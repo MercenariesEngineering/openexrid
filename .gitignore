@@ -1,0 +1,6 @@
+x64
+Debug
+*.filters
+*.sdf
+.vs
+*.opensdf
