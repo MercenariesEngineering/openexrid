@@ -21,6 +21,7 @@
 #include <ImfDeepFrameBuffer.h>
 #include <ImfDeepScanLineInputFile.h>
 #include <ImfDeepScanLineOutputFile.h>
+#include <ImfIntAttribute.h>
 #include <ImfPartType.h>
 #include <ImfStringAttribute.h>
 #include <ImathBox.h>
@@ -43,13 +44,20 @@ Mask::Mask (const char *filename)
 	_Width = dataWindow.max.x - dataWindow.min.x + 1;
 	_Height = dataWindow.max.y - dataWindow.min.y + 1;
 
+	// Check the version
+	const Imf::IntAttribute *version = header.findTypedAttribute<Imf::IntAttribute> ("OIMVersion");
+	if (!version)
+		throw exception ("The OIMVersion attribute is missing");
+	if (version->value () > (int)_Version)
+		throw exception ("The file has been created by an unknown version of the library");
+
 	// Get the name attribute
-	const Imf::StringAttribute *attr = header.findTypedAttribute<Imf::StringAttribute> ("Names");
-	if (!attr)
-		throw exception ("The Names attribute is missing");
+	const Imf::StringAttribute *names = header.findTypedAttribute<Imf::StringAttribute> ("OIMNames");
+	if (!names)
+		throw exception ("The OIMNames attribute is missing");
 	
 	// Copy the names
-	_Names = attr->value ();
+	_Names = names->value ();
 
 	// Count the names
 	int namesN = 0;
@@ -88,11 +96,11 @@ Mask::Mask (const char *filename)
 
 	// For each pixel of a single line, the pointer on the id values
 	vector<uint32_t*> id (_Width);
-	frameBuffer.insert ("OMIID", DeepSlice (UINT, (char *)&id[0], sizeof (uint32_t*), 0, sizeof (Sample)));
+	frameBuffer.insert ("OIMID", DeepSlice (UINT, (char *)&id[0], sizeof (uint32_t*), 0, sizeof (Sample)));
 
 	// For each pixel of a single line, the pointer on the coverage values
 	vector<float*> coverage (_Width);
-	frameBuffer.insert ("OMIA", DeepSlice (FLOAT, (char *)&coverage[0], sizeof (float*), 0, sizeof (Sample)));
+	frameBuffer.insert ("OIMA", DeepSlice (FLOAT, (char *)&coverage[0], sizeof (float*), 0, sizeof (Sample)));
 
 	file.setFrameBuffer(frameBuffer);
 
@@ -188,13 +196,14 @@ void Mask::write (const char *filename, Compression compression) const
 	// EXR Header
 	// Right now, the image window is the data window
 	Header header (_Width, _Height);
-	header.channels().insert ("OMIID", Channel (UINT));
-	header.channels().insert ("OMIA", Channel (FLOAT));
+	header.channels().insert ("OIMID", Channel (UINT));
+	header.channels().insert ("OIMA", Channel (FLOAT));
 	header.setType (DEEPSCANLINE);
 	header.compression () = compression;
 
 	// Write the names in an Attribute
-	header.insert ("Names", Imf::StringAttribute (_Names));
+	header.insert ("OIMVersion", Imf::IntAttribute (_Version));
+	header.insert ("OIMNames", Imf::StringAttribute (_Names));
 
 	DeepScanLineOutputFile file (filename, header);
 	DeepFrameBuffer frameBuffer;
@@ -207,7 +216,7 @@ void Mask::write (const char *filename, Compression compression) const
 
 	// A line of id
 	vector<const uint32_t*> id (_Width);
-	frameBuffer.insert ("OMIID",
+	frameBuffer.insert ("OIMID",
 						DeepSlice (UINT,
 						(char *) (&id[0]),
 						sizeof (uint32_t*),
@@ -216,7 +225,7 @@ void Mask::write (const char *filename, Compression compression) const
 
 	// A line of coverage
 	vector<const float*> coverage (_Width);
-	frameBuffer.insert ("OMIA",
+	frameBuffer.insert ("OIMA",
 						DeepSlice (FLOAT,
 						(char *) (&coverage[0]),
 						sizeof (float*),

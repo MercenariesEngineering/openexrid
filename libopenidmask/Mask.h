@@ -60,6 +60,9 @@ private:
 
 	// The pixel samples concatenated in a single vector.
 	std::vector<Sample>	_Samples;
+
+	// Mask version
+	const uint32_t		_Version = 1;
 };
 
 }
