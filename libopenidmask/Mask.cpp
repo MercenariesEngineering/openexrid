@@ -14,6 +14,7 @@
 */
 
 #include "Mask.h"
+#include "Builder.h"
 
 #include <ImfChannelList.h>
 #include <ImfHeader.h>
@@ -129,17 +130,16 @@ Mask::Mask (const char *filename)
 
 // ***************************************************************************
 
-Mask::Mask (int width, int height, const map<string, uint32_t> &nameToId,
-	const vector<vector<Sample> >	&pixels) : 
-	_Width (width), _Height (height)
+Mask::Mask (const Builder &builder, const std::vector<std::string> &names) : _Width (builder._Width), _Height (builder._Height)
 {
 	// * Build _NamesIndexes
 
 	// First, fill _NamesIndexes with the size of each string
-	_NamesIndexes.resize (nameToId.size (), 0);
-	for (const auto &kv : nameToId)
+	const size_t namesN = names.size ();
+	_NamesIndexes.resize (namesN, 0);
+	for (size_t i = 0; i < namesN; ++i)
 		// Including the ending \0
-		_NamesIndexes[kv.second] = (uint32_t)kv.first.length()+1;
+		_NamesIndexes[i] = (uint32_t)names[i].length()+1;
 
 	// Accumulates the string size to build a string index
 	uint32_t index = 0;
@@ -151,11 +151,14 @@ Mask::Mask (int width, int height, const map<string, uint32_t> &nameToId,
 	}
 
 	// Allocates the string buffer
-	_Names.resize (index, '\0');
+	_Names.reserve (index);
 
-	// Copy the names at their index
-	for (const auto &kv : nameToId)
-		copy (kv.first.begin (), kv.first.end (), _Names.begin()+_NamesIndexes[kv.second]);
+	// Concatenate the names into _Names
+	for (const auto &name : names)
+	{
+		_Names += name;
+		_Names += '\0';
+	}
 
 	// * Build _PixelsIndexes
 
@@ -163,8 +166,8 @@ Mask::Mask (int width, int height, const map<string, uint32_t> &nameToId,
 	// Current index
 	size_t indexN = 0;
 	// We need one more index to get the size of the last pixel
-	_PixelsIndexes.reserve (width*height+1);
-	for (const auto &p : pixels)
+	_PixelsIndexes.reserve (_Width*_Height+1);
+	for (const auto &p : builder._Pixels)
 	{
 		_PixelsIndexes.push_back ((uint32_t)indexN);
 		indexN += p.size ();
@@ -174,7 +177,7 @@ Mask::Mask (int width, int height, const map<string, uint32_t> &nameToId,
 
 	// Concatenate the samples
 	_Samples.reserve (indexN);
-	for (const auto &samples : pixels)
+	for (const auto &samples : builder._Pixels)
 		_Samples.insert (_Samples.end (), samples.begin (), samples.end ());
 }
 

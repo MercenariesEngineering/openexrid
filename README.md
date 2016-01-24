@@ -21,6 +21,12 @@ The renderer uses the libopenidmask library to build the mask id image during th
 
 The OpenFX plug-in reads and generates the mask in your prefered compositing tool.
 
+## Compilation
+
+Under windows, set the environment variable OPENIDMASK_INSTALL with the path to the installation folder.
+
+Compile the project with Visual 2015.
+
 ## Tests
 
 Compile and run the /test application.

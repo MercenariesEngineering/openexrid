@@ -29,8 +29,10 @@ namespace openidmask
 class Mask
 {
 	friend class Query;
-	friend class Builder;
 public:
+
+	// Build a mask using the Builder.
+	Mask (const class Builder &builder, const std::vector<std::string> &names);
 
 	// Build a Mask using an EXR file.
 	// This constructor throws exceptions in case of reading issues.
@@ -38,11 +40,6 @@ public:
 
 	// Write the mask in an EXR file.
 	void write (const char *filename, Imf::Compression compression=Imf::ZIPS_COMPRESSION) const;
-
-private:
-	// The internal build method called by the Builder object.
-	Mask (int width, int height, const std::map<std::string, uint32_t> &nameToId,
-		const std::vector<std::vector<Sample> >	&pixels);
 
 private:
 

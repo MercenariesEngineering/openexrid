@@ -54,13 +54,13 @@ int main(int argc, char **argv)
 			const vector<int> &pixel = pixelToNames[x+y*Width];
 			const float weight = 1.f/(float)pixel.size ();
 			for (size_t s = 0; s < pixel.size (); ++s)
-				builder.addCoverage (x, y, weight, names[pixel[s]].c_str ());
+				builder.addCoverage (x, y, weight, pixel[s]);
 		}
 
 		{
 			// Build and write a mask
 			cout << "Build the mask id map" << endl;
-			const Mask mask = builder.build ();
+			const Mask mask (builder, names);
 
 			cout << "Write the mask" << endl;
 			mask.write (filename);

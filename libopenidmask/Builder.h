@@ -25,6 +25,7 @@ namespace openidmask
 // the coverage data and then build a Mask object.
 class Builder
 {
+	friend class Mask;
 public:
 
 	// Initialize a builder
@@ -33,20 +34,12 @@ public:
 	// Add some coverage in the pixel (x,y) for the object named objectName.
 	// The sum of the coverage of a pixel is supposed to be between [0, 1].
 	// This method is not thread safe.
-	void addCoverage (int x, int y, float coverage, const char *objectName);
+	void addCoverage (int x, int y, float coverage, uint32_t id);
 
-	// Build a mask
-	Mask build () const;
 private:
 
 	// The image resolution.
 	int	_Width, _Height;
-
-	// String id of the next new object name.
-	uint32_t _NextID;
-
-	// The map of the known object names.
-	std::map<std::string, uint32_t>		_NameToId;
 
 	// The sample list per pixel.
 	std::vector<std::vector<Sample> >	_Pixels;

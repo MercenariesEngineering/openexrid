@@ -20,40 +20,23 @@ using namespace std;
 
 //**********************************************************************
 
-Builder::Builder (int width, int height) : _Width (width), 	_Height (height), _NextID (0), _Pixels (width*height) {}
+Builder::Builder (int width, int height) : _Width (width), 	_Height (height), _Pixels (width*height) {}
 
 //**********************************************************************
 
-void Builder::addCoverage (int x, int y, float coverage, 
-	const char *objectName)
+void Builder::addCoverage (int x, int y, float coverage, uint32_t id)
 {
-	// Search/insert the objectName in the name map
-	const auto pairib = _NameToId.emplace (objectName, _NextID);
-
-	// Increment the next id if an insertion occured
-	_NextID += (int)pairib.second;
-
-	// The final id for this name
-	const uint32_t id = pairib.first->second;
-
 	// The pixel sample list
-	auto &pixel = _Pixels[x+y*_Width];
+	vector<Sample> &pixel = _Pixels[x+y*_Width];
 
 	// Find a sample for this id
-	auto ite = find (pixel.begin (), pixel.end (), id);
+	vector<Sample>::iterator ite = find (pixel.begin (), pixel.end (), id);
 	if (ite == pixel.end())
 		// No sample yet for this object, add one entry
 		pixel.emplace_back (id, coverage);
 	else
 		// Accumulate the coverage for this object
 		ite->Coverage += coverage;
-}
-
-//**********************************************************************
-
-Mask Builder::build () const
-{
-	return Mask (_Width, _Height, _NameToId, _Pixels);
 }
 
 //**********************************************************************
