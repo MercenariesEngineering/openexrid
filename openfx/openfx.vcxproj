@@ -71,13 +71,11 @@
     <OutDir>$(SolutionDir)$(Configuration)\</OutDir>
     <IntDir>$(Configuration)\</IntDir>
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>C:\Users\guerilla\lib2015\contrib\openfx-include-1.4\include;c:\users\guerilla\lib2015\include;$(IncludePath)</IncludePath>
     <TargetName>openidmask</TargetName>
     <TargetExt>.ofx</TargetExt>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>C:\Users\guerilla\lib2015\contrib\openfx-include-1.4\include;c:\users\guerilla\lib2015\include;$(IncludePath)</IncludePath>
     <TargetName>openidmask</TargetName>
     <TargetExt>.ofx</TargetExt>
   </PropertyGroup>
@@ -85,13 +83,11 @@
     <OutDir>$(SolutionDir)$(Configuration)\</OutDir>
     <IntDir>$(Configuration)\</IntDir>
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>C:\Users\guerilla\lib2015\contrib\openfx-include-1.4\include;c:\users\guerilla\lib2015\include;$(IncludePath)</IncludePath>
     <TargetName>openidmask</TargetName>
     <TargetExt>.ofx</TargetExt>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>C:\Users\guerilla\lib2015\contrib\openfx-include-1.4\include;c:\users\guerilla\lib2015\include;$(IncludePath)</IncludePath>
     <TargetName>openidmask</TargetName>
     <TargetExt>.ofx</TargetExt>
   </PropertyGroup>
@@ -140,9 +136,9 @@ copy /Y "$(TargetPath)" /B "$(OutDir)$(ProjectName).ofx.bundle\Contents\Win32\$(
     </Link>
     <PostBuildEvent>
       <Message>Creating bundle...</Message>
-      <Command>if not exist "$(OutDir)openidmask.ofx.bundle\Contents\Resources" mkdir "$(OutDir)openidmask.ofx.bundle\Contents\Resources"
-if not exist "$(OutDir)openidmask.ofx.bundle\Contents\Win64" mkdir "$(OutDir)openidmask.ofx.bundle\Contents\Win64"
-copy /Y "$(TargetPath)" /B "$(OutDir)openidmask.ofx.bundle\Contents\Win64\openidmask.ofx" /B
+      <Command>if not exist "$(HOMEPATH)\.nuke\openidmask.ofx.bundle\Contents\Resources" mkdir "$(HOMEPATH)\.nuke\openidmask.ofx.bundle\Contents\Resources"
+if not exist "$(HOMEPATH)\.nuke\openidmask.ofx.bundle\Contents\Win64" mkdir "$(HOMEPATH)\.nuke\openidmask.ofx.bundle\Contents\Win64"
+copy /Y "$(TargetPath)" /B "$(HOMEPATH)\.nuke\openidmask.ofx.bundle\Contents\Win64\openidmask.ofx" /B
 </Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
@@ -190,9 +186,9 @@ copy /Y "$(TargetPath)" /B "$(OutDir)$(ProjectName).ofx.bundle\Contents\Win32\$(
     </Link>
     <PostBuildEvent>
       <Message>Creating bundle...</Message>
-      <Command>if not exist "$(OutDir)openidmask.ofx.bundle\Contents\Resources" mkdir "$(OutDir)openidmask.ofx.bundle\Contents\Resources"
-if not exist "$(OutDir)openidmask.ofx.bundle\Contents\Win64" mkdir "$(OutDir)openidmask.ofx.bundle\Contents\Win64"
-copy /Y "$(TargetPath)" /B "$(OutDir)openidmask.ofx.bundle\Contents\Win64\openidmask.ofx" /B
+      <Command>if not exist "$(HOMEPATH)\.nuke\openidmask.ofx.bundle\Contents\Resources" mkdir "$(HOMEPATH)\.nuke\openidmask.ofx.bundle\Contents\Resources"
+if not exist "$(HOMEPATH)\.nuke\openidmask.ofx.bundle\Contents\Win64" mkdir "$(HOMEPATH)\.nuke\openidmask.ofx.bundle\Contents\Win64"
+copy /Y "$(TargetPath)" /B "$(HOMEPATH)\.nuke\openidmask.ofx.bundle\Contents\Win64\openidmask.ofx" /B
 </Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>

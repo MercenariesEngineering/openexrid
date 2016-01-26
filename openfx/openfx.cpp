@@ -162,7 +162,7 @@ public :
 	{}
 
 	static void multiThreadProcessing(unsigned int threadId, unsigned int nThreads, void *arg);
-	virtual void doProcessing(OfxRectI window);
+	void doProcessing(OfxRectI window);
 	void process(void);
 
 protected :
@@ -191,7 +191,7 @@ void Processor::multiThreadProcessing(unsigned int threadId, unsigned int nThrea
 	win.y1 = y1; win.y2 = y2;
 
 	// and render that thread on each
-	proc->doProcessing(win);  
+	proc->doProcessing(win);
 }
 
 // function to kick off rendering across multiple CPUs
@@ -223,7 +223,7 @@ inline OfxRGBColourF haltonColors (int id)
 
 void Processor::doProcessing(OfxRectI procWindow)
 {
-	OfxRGBColourF *dst = (OfxRGBColourF*)dstV;
+	OfxRGBAColourF *dst = (OfxRGBAColourF*)dstV;
 
 	for(int y = procWindow.y1; y < procWindow.y2; y++) 
 	{
@@ -232,15 +232,17 @@ void Processor::doProcessing(OfxRectI procWindow)
 		const int _y = size.second-(int)((double)y/renderScale.y)-1;
 		if(gEffectHost->abort(effect)) break;
 
-		OfxRGBColourF *dstPix = pixelAddress(dst, dstRect, procWindow.x1, y, dstBytesPerLine);
+		OfxRGBAColourF *dstPix = pixelAddress(dst, dstRect, procWindow.x1, y, dstBytesPerLine);
 
 		for(int x = procWindow.x1; x < procWindow.x2; x++)
 		{
 			const int _x = (int)((double)x/renderScale.x);
+			dstPix->a = 1;
 
 			// False colors ?
 			if (Colors)
 			{
+				dstPix->r = dstPix->g = dstPix->b = 0;
 				const int n = Query.TheMask->getSampleN (_x, _y);
 				for (int s = 0; s < n; ++s)
 				{
@@ -374,9 +376,7 @@ static OfxStatus describeInContext(OfxImageEffectHandle effect, OfxPropertySetHa
 	OfxPropertySetHandle clipProps;
 	// define the single output clip in both contexts
 	gEffectHost->clipDefine(effect, kOfxImageEffectOutputClipName, &clipProps);
-
-	// set the component types we can handle on out output
-	gPropHost->propSetString(clipProps, kOfxImageEffectPropSupportedComponents, 0, kOfxImageComponentRGB);
+	gPropHost->propSetString(clipProps, kOfxImageEffectPropSupportedComponents, 0, kOfxImageComponentRGBA);
 
 	// define the parameters for this context
 
@@ -427,11 +427,11 @@ static OfxStatus describe(OfxImageEffectHandle effect)
 	gPropHost->propSetString(effectProps, kOfxImageEffectPropSupportedPixelDepths, 2, kOfxBitDepthFloat);
 
 	// set some labels and the group it belongs to
-	gPropHost->propSetString(effectProps, kOfxPropLabel, 0, "Image");
-	gPropHost->propSetString(effectProps, kOfxImageEffectPluginPropGrouping, 0, "openidmask");
+	gPropHost->propSetString(effectProps, kOfxPropLabel, 0, "openidmask");
+	gPropHost->propSetString(effectProps, kOfxImageEffectPluginPropGrouping, 0, "Image");
 
 	// define the contexts we can be used in
-	gPropHost->propSetString(effectProps, kOfxImageEffectPropSupportedContexts, 0, kOfxImageEffectContextGenerator);
+	gPropHost->propSetString(effectProps, kOfxImageEffectPropSupportedContexts, 0, kOfxImageEffectContextGeneral);
 
 	return kOfxStatOK;
 }
