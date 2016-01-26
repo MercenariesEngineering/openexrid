@@ -62,6 +62,13 @@ public:
 	{
 		return _Samples[_PixelsIndexes[x+y*_Width]+sample];
 	}
+
+	// Returns the pixel n-th sample
+	inline Sample &getSample (int x, int y, int sample)
+	{
+		return _Samples[_PixelsIndexes[x+y*_Width]+sample];
+	}
+
 private:
 
 	// The image resolution
