@@ -31,16 +31,37 @@ class Mask
 	friend class Query;
 public:
 
+	// Build an empty Mask
+	Mask ();
+
 	// Build a mask using the Builder.
 	Mask (const class Builder &builder, const std::vector<std::string> &names);
 
-	// Build a Mask using an EXR file.
-	// This constructor throws exceptions in case of reading issues.
-	Mask (const char *filename);
+	// Read a Mask from an EXR file.
+	// This method throws exceptions in case of reading issues.
+	void read (const char *filename);
 
 	// Write the mask in an EXR file.
 	void write (const char *filename, Imf::Compression compression=Imf::ZIPS_COMPRESSION) const;
 
+	// Returns the image size
+	// This method is thread safe
+	inline std::pair<int,int>	getSize () const {return {_Width, _Height};};
+
+	// Returns the number of sample in the pixel
+	// This method is thread safe
+	inline int getSampleN (int x, int y) const
+	{
+		const int offset = x+y*_Width;
+		return _PixelsIndexes[offset+1]-_PixelsIndexes[offset];
+	}
+
+	// Returns the pixel n-th sample
+	// This method is thread safe
+	inline const Sample &getSample (int x, int y, int sample) const
+	{
+		return _Samples[_PixelsIndexes[x+y*_Width]+sample];
+	}
 private:
 
 	// The image resolution

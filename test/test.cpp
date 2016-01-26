@@ -68,7 +68,8 @@ int main(int argc, char **argv)
 
 		// Read a mask
 		cout << "Read the mask" << endl;
-		Mask mask (filename);
+		Mask mask;
+		mask.read (filename);
 
 		// Check the mask
 		cout << "Check the mask" << endl;

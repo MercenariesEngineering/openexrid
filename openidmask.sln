@@ -10,6 +10,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "test", "test\test.vcxproj",
 		{1C804A06-A8C8-4A6C-B3BF-CFFD3C0C2603} = {1C804A06-A8C8-4A6C-B3BF-CFFD3C0C2603}
 	EndProjectSection
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "openfx", "openfx\Rectangle_2005.vcxproj", "{54024FBF-452B-4B64-98D4-F540601292DC}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -34,6 +36,14 @@ Global
 		{F2315ED9-ECC6-4866-B2B0-53D4FF6E042C}.Release|x64.Build.0 = Release|x64
 		{F2315ED9-ECC6-4866-B2B0-53D4FF6E042C}.Release|x86.ActiveCfg = Release|Win32
 		{F2315ED9-ECC6-4866-B2B0-53D4FF6E042C}.Release|x86.Build.0 = Release|Win32
+		{54024FBF-452B-4B64-98D4-F540601292DC}.Debug|x64.ActiveCfg = Debug|x64
+		{54024FBF-452B-4B64-98D4-F540601292DC}.Debug|x64.Build.0 = Debug|x64
+		{54024FBF-452B-4B64-98D4-F540601292DC}.Debug|x86.ActiveCfg = Debug|Win32
+		{54024FBF-452B-4B64-98D4-F540601292DC}.Debug|x86.Build.0 = Debug|Win32
+		{54024FBF-452B-4B64-98D4-F540601292DC}.Release|x64.ActiveCfg = Release|x64
+		{54024FBF-452B-4B64-98D4-F540601292DC}.Release|x64.Build.0 = Release|x64
+		{54024FBF-452B-4B64-98D4-F540601292DC}.Release|x86.ActiveCfg = Release|Win32
+		{54024FBF-452B-4B64-98D4-F540601292DC}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

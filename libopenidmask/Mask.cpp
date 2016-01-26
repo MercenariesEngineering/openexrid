@@ -34,7 +34,11 @@ using namespace openidmask;
 
 // ***************************************************************************
 
-Mask::Mask (const char *filename)
+Mask::Mask () : _Width (0), _Height (0) {}
+
+// ***************************************************************************
+
+void Mask::read (const char *filename)
 {
 	DeepScanLineInputFile file (filename);
 	const Header& header = file.header();
@@ -71,6 +75,7 @@ Mask::Mask (const char *filename)
 	}
 
 	// Build the name indexes
+	_NamesIndexes.clear ();
 	_NamesIndexes.reserve (namesN);
 	{
 		// Current index
@@ -119,6 +124,7 @@ Mask::Mask (const char *filename)
 	}
 
 	// Resize the samples
+	_Samples.clear ();
 	_Samples.resize (index, {0,0});
 
 	// For each line
