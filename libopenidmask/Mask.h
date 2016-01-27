@@ -25,7 +25,6 @@ namespace openidmask
 
 // The Mask object hold the data needed to dynamically craft the mask images.
 // The Mask is built using a Builder object. It can be loaded and saved in an EXR file.
-// A Query object references a Mask object to craft a specific mask image.
 class Mask
 {
 	friend class Query;
@@ -46,28 +45,36 @@ public:
 
 	// Returns the image size
 	// This method is thread safe
-	inline std::pair<int,int>	getSize () const {return {_Width, _Height};};
+	inline std::pair<int,int>	getSize () const;
 
 	// Returns the number of sample in the pixel
 	// This method is thread safe
-	inline int getSampleN (int x, int y) const
-	{
-		const int offset = x+y*_Width;
-		return _PixelsIndexes[offset+1]-_PixelsIndexes[offset];
-	}
+	inline int getSampleN (int x, int y) const;
 
 	// Returns the pixel n-th sample
 	// This method is thread safe
-	inline const Sample &getSample (int x, int y, int sample) const
-	{
-		return _Samples[_PixelsIndexes[x+y*_Width]+sample];
-	}
+	// x and y and samples must be in the valid range
+	inline const Sample &getSample (int x, int y, int sample) const;
 
 	// Returns the pixel n-th sample
-	inline Sample &getSample (int x, int y, int sample)
-	{
-		return _Samples[_PixelsIndexes[x+y*_Width]+sample];
-	}
+	// x and y and samples must be in the valid range
+	inline Sample &getSample (int x, int y, int sample);
+
+	// Returns the sample name
+	// This method is thread safe
+	// x and y and samples must be in the valid range
+	// The returned pointer is valid until the Mask content is changed or destroyed
+	inline const char *getSampleName (int x, int y, int sample) const;
+
+	// Returns the id limit, i-e the largest id + 1.
+	// This method is thread safe
+	inline uint32_t getIdN () const;
+
+	// Returns the name using a sample id.
+	// The id should be < than getIdN(). "" is returned if no name is found for this id.
+	// The returned pointer is valid until the Mask content is changed or destroyed
+	// This method is thread safe
+	inline const char *getName (uint32_t id) const;
 
 private:
 
@@ -90,7 +97,47 @@ private:
 	std::vector<Sample>	_Samples;
 
 	// Mask version
-	const uint32_t		_Version = 1;
+	const uint32_t	_Version = 1;
 };
+
+inline std::pair<int,int> Mask::getSize () const 
+{
+	return {_Width, _Height};
+}
+
+inline int Mask::getSampleN (int x, int y) const
+{
+	const int offset = x+y*_Width;
+	return _PixelsIndexes[offset+1]-_PixelsIndexes[offset];
+}
+
+inline const Sample &Mask::getSample (int x, int y, int sample) const
+{
+	return _Samples[_PixelsIndexes[x+y*_Width]+sample];
+}
+
+inline Sample &Mask::getSample (int x, int y, int sample)
+{
+	return _Samples[_PixelsIndexes[x+y*_Width]+sample];
+}
+
+inline const char *Mask::getSampleName (int x, int y, int sample) const
+{
+	const Sample &s = getSample (x, y, sample);
+	return getName (s.Id);
+}
+
+inline uint32_t Mask::getIdN () const
+{
+	return (uint32_t)_NamesIndexes.size ();
+}
+
+inline const char *Mask::getName (uint32_t id) const
+{
+	if (id < getIdN ())
+		return &_Names[_NamesIndexes[id]];
+	else
+		return "";
+}
 
 }

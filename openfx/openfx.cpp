@@ -17,7 +17,7 @@
 #include <openidmask/Mask.h>
 #include <openidmask/Query.h>
 #include <ImfDeepScanLineInputFile.h>
-#include "ofxImageEffect.h"
+#include "instance.h"
 #include "ofxUtilities.h"
 
 using namespace Imf;
@@ -41,23 +41,11 @@ OfxInteractSuiteV1		*gInteractHost = NULL;
 OfxMemorySuiteV1		*gMemoryHost = NULL;
 OfxMessageSuiteV1		*gMessageSuite = NULL;
 
-// private instance data type
-struct InstanceData 
-{
-	// handles to the clips we deal with
-	OfxImageClipHandle outputClip;
-
-	// handles to a our parameters
-	OfxParamHandle fileParam;
-	OfxParamHandle patternParam;
-	OfxParamHandle colorsParam;
-};
-
 // Convinience wrapper to get private data 
-static InstanceData *getInstanceData(OfxImageEffectHandle effect)
+static Instance *getInstanceData(OfxImageEffectHandle effect)
 {
-	InstanceData *myData = (InstanceData *) ofxuGetEffectInstanceData(effect);
-	return myData;
+	Instance *instance = (Instance *) ofxuGetEffectInstanceData(effect);
+	return instance;
 }
 
 //  instance construction
@@ -72,18 +60,18 @@ static OfxStatus createInstance(OfxImageEffectHandle effect)
 	gEffectHost->getParamSet(effect, &paramSet);
 
 	// make my private instance data
-	InstanceData *myData = new InstanceData;
+	Instance *instance = new Instance;
 
 	// cache away param handles
-	gParamHost->paramGetHandle(paramSet, "file", &myData->fileParam, 0);
-	gParamHost->paramGetHandle(paramSet, "pattern", &myData->patternParam, 0);
-	gParamHost->paramGetHandle(paramSet, "colors", &myData->colorsParam, 0);
+	gParamHost->paramGetHandle(paramSet, "file", &instance->fileParam, 0);
+	gParamHost->paramGetHandle(paramSet, "pattern", &instance->patternParam, 0);
+	gParamHost->paramGetHandle(paramSet, "colors", &instance->colorsParam, 0);
 
 	// cache away clip handles
-	gEffectHost->clipGetHandle(effect, kOfxImageEffectOutputClipName, &myData->outputClip, 0);
+	gEffectHost->clipGetHandle(effect, kOfxImageEffectOutputClipName, &instance->outputClip, 0);
 
 	// set my private instance data
-	gPropHost->propSetPointer(effectProps, kOfxPropInstanceData, 0, (void *) myData);
+	gPropHost->propSetPointer(effectProps, kOfxPropInstanceData, 0, (void *) instance);
 
 	return kOfxStatOK;
 }
@@ -92,11 +80,11 @@ static OfxStatus createInstance(OfxImageEffectHandle effect)
 static OfxStatus destroyInstance(OfxImageEffectHandle effect)
 {
 	// get my instance data
-	InstanceData *myData = getInstanceData(effect);
+	Instance *instance = getInstanceData(effect);
 
 	// and delete it
-	if(myData)
-		delete myData;
+	if(instance)
+		delete instance;
 	return kOfxStatOK;
 }
 
@@ -106,11 +94,11 @@ OfxStatus getSpatialRoD(OfxImageEffectHandle effect, OfxPropertySetHandle inArgs
 	OfxStatus status = kOfxStatOK;
 
 	// retrieve any instance data associated with this effect
-	InstanceData *myData = getInstanceData(effect);
+	Instance *instance = getInstanceData(effect);
 
 	// Read the mas now
 	const char *filename;
-	gParamHost->paramGetValue(myData->fileParam, &filename);
+	gParamHost->paramGetValue(instance->fileParam, &filename);
 
 	try 
 	{
@@ -248,9 +236,9 @@ void Processor::doProcessing(OfxRectI procWindow)
 				{
 					const openidmask::Sample &sample = Query.TheMask->getSample (_x, _y, s);
 					const OfxRGBColourF c = Query.isSelected (sample.Id) ? OfxRGBColourF{1,1,1} : haltonColors (sample.Id);
-					dstPix->r += c.r*sample.Coverage;
-					dstPix->g += c.g*sample.Coverage;
-					dstPix->b += c.b*sample.Coverage;
+					dstPix->r += powf (c.r, 1.f/0.3f)*sample.Coverage;
+					dstPix->g += powf (c.g, 1.f/0.3f)*sample.Coverage;
+					dstPix->b += powf (c.b, 1.f/0.3f)*sample.Coverage;
 				}
 			}
 			else
@@ -277,7 +265,7 @@ static OfxStatus render(OfxImageEffectHandle effect,
 	gPropHost->propGetIntN(inArgs, kOfxImageEffectPropRenderWindow, 4, &renderWindow.x1);
 
 	// retrieve any instance data associated with this effect
-	InstanceData *myData = getInstanceData(effect);
+	Instance *instance = getInstanceData(effect);
 
 	// property handles and members of each image
 	// in reality, we would put this in a struct as the C++ support layer does
@@ -289,7 +277,7 @@ static OfxStatus render(OfxImageEffectHandle effect,
 
 	try 
 	{
-		outputImg = ofxuGetImage(myData->outputClip, time, dstRowBytes, dstBitDepth, dstIsAlpha, dstRect, dst);
+		outputImg = ofxuGetImage(instance->outputClip, time, dstRowBytes, dstBitDepth, dstIsAlpha, dstRect, dst);
 		if(outputImg == NULL)
 			throw OfxuNoImageException();
 
@@ -297,11 +285,11 @@ static OfxStatus render(OfxImageEffectHandle effect,
 		OfxPointD renderScale;
 		gPropHost->propGetDoubleN(inArgs, kOfxImageEffectPropRenderScale, 2, &renderScale.x);
 		const char *filename;
-		gParamHost->paramGetValue(myData->fileParam, &filename);
+		gParamHost->paramGetValue(instance->fileParam, &filename);
 		const char *pattern;
-		gParamHost->paramGetValue(myData->patternParam, &pattern);
+		gParamHost->paramGetValue(instance->patternParam, &pattern);
 		int colors;
-		gParamHost->paramGetValue(myData->colorsParam, &colors);
+		gParamHost->paramGetValue(instance->colorsParam, &colors);
 
 		// Split the string in strings
 		std::set<std::string> patterns;
@@ -325,8 +313,11 @@ static OfxStatus render(OfxImageEffectHandle effect,
 
 		try
 		{
-			openidmask::Mask mask;
-			mask.read (filename);
+			if (instance->LastMaskFilename != filename)
+			{
+				instance->Mask.read (filename);
+				instance->LastMaskFilename = filename;
+			}
 			auto match = [&patterns] (const char *name)
 			{
 				for (auto &pattern : patterns)
@@ -334,7 +325,7 @@ static OfxStatus render(OfxImageEffectHandle effect,
 						return true;
 				return false;
 			};
-			openidmask::Query query (&mask, match);
+			openidmask::Query query (&instance->Mask, match);
 
 			// do the rendering
 			Processor fred (effect, renderScale, dst, dstRect, dstRowBytes, renderWindow, query, colors != 0);
@@ -365,7 +356,7 @@ static OfxStatus render(OfxImageEffectHandle effect,
 static OfxStatus getClipPreferences(OfxImageEffectHandle effect, OfxPropertySetHandle /*inArgs*/, OfxPropertySetHandle outArgs)
 {
 	// retrieve any instance data associated with this effect
-	InstanceData *myData = getInstanceData(effect);
+	Instance *instance = getInstanceData(effect);
 
 	return kOfxStatOK;
 }
@@ -432,6 +423,10 @@ static OfxStatus describe(OfxImageEffectHandle effect)
 
 	// define the contexts we can be used in
 	gPropHost->propSetString(effectProps, kOfxImageEffectPropSupportedContexts, 0, kOfxImageEffectContextGeneral);
+
+	// set the property that is the overlay's main entry point for the plugin
+	extern OfxStatus overlayMain(const char *action,  const void *handle, OfxPropertySetHandle inArgs, OfxPropertySetHandle /*outArgs*/);
+	gPropHost->propSetPointer(effectProps, kOfxImageEffectPluginPropOverlayInteractV1, 0,  (void *) overlayMain);
 
 	return kOfxStatOK;
 }
