@@ -225,7 +225,6 @@ void Processor::doProcessing(OfxRectI procWindow)
 		for(int x = procWindow.x1; x < procWindow.x2; x++)
 		{
 			const int _x = (int)((double)x/renderScale.x);
-			dstPix->a = 1;
 
 			// False colors ?
 			if (Colors)
@@ -239,12 +238,16 @@ void Processor::doProcessing(OfxRectI procWindow)
 					dstPix->r += powf (c.r, 1.f/0.3f)*sample.Coverage;
 					dstPix->g += powf (c.g, 1.f/0.3f)*sample.Coverage;
 					dstPix->b += powf (c.b, 1.f/0.3f)*sample.Coverage;
+					dstPix->a += sample.Coverage;
 				}
 			}
 			else
 			{
 				const float c = Query.getCoverage (_x, _y);
-				dstPix->r = dstPix->g = dstPix->b = c;
+				dstPix->r += c;
+				dstPix->g += c;
+				dstPix->b += c;
+				dstPix->a += c;
 			}
 			dstPix++;
 		}
@@ -357,6 +360,9 @@ static OfxStatus getClipPreferences(OfxImageEffectHandle effect, OfxPropertySetH
 {
 	// retrieve any instance data associated with this effect
 	Instance *instance = getInstanceData(effect);
+
+	// Output is pre multiplied
+	gPropHost->propSetString(outArgs, kOfxImageEffectPropPreMultiplication, 0, kOfxImagePreMultiplied);
 
 	return kOfxStatOK;
 }
