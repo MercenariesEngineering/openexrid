@@ -124,8 +124,9 @@ OfxStatus getSpatialRoD(OfxImageEffectHandle effect, OfxPropertySetHandle inArgs
 		const double res[] = {(double)xMin, (double)yMin, (double)(xMin+w), (double)(yMin+h)};
 		gPropHost->propSetDoubleN(outArgs, kOfxImageEffectPropRegionOfDefinition, 4, res);
 	}
-	catch (std::runtime_error &)
+	catch (const std::exception &e)
 	{
+		std::cerr << e.what () << std::endl;
 		status = kOfxStatFailed;
 	}
 
@@ -368,8 +369,9 @@ static OfxStatus render(OfxImageEffectHandle effect,
 			Processor fred (effect, renderScale, dst, dstRect, dstRowBytes, renderWindow, query, colors != 0);
 			fred.process();
 		}
-		catch (std::runtime_error &)
+		catch (const std::exception &e)
 		{
+			std::cerr << e.what () << std::endl;
 			status = kOfxStatFailed;
 		}
 
@@ -473,11 +475,10 @@ static OfxStatus describe(OfxImageEffectHandle effect)
 // The main function
 static OfxStatus pluginMain(const char *action,  const void *handle, OfxPropertySetHandle inArgs, OfxPropertySetHandle outArgs)
 {
+	// cast to appropriate type
+	OfxImageEffectHandle effect = (OfxImageEffectHandle ) handle;
 	try 
 	{
-		// cast to appropriate type
-		OfxImageEffectHandle effect = (OfxImageEffectHandle ) handle;
-
 		if(strcmp(action, kOfxActionDescribe) == 0)
 			return describe(effect);
 		else if(strcmp(action, kOfxImageEffectActionDescribeInContext) == 0)
@@ -496,13 +497,12 @@ static OfxStatus pluginMain(const char *action,  const void *handle, OfxProperty
 	catch (std::bad_alloc)
 	{
 		// catch memory
-		//std::cout << "OFX Plugin Memory error." << std::endl;
 		return kOfxStatErrMemory;
 	}
-	catch ( const std::runtime_error &)
+	catch (const std::exception &e)
 	{
 		// standard exceptions
-		//std::cout << "OFX Plugin error: " << e.what() << std::endl;
+		std::cerr << e.what () << std::endl;
 		return kOfxStatErrUnknown;
 	} 
 	catch (int err) 
