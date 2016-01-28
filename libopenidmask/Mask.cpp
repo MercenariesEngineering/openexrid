@@ -32,6 +32,10 @@ using namespace Imath;
 using namespace std;
 using namespace openidmask;
 
+// Compression
+extern std::string deflate (const std::string& str);
+extern std::string inflate (const std::string& str);
+
 // ***************************************************************************
 
 Mask::Mask () : _Width (0), _Height (0) {}
@@ -61,7 +65,7 @@ void Mask::read (const char *filename)
 		throw runtime_error ("The OIMNames attribute is missing");
 	
 	// Copy the names
-	_Names = names->value ();
+	_Names = inflate (names->value ());
 
 	// Count the names
 	int namesN = 0;
@@ -212,7 +216,7 @@ void Mask::write (const char *filename, Compression compression) const
 
 	// Write the names in an Attribute
 	header.insert ("OIMVersion", Imf::IntAttribute (_Version));
-	header.insert ("OIMNames", Imf::StringAttribute (_Names));
+	header.insert ("OIMNames", Imf::StringAttribute (deflate (_Names)));
 
 	DeepScanLineOutputFile file (filename, header);
 	DeepFrameBuffer frameBuffer;

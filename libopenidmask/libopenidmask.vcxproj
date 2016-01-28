@@ -21,6 +21,7 @@
   <ItemGroup>
     <ClCompile Include="Builder.cpp" />
     <ClCompile Include="Mask.cpp" />
+    <ClCompile Include="zlib.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Builder.h" />
