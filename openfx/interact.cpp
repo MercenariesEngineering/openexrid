@@ -70,6 +70,22 @@ std::string join (const T &names, const char *sep)
 	return result;
 }
 
+// Escape the regexp characters
+std::string escapeRegExp (const char *s)
+{
+	const char *sc = ".^$*+?()[{\\|";
+	std::string result = "^";
+	while (*s)
+	{
+		if (std::find (sc, sc+12, *s) != sc+12)
+			result += '\\';
+		result += *s;
+		++s;
+	}
+	result += "$";
+	return result;
+}
+
 // the interaction routines
 struct MyInteractData {
 	int DownX, DownY;
@@ -272,7 +288,7 @@ static OfxStatus interactPenUp(OfxImageEffectHandle  effect, OfxInteractHandle i
 			if (maxId != ~0U)
 			{
 				const char *name = instance->Mask.getName (maxId);
-				names.insert (name);
+				names.insert (escapeRegExp (name));
 			}
 		}
 

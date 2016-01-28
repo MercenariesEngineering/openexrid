@@ -107,7 +107,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Windows</SubSystem>
       <TargetMachine>MachineX86</TargetMachine>
-      <AdditionalDependencies>libopenidmask.lib;IlmImf.lib;IlmThread.lib;Iex.lib;IlmHalf.lib;zlib.lib;opengl32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>libopenidmask.lib;IlmImf.lib;IlmThread.lib;Iex.lib;IlmHalf.lib;zlib.lib;opengl32.lib;re2.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
       <Message>Creating bundle...</Message>
@@ -132,7 +132,7 @@ copy /Y "$(TargetPath)" /B "$(OutDir)$(ProjectName).ofx.bundle\Contents\Win32\$(
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Windows</SubSystem>
-      <AdditionalDependencies>libopenidmask.lib;IlmImf.lib;IlmThread.lib;Iex.lib;IlmHalf.lib;zlib.lib;opengl32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>libopenidmask.lib;IlmImf.lib;IlmThread.lib;Iex.lib;IlmHalf.lib;zlib.lib;opengl32.lib;re2.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
       <Message>Creating bundle...</Message>
@@ -157,7 +157,7 @@ copy /Y "$(TargetPath)" /B "$(HOMEPATH)\.nuke\openidmask.ofx.bundle\Contents\Win
       <OptimizeReferences>true</OptimizeReferences>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <TargetMachine>MachineX86</TargetMachine>
-      <AdditionalDependencies>libopenidmask.lib;IlmImf.lib;IlmThread.lib;Iex.lib;IlmHalf.lib;zlib.lib;opengl32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>libopenidmask.lib;IlmImf.lib;IlmThread.lib;Iex.lib;IlmHalf.lib;zlib.lib;opengl32.lib;re2.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
       <Message>Creating bundle...</Message>
@@ -182,7 +182,7 @@ copy /Y "$(TargetPath)" /B "$(OutDir)$(ProjectName).ofx.bundle\Contents\Win32\$(
       <SubSystem>Windows</SubSystem>
       <OptimizeReferences>true</OptimizeReferences>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
-      <AdditionalDependencies>libopenidmask.lib;IlmImf.lib;IlmThread.lib;Iex.lib;IlmHalf.lib;zlib.lib;opengl32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>libopenidmask.lib;IlmImf.lib;IlmThread.lib;Iex.lib;IlmHalf.lib;zlib.lib;opengl32.lib;re2.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
       <Message>Creating bundle...</Message>

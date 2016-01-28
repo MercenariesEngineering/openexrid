@@ -135,8 +135,11 @@ void Mask::read (const char *filename)
 		for (int x = 0; x < _Width; x++, ++i)
 		{
 			// The sample id and coverage pointers for this pixel
-			id[x] = &_Samples[_PixelsIndexes[i]].Id;
-			coverage[x] = &_Samples[_PixelsIndexes[i]].Coverage;
+			const uint32_t count = _PixelsIndexes[i+1]-_PixelsIndexes[i];
+
+			// Avoid invalide indexes
+			id[x] = count ? &_Samples[_PixelsIndexes[i]].Id : NULL;
+			coverage[x] = count ? &_Samples[_PixelsIndexes[i]].Coverage : NULL;
 		}
 		file.readPixels (y);
 	}

@@ -17,6 +17,8 @@
 #include <openidmask/Mask.h>
 #include <openidmask/Query.h>
 #include <ImfDeepScanLineInputFile.h>
+#include <re2/set.h>
+#include <assert.h>
 #include "instance.h"
 #include "ofxUtilities.h"
 
@@ -40,6 +42,14 @@ OfxMultiThreadSuiteV1	*gThreadHost = NULL;
 OfxInteractSuiteV1		*gInteractHost = NULL;
 OfxMemorySuiteV1		*gMemoryHost = NULL;
 OfxMessageSuiteV1		*gMessageSuite = NULL;
+
+// Remove the - sign
+const char *removeNeg (const string &s)
+{
+	if (!s.empty () && s[0] == '-')
+		return s.c_str ()+1;
+	return s.c_str ();
+}
 
 // Convinience wrapper to get private data 
 static Instance *getInstanceData(OfxImageEffectHandle effect)
@@ -295,7 +305,7 @@ static OfxStatus render(OfxImageEffectHandle effect,
 		gParamHost->paramGetValue(instance->colorsParam, &colors);
 
 		// Split the string in strings
-		std::set<std::string> patterns;
+		std::vector<std::string> patterns;
 		std::string line;
 		while (true)
 		{
@@ -304,7 +314,7 @@ static OfxStatus render(OfxImageEffectHandle effect,
 			{
 				if (!line.empty())
 				{
-					patterns.insert (line);
+					patterns.push_back (line);
 					line.clear ();
 				}
 			}
@@ -321,12 +331,36 @@ static OfxStatus render(OfxImageEffectHandle effect,
 				instance->Mask.read (filename);
 				instance->LastMaskFilename = filename;
 			}
-			auto match = [&patterns] (const char *name)
+
+			// Initialize re2
+			re2::RE2::Options			options;
+			re2::RE2::Anchor			anchor = re2::RE2::UNANCHORED;
+			re2::RE2::Set set (options, anchor);
+			for (const auto &pattern : patterns)
+				if (set.Add (removeNeg (pattern), NULL) < 0)
+					throw std::exception ("Bad regular expression");
+
+			if (!patterns.empty () && !set.Compile ())
+					throw std::exception ("Bad regular expression");
+			std::vector<int> matched;
+
+			auto match = [&set,&patterns,&matched] (const char *name)
 			{
-				for (auto &pattern : patterns)
-					if (strstr(name, pattern.c_str()) != NULL)
-						return true;
-				return false;
+				bool match = false;
+				if (!patterns.empty ())
+				{
+					matched.clear ();
+					set.Match (name, &matched);
+					for (auto m : matched)
+					{
+						// Negative match
+						if (patterns[m][0] == '-')
+							return false;
+						else
+							match = true;
+					}
+				}
+				return match;
 			};
 			openidmask::Query query (&instance->Mask, match);
 
@@ -403,7 +437,6 @@ static OfxStatus describeInContext(OfxImageEffectHandle effect, OfxPropertySetHa
 	gPropHost->propSetString(paramProps, kOfxParamPropHint, 0, "Show the image with false colors");
 	gPropHost->propSetString(paramProps, kOfxParamPropScriptName, 0, "colors");
 	gPropHost->propSetString(paramProps, kOfxPropLabel, 0, "Colors");
-	gPropHost->propSetString(paramProps, kOfxParamPropStringMode, 0, kOfxParamStringIsMultiLine);
 
 	return kOfxStatOK;
 }
