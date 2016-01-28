@@ -96,7 +96,7 @@ int main(int argc, char **argv)
 			}
 		}
 	}
-	catch (exception &e)
+	catch (runtime_error &e)
 	{
 		cout << e.what () << endl;
 		remove (filename);

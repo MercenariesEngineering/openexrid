@@ -124,7 +124,7 @@ OfxStatus getSpatialRoD(OfxImageEffectHandle effect, OfxPropertySetHandle inArgs
 		const double res[] = {(double)xMin, (double)yMin, (double)(xMin+w), (double)(yMin+h)};
 		gPropHost->propSetDoubleN(outArgs, kOfxImageEffectPropRegionOfDefinition, 4, res);
 	}
-	catch (std::exception &)
+	catch (std::runtime_error &)
 	{
 		status = kOfxStatFailed;
 	}
@@ -338,10 +338,10 @@ static OfxStatus render(OfxImageEffectHandle effect,
 			re2::RE2::Set set (options, anchor);
 			for (const auto &pattern : patterns)
 				if (set.Add (removeNeg (pattern), NULL) < 0)
-					throw std::exception ("Bad regular expression");
+					throw std::runtime_error ("Bad regular expression");
 
 			if (!patterns.empty () && !set.Compile ())
-					throw std::exception ("Bad regular expression");
+					throw std::runtime_error ("Bad regular expression");
 			std::vector<int> matched;
 
 			auto match = [&set,&patterns,&matched] (const char *name)
@@ -368,7 +368,7 @@ static OfxStatus render(OfxImageEffectHandle effect,
 			Processor fred (effect, renderScale, dst, dstRect, dstRowBytes, renderWindow, query, colors != 0);
 			fred.process();
 		}
-		catch (std::exception &)
+		catch (std::runtime_error &)
 		{
 			status = kOfxStatFailed;
 		}
@@ -499,7 +499,7 @@ static OfxStatus pluginMain(const char *action,  const void *handle, OfxProperty
 		//std::cout << "OFX Plugin Memory error." << std::endl;
 		return kOfxStatErrMemory;
 	}
-	catch ( const std::exception &)
+	catch ( const std::runtime_error &)
 	{
 		// standard exceptions
 		//std::cout << "OFX Plugin error: " << e.what() << std::endl;

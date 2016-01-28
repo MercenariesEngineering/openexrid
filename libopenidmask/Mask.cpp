@@ -51,14 +51,14 @@ void Mask::read (const char *filename)
 	// Check the version
 	const Imf::IntAttribute *version = header.findTypedAttribute<Imf::IntAttribute> ("OIMVersion");
 	if (!version)
-		throw exception ("The OIMVersion attribute is missing");
+		throw runtime_error ("The OIMVersion attribute is missing");
 	if (version->value () > (int)_Version)
-		throw exception ("The file has been created by an unknown version of the library");
+		throw runtime_error ("The file has been created by an unknown version of the library");
 
 	// Get the name attribute
 	const Imf::StringAttribute *names = header.findTypedAttribute<Imf::StringAttribute> ("OIMNames");
 	if (!names)
-		throw exception ("The OIMNames attribute is missing");
+		throw runtime_error ("The OIMNames attribute is missing");
 	
 	// Copy the names
 	_Names = names->value ();
