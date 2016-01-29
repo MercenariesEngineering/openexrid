@@ -42,6 +42,7 @@ OfxMultiThreadSuiteV1	*gThreadHost = NULL;
 OfxInteractSuiteV1		*gInteractHost = NULL;
 OfxMemorySuiteV1		*gMemoryHost = NULL;
 OfxMessageSuiteV1		*gMessageSuite = NULL;
+bool					gIsNuke = true;
 
 // Remove the - sign
 const char *removeNeg (const string &s)
@@ -82,6 +83,11 @@ static OfxStatus createInstance(OfxImageEffectHandle effect)
 
 	// set my private instance data
 	gPropHost->propSetPointer(effectProps, kOfxPropInstanceData, 0, (void *) instance);
+
+	// get the host name
+	char *returnedHostName;
+	gPropHost->propGetString(gHost->host, kOfxPropName, 0, &returnedHostName);
+	gIsNuke = strstr (".nuke", returnedHostName) != 0;
 
 	return kOfxStatOK;
 }
@@ -240,7 +246,7 @@ void Processor::doProcessing(OfxRectI procWindow)
 			// False colors ?
 			if (Colors)
 			{
-				dstPix->r = dstPix->g = dstPix->b = 0;
+				dstPix->r = dstPix->g = dstPix->b = dstPix->a = 0;
 				const int n = Query.TheMask->getSampleN (_x, _y);
 				for (int s = 0; s < n; ++s)
 				{
@@ -255,10 +261,10 @@ void Processor::doProcessing(OfxRectI procWindow)
 			else
 			{
 				const float c = Query.getCoverage (_x, _y);
-				dstPix->r += c;
-				dstPix->g += c;
-				dstPix->b += c;
-				dstPix->a += c;
+				dstPix->r = c;
+				dstPix->g = c;
+				dstPix->b = c;
+				dstPix->a = c;
 			}
 			dstPix++;
 		}
