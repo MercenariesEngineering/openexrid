@@ -105,11 +105,11 @@ void Mask::read (const char *filename)
 
 	// For each pixel of a single line, the pointer on the id values
 	vector<uint32_t*> id (_Width);
-	frameBuffer.insert ("OIMID", DeepSlice (UINT, (char *)&id[0], sizeof (uint32_t*), 0, sizeof (Sample)));
+	frameBuffer.insert ("OIMID", DeepSlice (UINT, (char *)&id[0], sizeof (uint32_t*), 0, sizeof (uint32_t)));
 
 	// For each pixel of a single line, the pointer on the coverage values
-	vector<float*> coverage (_Width);
-	frameBuffer.insert ("OIMA", DeepSlice (FLOAT, (char *)&coverage[0], sizeof (float*), 0, sizeof (Sample)));
+	vector<half*> coverage (_Width);
+	frameBuffer.insert ("OIMA", DeepSlice (HALF, (char *)&coverage[0], sizeof (half*), 0, sizeof (half)));
 
 	file.setFrameBuffer(frameBuffer);
 
@@ -128,8 +128,10 @@ void Mask::read (const char *filename)
 	}
 
 	// Resize the samples
-	_Samples.clear ();
-	_Samples.resize (index, {0,0});
+	_Ids.clear ();
+	_Ids.resize (index, 0);
+	_Coverage.clear ();
+	_Coverage.resize (index, 0.f);
 
 	// For each line
 	int i = 0;
@@ -142,8 +144,8 @@ void Mask::read (const char *filename)
 			const uint32_t count = _PixelsIndexes[i+1]-_PixelsIndexes[i];
 
 			// Avoid invalide indexes
-			id[x] = count ? &_Samples[_PixelsIndexes[i]].Id : NULL;
-			coverage[x] = count ? &_Samples[_PixelsIndexes[i]].Coverage : NULL;
+			id[x] = count ? &_Ids[_PixelsIndexes[i]] : NULL;
+			coverage[x] = count ? &_Coverage[_PixelsIndexes[i]] : NULL;
 		}
 		file.readPixels (y);
 	}
@@ -197,9 +199,16 @@ Mask::Mask (const Builder &builder, const std::vector<std::string> &names) : _Wi
 	_PixelsIndexes.push_back ((uint32_t)indexN);
 
 	// Concatenate the samples
-	_Samples.reserve (indexN);
+	_Ids.reserve (indexN);
+	_Coverage.reserve (indexN);
 	for (const auto &samples : builder._Pixels)
-		_Samples.insert (_Samples.end (), samples.begin (), samples.end ());
+	{
+		for (const auto &s : samples)
+		{
+			_Ids.push_back (s.Id);
+			_Coverage.push_back (s.Coverage);
+		}
+	}
 }
 
 // ***************************************************************************
@@ -210,7 +219,7 @@ void Mask::write (const char *filename, Compression compression) const
 	// Right now, the image window is the data window
 	Header header (_Width, _Height);
 	header.channels().insert ("OIMID", Channel (UINT));
-	header.channels().insert ("OIMA", Channel (FLOAT));
+	header.channels().insert ("OIMA", Channel (HALF));
 	header.setType (DEEPSCANLINE);
 	header.compression () = compression;
 
@@ -234,16 +243,16 @@ void Mask::write (const char *filename, Compression compression) const
 						(char *) (&id[0]),
 						sizeof (uint32_t*),
 						0,
-						sizeof (Sample)));
+						sizeof (uint32_t)));
 
 	// A line of coverage
-	vector<const float*> coverage (_Width);
+	vector<const half*> coverage (_Width);
 	frameBuffer.insert ("OIMA",
-						DeepSlice (FLOAT,
+						DeepSlice (HALF,
 						(char *) (&coverage[0]),
-						sizeof (float*),
+						sizeof (half*),
 						0,
-						sizeof (Sample)));
+						sizeof (half)));
 	
 	file.setFrameBuffer(frameBuffer);
 
@@ -255,8 +264,8 @@ void Mask::write (const char *filename, Compression compression) const
 		for (int x = 0; x < _Width; x++, ++i)
 		{
 			sampleCount[x] = _PixelsIndexes[i+1] - _PixelsIndexes[i];
-			id[x] = &_Samples[_PixelsIndexes[i]].Id;
-			coverage[x] = &_Samples[_PixelsIndexes[i]].Coverage;
+			id[x] = &_Ids[_PixelsIndexes[i]];
+			coverage[x] = &_Coverage[_PixelsIndexes[i]];
 		}
 		file.writePixels(1);
 	}

@@ -19,6 +19,7 @@
 #include <vector>
 #include <map>
 #include <ImfCompression.h>
+#include <Half.h>
 
 namespace openidmask
 {
@@ -54,11 +55,11 @@ public:
 	// Returns the pixel n-th sample
 	// This method is thread safe
 	// x and y and samples must be in the valid range
-	inline const Sample &getSample (int x, int y, int sample) const;
+	inline const Sample getSample (int x, int y, int sample) const;
 
 	// Returns the pixel n-th sample
 	// x and y and samples must be in the valid range
-	inline Sample &getSample (int x, int y, int sample);
+	inline Sample getSample (int x, int y, int sample);
 
 	// Returns the sample name
 	// This method is thread safe
@@ -93,8 +94,11 @@ private:
 	// _PixelsIndexes size is _Width*_Height+1.
 	std::vector<uint32_t>	_PixelsIndexes;
 
+	// The pixel id concatenated in a single vector.
+	std::vector<uint32_t>	_Ids;
+
 	// The pixel samples concatenated in a single vector.
-	std::vector<Sample>	_Samples;
+	std::vector<half>	_Coverage;
 
 	// Mask version
 	const uint32_t	_Version = 1;
@@ -111,14 +115,16 @@ inline int Mask::getSampleN (int x, int y) const
 	return _PixelsIndexes[offset+1]-_PixelsIndexes[offset];
 }
 
-inline const Sample &Mask::getSample (int x, int y, int sample) const
+inline const Sample Mask::getSample (int x, int y, int sample) const
 {
-	return _Samples[_PixelsIndexes[x+y*_Width]+sample];
+	const int index = _PixelsIndexes[x+y*_Width]+sample;
+	return {_Ids[index], _Coverage[index]};
 }
 
-inline Sample &Mask::getSample (int x, int y, int sample)
+inline Sample Mask::getSample (int x, int y, int sample)
 {
-	return _Samples[_PixelsIndexes[x+y*_Width]+sample];
+	const int index = _PixelsIndexes[x+y*_Width]+sample;
+	return {_Ids[index], _Coverage[index]};
 }
 
 inline const char *Mask::getSampleName (int x, int y, int sample) const
