@@ -90,9 +90,9 @@ int main(int argc, char **argv)
 				const float weight = 1.f/(float)pixel.size ();
 				float weightSum = 0;
 				for (size_t s = 0; s < pixel.size (); ++s)
-					weightSum += names[pixel[s]] == names[i] ? weight : 0;
+					weightSum += names[pixel[s]] == names[i] ? (half)weight : 0;
 
-				Errors += int(weightSum != coverage);
+				Errors += int((half)weightSum != (half)coverage);
 			}
 		}
 	}

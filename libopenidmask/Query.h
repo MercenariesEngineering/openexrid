@@ -51,10 +51,7 @@ public:
 
 		float coverage = 0;
 		for (uint32_t i = begin; i < end; ++i)
-		{
-			const Sample &f = TheMask->_Samples[i];
-			coverage += _State[f.Id] ? f.Coverage : 0.f;
-		}
+			coverage += _State[TheMask->_Ids[i]] ? TheMask->_Coverage[i] : 0.f;
 
 		return coverage;
 	}
