@@ -271,6 +271,13 @@ void Processor::doProcessing(OfxRectI procWindow)
 	}
 }
 
+static OfxStatus purgeCaches(OfxImageEffectHandle effect)
+{
+	Instance *instance = getInstanceData(effect);
+	instance->LastMaskFilename = "";
+	return kOfxStatOK;
+}
+
 // the process code  that the host sees
 static OfxStatus render(OfxImageEffectHandle effect,
 						OfxPropertySetHandle inArgs,
@@ -499,6 +506,8 @@ static OfxStatus pluginMain(const char *action,  const void *handle, OfxProperty
 			return getSpatialRoD(effect, inArgs, outArgs);
 		else if(strcmp(action, kOfxImageEffectActionGetClipPreferences) == 0)
 			return getClipPreferences(effect, inArgs, outArgs);
+		else if(strcmp(action, kOfxActionPurgeCaches) == 0)
+			return purgeCaches(effect);
 	} 
 	catch (std::bad_alloc)
 	{
