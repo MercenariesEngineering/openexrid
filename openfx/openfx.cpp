@@ -297,9 +297,9 @@ static OfxStatus render(OfxImageEffectHandle effect,
 	// property handles and members of each image
 	// in reality, we would put this in a struct as the C++ support layer does
 	OfxPropertySetHandle outputImg = NULL;
-	int srcRowBytes = 0, dstRowBytes, dstBitDepth;
+	int dstRowBytes, dstBitDepth;
 	bool dstIsAlpha;
-	OfxRectI dstRect, srcRect = {0};
+	OfxRectI dstRect;
 	void *dst;
 
 	try 
@@ -407,9 +407,6 @@ static OfxStatus render(OfxImageEffectHandle effect,
 // Set our clip preferences 
 static OfxStatus getClipPreferences(OfxImageEffectHandle effect, OfxPropertySetHandle /*inArgs*/, OfxPropertySetHandle outArgs)
 {
-	// retrieve any instance data associated with this effect
-	Instance *instance = getInstanceData(effect);
-
 	// Output is pre multiplied
 	gPropHost->propSetString(outArgs, kOfxImageEffectPropPreMultiplication, 0, kOfxImagePreMultiplied);
 

@@ -15,6 +15,7 @@
 
 #pragma once
 #include <vector>
+#include <stdint.h>
 
 namespace openidmask
 {

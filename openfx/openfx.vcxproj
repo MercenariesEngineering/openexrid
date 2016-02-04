@@ -68,7 +68,7 @@
     <_ProjectFileVersion>14.0.23107.0</_ProjectFileVersion>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <OutDir>$(SolutionDir)$(Configuration)\</OutDir>
+    <OutDir>$(ProjectDir)$(Platform)\$(Configuration)\</OutDir>
     <IntDir>$(Configuration)\</IntDir>
     <LinkIncremental>true</LinkIncremental>
     <TargetName>openidmask</TargetName>
@@ -78,9 +78,10 @@
     <LinkIncremental>true</LinkIncremental>
     <TargetName>openidmask</TargetName>
     <TargetExt>.ofx</TargetExt>
+    <OutDir>$(ProjectDir)$(Platform)\$(Configuration)\</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-    <OutDir>$(SolutionDir)$(Configuration)\</OutDir>
+    <OutDir>$(ProjectDir)$(Platform)\$(Configuration)\</OutDir>
     <IntDir>$(Configuration)\</IntDir>
     <LinkIncremental>false</LinkIncremental>
     <TargetName>openidmask</TargetName>
@@ -90,6 +91,7 @@
     <LinkIncremental>false</LinkIncremental>
     <TargetName>openidmask</TargetName>
     <TargetExt>.ofx</TargetExt>
+    <OutDir>$(ProjectDir)$(Platform)\$(Configuration)\</OutDir>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -197,12 +199,12 @@ copy /Y "$(TargetPath)" /B "$(HOMEPATH)\.nuke\openidmask.ofx.bundle\Contents\Win
     <ClCompile Include="openfx.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\libopenidmask\libopenidmask.vcxproj">
-      <Project>{1c804a06-a8c8-4a6c-b3bf-cffd3c0c2603}</Project>
-    </ProjectReference>
+    <ClInclude Include="instance.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="instance.h" />
+    <ProjectReference Include="..\openidmask\openidmask.vcxproj">
+      <Project>{1c804a06-a8c8-4a6c-b3bf-cffd3c0c2603}</Project>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

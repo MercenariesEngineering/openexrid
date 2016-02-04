@@ -14,6 +14,7 @@
 */
 
 #include "Builder.h"
+#include <algorithm>
 
 using namespace openidmask;
 using namespace std;

@@ -1,0 +1,13 @@
+***************************
+* Compilation under linux *
+***************************
+
+1) Install the following libraries :
+	OpenEXR 2.x
+	re2
+	OFX
+
+2) Edit the makefile.conf file and set the correct location of those libraries
+	or define the different variables in the environment.
+
+3) make install

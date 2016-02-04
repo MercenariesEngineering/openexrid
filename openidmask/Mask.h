@@ -19,7 +19,7 @@
 #include <vector>
 #include <map>
 #include <ImfCompression.h>
-#include <Half.h>
+#include <half.h>
 
 namespace openidmask
 {

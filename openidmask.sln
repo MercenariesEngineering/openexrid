@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 14
 VisualStudioVersion = 14.0.23107.0
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libopenidmask", "libopenidmask\libopenidmask.vcxproj", "{1C804A06-A8C8-4A6C-B3BF-CFFD3C0C2603}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "openidmask", "openidmask\openidmask.vcxproj", "{1C804A06-A8C8-4A6C-B3BF-CFFD3C0C2603}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "test", "test\test.vcxproj", "{F2315ED9-ECC6-4866-B2B0-53D4FF6E042C}"
 	ProjectSection(ProjectDependencies) = postProject

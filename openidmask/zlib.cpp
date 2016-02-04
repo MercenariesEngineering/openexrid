@@ -16,6 +16,8 @@
 #include <string>
 #include <zlib.h>
 #include <sstream>
+#include <stdexcept>
+#include <memory.h>
 
 // ***************************************************************************
 

@@ -1,9 +1,9 @@
 #include <vector>
 #include <iostream>
 #include <string>
-#include "../libopenidmask/Builder.h"
-#include "../libopenidmask/Mask.h"
-#include "../libopenidmask/Query.h"
+#include "../openidmask/Builder.h"
+#include "../openidmask/Mask.h"
+#include "../openidmask/Query.h"
 
 using namespace std;
 using namespace openidmask;
@@ -90,7 +90,7 @@ int main(int argc, char **argv)
 				const float weight = 1.f/(float)pixel.size ();
 				float weightSum = 0;
 				for (size_t s = 0; s < pixel.size (); ++s)
-					weightSum += names[pixel[s]] == names[i] ? (half)weight : 0;
+					weightSum += names[pixel[s]] == names[i] ? (half)weight : (half)0;
 
 				Errors += int((half)weightSum != (half)coverage);
 			}

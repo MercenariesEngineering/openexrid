@@ -24,7 +24,7 @@
 #undef min
 #undef max
 #endif // WIN32
-#include <gl/GL.h>
+#include <GL/gl.h>
 #include "ofxUtilities.h"
 #include "instance.h"
 
@@ -216,7 +216,6 @@ static OfxStatus interactDraw(OfxImageEffectHandle  effect, OfxInteractHandle in
 static OfxStatus interactPenMotion(OfxImageEffectHandle effect, OfxInteractHandle interactInstance, OfxPropertySetHandle inArgs)
 {
 	// get my data handle
-	MyInteractData *data = getInteractData(interactInstance);
 	return kOfxStatOK;
 }
 

@@ -51,7 +51,7 @@ public:
 
 		float coverage = 0;
 		for (uint32_t i = begin; i < end; ++i)
-			coverage += _State[TheMask->_Ids[i]] ? TheMask->_Coverage[i] : 0.f;
+			coverage += _State[TheMask->_Ids[i]] ? (float)TheMask->_Coverage[i] : 0.f;
 
 		return coverage;
 	}
