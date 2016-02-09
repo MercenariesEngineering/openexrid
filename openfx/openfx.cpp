@@ -346,6 +346,12 @@ static OfxStatus render(OfxImageEffectHandle effect,
 				instance->LastMaskFilename = filename;
 			}
 
+			// Check the size
+			std::pair<int,int> size = instance->Mask.getSize ();
+			if (size.first < renderWindow.x2 || renderWindow.x1 < 0 ||
+				size.second < renderWindow.y2 || renderWindow.y1 < 0)
+				return kOfxStatFailed;
+
 			// Initialize re2
 			re2::RE2::Options			options;
 			re2::RE2::Anchor			anchor = re2::RE2::UNANCHORED;
