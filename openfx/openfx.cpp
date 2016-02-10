@@ -22,6 +22,11 @@
 #include "instance.h"
 #include "ofxUtilities.h"
 
+extern OfxStatus onInstanceChanged(OfxImageEffectHandle effect, OfxPropertySetHandle inArgs);
+extern std::string computeFinalName (OfxPropertySetHandle inArgs, Instance *instance, bool &black);
+extern bool isFileAnimated (OfxPropertySetHandle inArgs, Instance *instance);
+
+
 using namespace Imf;
 using namespace Imath;
 
@@ -74,12 +79,20 @@ static OfxStatus createInstance(OfxImageEffectHandle effect)
 	Instance *instance = new Instance;
 
 	// cache away param handles
-	gParamHost->paramGetHandle(paramSet, "file", &instance->fileParam, 0);
-	gParamHost->paramGetHandle(paramSet, "pattern", &instance->patternParam, 0);
-	gParamHost->paramGetHandle(paramSet, "colors", &instance->colorsParam, 0);
+	gParamHost->paramGetHandle(paramSet, "file", &instance->File, 0);
+
+	gParamHost->paramGetHandle(paramSet, "firstFrame", &instance->FirstFrame, 0);
+	gParamHost->paramGetHandle(paramSet, "lastFrame", &instance->LastFrame, 0);
+	gParamHost->paramGetHandle(paramSet, "before", &instance->Before, 0);
+	gParamHost->paramGetHandle(paramSet, "after", &instance->After, 0);
+	gParamHost->paramGetHandle(paramSet, "originalStart", &instance->OriginalStart, 0);
+	gParamHost->paramGetHandle(paramSet, "missingFrames", &instance->MissingFrames, 0);
+
+	gParamHost->paramGetHandle(paramSet, "pattern", &instance->Pattern, 0);
+	gParamHost->paramGetHandle(paramSet, "colors", &instance->Colors, 0);
 
 	// cache away clip handles
-	gEffectHost->clipGetHandle(effect, kOfxImageEffectOutputClipName, &instance->outputClip, 0);
+	gEffectHost->clipGetHandle(effect, kOfxImageEffectOutputClipName, &instance->OutputClip, 0);
 
 	// set my private instance data
 	gPropHost->propSetPointer(effectProps, kOfxPropInstanceData, 0, (void *) instance);
@@ -113,12 +126,12 @@ OfxStatus getSpatialRoD(OfxImageEffectHandle effect, OfxPropertySetHandle inArgs
 	Instance *instance = getInstanceData(effect);
 
 	// Read the mas now
-	const char *filename;
-	gParamHost->paramGetValue(instance->fileParam, &filename);
+	bool black;
+	const std::string finalName = computeFinalName (inArgs, instance, black);
 
 	try 
 	{
-		DeepScanLineInputFile file (filename);
+		DeepScanLineInputFile file (finalName.c_str ());
 		const Header& header = file.header();
 		const Box2i displayWindow = header.displayWindow();
 		const Box2i dataWindow = header.dataWindow();
@@ -155,7 +168,7 @@ class Processor
 {
 public :
 	Processor(OfxImageEffectHandle eff, OfxPointD rs, void *dst, 
-		OfxRectI dRect, int dBytesPerLine, OfxRectI  win, openidmask::Query &query, bool colors)
+		OfxRectI dRect, int dBytesPerLine, OfxRectI  win, openidmask::Query &query, bool colors, bool black)
 		: effect(eff)
 		, renderScale(rs)
 		, dstV(dst)
@@ -164,6 +177,7 @@ public :
 		, dstBytesPerLine(dBytesPerLine)
 		, Query (query)
 		, Colors (colors)
+		, Black (black)
 	{}
 
 	static void multiThreadProcessing(unsigned int threadId, unsigned int nThreads, void *arg);
@@ -178,7 +192,7 @@ protected :
 	OfxRectI  window;
 	int dstBytesPerLine;
 	openidmask::Query &Query;
-	bool	Colors;
+	bool	Colors, Black;
 };
 
 // function call once for each thread by the host
@@ -244,7 +258,11 @@ void Processor::doProcessing(OfxRectI procWindow)
 			const int _x = (int)((double)x/renderScale.x);
 
 			// False colors ?
-			if (Colors)
+			if (Black)
+			{
+				dstPix->r = dstPix->g = dstPix->b = dstPix->a = 0;
+			}
+			else if (Colors)
 			{
 				dstPix->r = dstPix->g = dstPix->b = dstPix->a = 0;
 				const int n = Query.TheMask->getSampleN (_x, _y);
@@ -304,19 +322,19 @@ static OfxStatus render(OfxImageEffectHandle effect,
 
 	try 
 	{
-		outputImg = ofxuGetImage(instance->outputClip, time, dstRowBytes, dstBitDepth, dstIsAlpha, dstRect, dst);
+		outputImg = ofxuGetImage(instance->OutputClip, time, dstRowBytes, dstBitDepth, dstIsAlpha, dstRect, dst);
 		if(outputImg == NULL)
 			throw OfxuNoImageException();
 
 		// get the render scale
 		OfxPointD renderScale;
 		gPropHost->propGetDoubleN(inArgs, kOfxImageEffectPropRenderScale, 2, &renderScale.x);
-		const char *filename;
-		gParamHost->paramGetValue(instance->fileParam, &filename);
+		bool black;
+		const std::string finalName = computeFinalName (inArgs, instance, black);
 		const char *pattern;
-		gParamHost->paramGetValue(instance->patternParam, &pattern);
+		gParamHost->paramGetValue(instance->Pattern, &pattern);
 		int colors;
-		gParamHost->paramGetValue(instance->colorsParam, &colors);
+		gParamHost->paramGetValue(instance->Colors, &colors);
 
 		// Split the string in strings
 		std::vector<std::string> patterns;
@@ -340,10 +358,12 @@ static OfxStatus render(OfxImageEffectHandle effect,
 
 		try
 		{
-			if (instance->LastMaskFilename != filename)
+			// Same file ?
+			if (instance->LastMaskFilename != finalName)
 			{
-				instance->Mask.read (filename);
-				instance->LastMaskFilename = filename;
+				// Already in cache
+				instance->Mask.read (finalName.c_str());
+				instance->LastMaskFilename = finalName;
 			}
 
 			// Check the size
@@ -385,7 +405,7 @@ static OfxStatus render(OfxImageEffectHandle effect,
 			openidmask::Query query (&instance->Mask, match);
 
 			// do the rendering
-			Processor fred (effect, renderScale, dst, dstRect, dstRowBytes, renderWindow, query, colors != 0);
+			Processor fred (effect, renderScale, dst, dstRect, dstRowBytes, renderWindow, query, colors != 0, black);
 			fred.process();
 		}
 		catch (const std::exception &e)
@@ -411,10 +431,13 @@ static OfxStatus render(OfxImageEffectHandle effect,
 }
 
 // Set our clip preferences 
-static OfxStatus getClipPreferences(OfxImageEffectHandle effect, OfxPropertySetHandle /*inArgs*/, OfxPropertySetHandle outArgs)
+static OfxStatus getClipPreferences(OfxImageEffectHandle effect, OfxPropertySetHandle inArgs, OfxPropertySetHandle outArgs)
 {
+	Instance *instance = getInstanceData(effect);
+
 	// Output is pre multiplied
 	gPropHost->propSetString(outArgs, kOfxImageEffectPropPreMultiplication, 0, kOfxImagePreMultiplied);
+	gPropHost->propSetInt(outArgs, kOfxImageEffectFrameVarying, 0, isFileAnimated (inArgs, instance) ? 1 : 0);
 
 	return kOfxStatOK;
 }
@@ -440,20 +463,65 @@ static OfxStatus describeInContext(OfxImageEffectHandle effect, OfxPropertySetHa
 	gParamHost->paramDefine(paramSet, kOfxParamTypeString, "file", &paramProps);
 	gPropHost->propSetString(paramProps, kOfxParamPropHint, 0, "The openidmask file");
 	gPropHost->propSetString(paramProps, kOfxParamPropScriptName, 0, "file");
-	gPropHost->propSetString(paramProps, kOfxPropLabel, 0, "File");
+	gPropHost->propSetString(paramProps, kOfxPropLabel, 0, "file");
+	gPropHost->propSetInt(paramProps, kOfxParamPropAnimates, 0, 0);
 	gPropHost->propSetString(paramProps, kOfxParamPropStringMode, 0, kOfxParamStringIsFilePath);
+
+	gParamHost->paramDefine(paramSet, kOfxParamTypeInteger, "firstFrame", &paramProps);
+	gPropHost->propSetString(paramProps, kOfxParamPropHint, 0, "The frame range where this sequence will be displayed");
+	gPropHost->propSetString(paramProps, kOfxParamPropScriptName, 0, "firstFrame");
+	gPropHost->propSetString(paramProps, kOfxPropLabel, 0, "first frame");
+	gPropHost->propSetInt(paramProps, kOfxParamPropAnimates, 0, 0);
+	gPropHost->propSetInt(paramProps, "OfxParamPropLayoutHint", 0, 2);
+
+	gParamHost->paramDefine(paramSet, kOfxParamTypeChoice, "before", &paramProps);
+	gPropHost->propSetString(paramProps, kOfxParamPropHint, 0, "Behaviour before the frame range");
+	gPropHost->propSetString(paramProps, kOfxParamPropScriptName, 0, "before");
+	gPropHost->propSetString(paramProps, kOfxPropLabel, 0, "before");
+	gPropHost->propSetInt(paramProps, kOfxParamPropAnimates, 0, 0);
+	gPropHost->propSetString(paramProps, kOfxParamPropChoiceOption, 0, "hold");
+	gPropHost->propSetString(paramProps, kOfxParamPropChoiceOption, 1, "loop");
+	gPropHost->propSetString(paramProps, kOfxParamPropChoiceOption, 2, "bounce");
+	gPropHost->propSetString(paramProps, kOfxParamPropChoiceOption, 3, "black");
+	gPropHost->propSetString(paramProps, kOfxParamPropChoiceOption, 4, "error");	
+
+	gParamHost->paramDefine(paramSet, kOfxParamTypeInteger, "lastFrame", &paramProps);
+	gPropHost->propSetString(paramProps, kOfxParamPropHint, 0, "The frame range where this sequence will be displayed");
+	gPropHost->propSetString(paramProps, kOfxParamPropScriptName, 0, "lastFrame");
+	gPropHost->propSetString(paramProps, kOfxPropLabel, 0, "last frame");
+	gPropHost->propSetInt(paramProps, kOfxParamPropAnimates, 0, 0);
+	gPropHost->propSetInt(paramProps, "OfxParamPropLayoutHint", 0, 2);
+
+	gParamHost->paramDefine(paramSet, kOfxParamTypeChoice, "after", &paramProps);
+	gPropHost->propSetString(paramProps, kOfxParamPropHint, 0, "Behaviour after the frame range");
+	gPropHost->propSetString(paramProps, kOfxParamPropScriptName, 0, "after");
+	gPropHost->propSetString(paramProps, kOfxPropLabel, 0, "after");
+	gPropHost->propSetInt(paramProps, kOfxParamPropAnimates, 0, 0);
+	gPropHost->propSetString(paramProps, kOfxParamPropChoiceOption, 0, "hold");
+	gPropHost->propSetString(paramProps, kOfxParamPropChoiceOption, 1, "loop");
+	gPropHost->propSetString(paramProps, kOfxParamPropChoiceOption, 2, "bounce");
+	gPropHost->propSetString(paramProps, kOfxParamPropChoiceOption, 3, "black");
+	gPropHost->propSetString(paramProps, kOfxParamPropChoiceOption, 4, "error");	
+
+	gParamHost->paramDefine(paramSet, kOfxParamTypeInteger, "originalStart", &paramProps);
+	gPropHost->propSetString(paramProps, kOfxParamPropHint, 0, "The original sequence start frame");
+	gPropHost->propSetString(paramProps, kOfxParamPropScriptName, 0, "originalStart");
+	gPropHost->propSetString(paramProps, kOfxPropLabel, 0, "original start");
+	gPropHost->propSetInt(paramProps, kOfxParamPropAnimates, 0, 0);
 
 	// The mask pattern
 	gParamHost->paramDefine(paramSet, kOfxParamTypeString, "pattern", &paramProps);
 	gPropHost->propSetString(paramProps, kOfxParamPropHint, 0, "The object selection pattern");
 	gPropHost->propSetString(paramProps, kOfxParamPropScriptName, 0, "pattern");
 	gPropHost->propSetString(paramProps, kOfxPropLabel, 0, "Pattern");
+	gPropHost->propSetInt(paramProps, kOfxParamPropAnimates, 0, 0);
 	gPropHost->propSetString(paramProps, kOfxParamPropStringMode, 0, kOfxParamStringIsMultiLine);
 
-	// The mask pattern
+	// The false color button
 	gParamHost->paramDefine(paramSet, kOfxParamTypeBoolean, "colors", &paramProps);
 	gPropHost->propSetString(paramProps, kOfxParamPropHint, 0, "Show the image with false colors");
 	gPropHost->propSetString(paramProps, kOfxParamPropScriptName, 0, "colors");
+	gPropHost->propSetInt(paramProps, kOfxParamPropAnimates, 0, 0);
 	gPropHost->propSetString(paramProps, kOfxPropLabel, 0, "Colors");
 
 	return kOfxStatOK;
@@ -485,6 +553,8 @@ static OfxStatus describe(OfxImageEffectHandle effect)
 	extern OfxStatus overlayMain(const char *action,  const void *handle, OfxPropertySetHandle inArgs, OfxPropertySetHandle /*outArgs*/);
 	gPropHost->propSetPointer(effectProps, kOfxImageEffectPluginPropOverlayInteractV1, 0,  (void *) overlayMain);
 
+	gPropHost->propSetString(effectProps, kOfxImageEffectPropClipPreferencesSlaveParam, 0, "file");
+
 	return kOfxStatOK;
 }
 
@@ -511,6 +581,8 @@ static OfxStatus pluginMain(const char *action,  const void *handle, OfxProperty
 			return getClipPreferences(effect, inArgs, outArgs);
 		else if(strcmp(action, kOfxActionPurgeCaches) == 0)
 			return purgeCaches(effect);
+		else if(strcmp(action,kOfxActionInstanceChanged) == 0)
+			return onInstanceChanged(effect, inArgs);
 	} 
 	catch (std::bad_alloc)
 	{

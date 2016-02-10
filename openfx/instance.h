@@ -27,10 +27,16 @@ public:
 	std::string		LastMaskFilename;
 
 	// handles to the clips we deal with
-	OfxImageClipHandle outputClip;
+	OfxImageClipHandle OutputClip;
 
 	// handles to a our parameters
-	OfxParamHandle fileParam;
-	OfxParamHandle patternParam;
-	OfxParamHandle colorsParam;
+	OfxParamHandle File;
+	OfxParamHandle FirstFrame;
+	OfxParamHandle LastFrame;
+	OfxParamHandle Before;
+	OfxParamHandle After;
+	OfxParamHandle OriginalStart;
+	OfxParamHandle MissingFrames;
+	OfxParamHandle Pattern;
+	OfxParamHandle Colors;
 };
