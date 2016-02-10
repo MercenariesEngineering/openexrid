@@ -90,6 +90,7 @@ static OfxStatus createInstance(OfxImageEffectHandle effect)
 
 	gParamHost->paramGetHandle(paramSet, "pattern", &instance->Pattern, 0);
 	gParamHost->paramGetHandle(paramSet, "colors", &instance->Colors, 0);
+	gParamHost->paramGetHandle(paramSet, "invert", &instance->Invert, 0);
 
 	// cache away clip handles
 	gEffectHost->clipGetHandle(effect, kOfxImageEffectOutputClipName, &instance->OutputClip, 0);
@@ -243,6 +244,12 @@ inline OfxRGBColourF haltonColors (int id)
 void Processor::doProcessing(OfxRectI procWindow)
 {
 	OfxRGBAColourF *dst = (OfxRGBAColourF*)dstV;
+	openidmask::Sample sample;
+	const int R = Query.TheMask->findSlice ("R");
+	const int G = Query.TheMask->findSlice ("G");
+	const int B = Query.TheMask->findSlice ("B");
+	const int A = Query.TheMask->findSlice ("A");
+	std::vector<float> data;
 
 	for(int y = procWindow.y1; y < procWindow.y2; y++) 
 	{
@@ -256,33 +263,38 @@ void Processor::doProcessing(OfxRectI procWindow)
 		for(int x = procWindow.x1; x < procWindow.x2; x++)
 		{
 			const int _x = (int)((double)x/renderScale.x);
-
-			// False colors ?
+			dstPix->r = dstPix->g = dstPix->b = dstPix->a = 0;
 			if (Black)
+				continue;
+
+			if (Colors)
 			{
-				dstPix->r = dstPix->g = dstPix->b = dstPix->a = 0;
-			}
-			else if (Colors)
-			{
-				dstPix->r = dstPix->g = dstPix->b = dstPix->a = 0;
+				// False colors
 				const int n = Query.TheMask->getSampleN (_x, _y);
 				for (int s = 0; s < n; ++s)
 				{
-					const openidmask::Sample &sample = Query.TheMask->getSample (_x, _y, s);
-					const OfxRGBColourF c = Query.isSelected (sample.Id) ? OfxRGBColourF{1,1,1} : haltonColors (sample.Id);
-					dstPix->r += powf (c.r, 1.f/0.3f)*sample.Coverage;
-					dstPix->g += powf (c.g, 1.f/0.3f)*sample.Coverage;
-					dstPix->b += powf (c.b, 1.f/0.3f)*sample.Coverage;
-					dstPix->a += sample.Coverage;
+					Query.TheMask->getSample (_x, _y, s, sample);
+					const float a = A == -1 ? 1.f : sample.Values[A];
+					const OfxRGBColourF h = haltonColors (sample.Id);
+					const bool selected = Query.isSelected (sample.Id);
+					const OfxRGBColourF c = {
+						R == -1 ? 1.f : sample.Values[R], 
+						G == -1 ? 1.f : sample.Values[G],
+						B == -1 ? 1.f : sample.Values[B]};
+					dstPix->r += selected ? c.r : powf (h.r, 1.f/0.3f)*a;
+					dstPix->g += selected ? c.g : powf (h.g, 1.f/0.3f)*a;
+					dstPix->b += selected ? c.b : powf (h.b, 1.f/0.3f)*a;
+					dstPix->a += a;
 				}
 			}
 			else
 			{
-				const float c = Query.getCoverage (_x, _y);
-				dstPix->r = c;
-				dstPix->g = c;
-				dstPix->b = c;
-				dstPix->a = c;
+				Query.getSliceData (_x, _y, data);
+				const float a = A == -1 ? 1.f : data[A];
+				dstPix->r = R == -1 ? a : data[R];
+				dstPix->g = G == -1 ? a : data[G];
+				dstPix->b = B == -1 ? a : data[B];
+				dstPix->a = a;
 			}
 			dstPix++;
 		}
@@ -335,6 +347,9 @@ static OfxStatus render(OfxImageEffectHandle effect,
 		gParamHost->paramGetValue(instance->Pattern, &pattern);
 		int colors;
 		gParamHost->paramGetValue(instance->Colors, &colors);
+		int _invert;
+		gParamHost->paramGetValue(instance->Invert, &_invert);
+		const bool invert = _invert != 0;
 
 		// Split the string in strings
 		std::vector<std::string> patterns;
@@ -384,7 +399,7 @@ static OfxStatus render(OfxImageEffectHandle effect,
 					throw std::runtime_error ("Bad regular expression");
 			std::vector<int> matched;
 
-			auto match = [&set,&patterns,&matched] (const char *name)
+			auto match = [&set,&patterns,&matched,invert] (const char *name)->bool
 			{
 				bool match = false;
 				if (!patterns.empty ())
@@ -395,12 +410,12 @@ static OfxStatus render(OfxImageEffectHandle effect,
 					{
 						// Negative match
 						if (patterns[m][0] == '-')
-							return false;
+							return invert;
 						else
 							match = true;
 					}
 				}
-				return match;
+				return match^invert;
 			};
 			openidmask::Query query (&instance->Mask, match);
 
@@ -472,6 +487,7 @@ static OfxStatus describeInContext(OfxImageEffectHandle effect, OfxPropertySetHa
 	gPropHost->propSetString(paramProps, kOfxParamPropScriptName, 0, "firstFrame");
 	gPropHost->propSetString(paramProps, kOfxPropLabel, 0, "first frame");
 	gPropHost->propSetInt(paramProps, kOfxParamPropAnimates, 0, 0);
+	gPropHost->propSetString(paramProps, kOfxParamPropDoubleType, 0, kOfxParamDoubleTypeAbsoluteTime);
 	gPropHost->propSetInt(paramProps, "OfxParamPropLayoutHint", 0, 2);
 
 	gParamHost->paramDefine(paramSet, kOfxParamTypeChoice, "before", &paramProps);
@@ -490,6 +506,7 @@ static OfxStatus describeInContext(OfxImageEffectHandle effect, OfxPropertySetHa
 	gPropHost->propSetString(paramProps, kOfxParamPropScriptName, 0, "lastFrame");
 	gPropHost->propSetString(paramProps, kOfxPropLabel, 0, "last frame");
 	gPropHost->propSetInt(paramProps, kOfxParamPropAnimates, 0, 0);
+	gPropHost->propSetString(paramProps, kOfxParamPropDoubleType, 0, kOfxParamDoubleTypeAbsoluteTime);
 	gPropHost->propSetInt(paramProps, "OfxParamPropLayoutHint", 0, 2);
 
 	gParamHost->paramDefine(paramSet, kOfxParamTypeChoice, "after", &paramProps);
@@ -507,6 +524,7 @@ static OfxStatus describeInContext(OfxImageEffectHandle effect, OfxPropertySetHa
 	gPropHost->propSetString(paramProps, kOfxParamPropHint, 0, "The original sequence start frame");
 	gPropHost->propSetString(paramProps, kOfxParamPropScriptName, 0, "originalStart");
 	gPropHost->propSetString(paramProps, kOfxPropLabel, 0, "original start");
+	gPropHost->propSetString(paramProps, kOfxParamPropDoubleType, 0, kOfxParamDoubleTypeAbsoluteTime);
 	gPropHost->propSetInt(paramProps, kOfxParamPropAnimates, 0, 0);
 
 	// The mask pattern
@@ -523,6 +541,13 @@ static OfxStatus describeInContext(OfxImageEffectHandle effect, OfxPropertySetHa
 	gPropHost->propSetString(paramProps, kOfxParamPropScriptName, 0, "colors");
 	gPropHost->propSetInt(paramProps, kOfxParamPropAnimates, 0, 0);
 	gPropHost->propSetString(paramProps, kOfxPropLabel, 0, "Colors");
+
+	// The false color button
+	gParamHost->paramDefine(paramSet, kOfxParamTypeBoolean, "invert", &paramProps);
+	gPropHost->propSetString(paramProps, kOfxParamPropHint, 0, "Invert the selection");
+	gPropHost->propSetString(paramProps, kOfxParamPropScriptName, 0, "invert");
+	gPropHost->propSetInt(paramProps, kOfxParamPropAnimates, 0, 0);
+	gPropHost->propSetString(paramProps, kOfxPropLabel, 0, "Invert");
 
 	return kOfxStatOK;
 }

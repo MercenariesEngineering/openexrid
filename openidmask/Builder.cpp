@@ -21,23 +21,15 @@ using namespace std;
 
 //**********************************************************************
 
-Builder::Builder (int width, int height) : _Width (width), 	_Height (height), _Pixels (width*height) {}
+Builder::Builder (int width, int height, const std::vector<std::string> &slices) : _Width (width), 	_Height (height), _Pixels (width*height), _Slices (slices) {}
 
 //**********************************************************************
 
-void Builder::addCoverage (int x, int y, float coverage, uint32_t id)
+void Builder::addCoverage (int x, int y, uint32_t id, const float *sliceValues)
 {
 	// The pixel sample list
-	vector<Sample> &pixel = _Pixels[x+y*_Width];
-
-	// Find a sample for this id
-	vector<Sample>::iterator ite = find (pixel.begin (), pixel.end (), id);
-	if (ite == pixel.end())
-		// No sample yet for this object, add one entry
-		pixel.emplace_back (id, coverage);
-	else
-		// Accumulate the coverage for this object
-		ite->Coverage += coverage;
+	SampleList &sl = _Pixels[x+y*_Width];
+	sl.addCoverage (id, sliceValues, (int)_Slices.size ());
 }
 
 //**********************************************************************

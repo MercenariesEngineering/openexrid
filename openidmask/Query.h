@@ -43,17 +43,23 @@ public:
 
 	// Get the pixel coverage for this query
 	// This method is thread safe
-	inline float getCoverage (int x, int y)
+	inline void getSliceData (int x, int y, std::vector<float> &result)
 	{
+		result.clear ();
 		const size_t index = x+y*TheMask->_Width;
 		const uint32_t begin = TheMask->_PixelsIndexes[index];
 		const uint32_t end = TheMask->_PixelsIndexes[index+1];
 
-		float coverage = 0;
+		result.clear ();
+		result.resize (TheMask->_Slices.size (), 0);
 		for (uint32_t i = begin; i < end; ++i)
-			coverage += _State[TheMask->_Ids[i]] ? (float)TheMask->_Coverage[i] : 0.f;
-
-		return coverage;
+		{
+			if (_State[TheMask->_Ids[i]])
+			{
+				for (size_t s = 0; s < TheMask->_Slices.size (); ++s)
+					result[s] += (float)TheMask->_SlicesData[s][i];
+			}
+		}
 	}
 
 	// Is this Id selected

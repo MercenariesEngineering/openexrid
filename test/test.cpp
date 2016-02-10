@@ -45,7 +45,7 @@ int main(int argc, char **argv)
 		}
 
 		cout << "Fill a mask id map" << endl;
-		Builder builder (Width, Height);
+		Builder builder (Width, Height, {"R","G","B"});
 
 		// Fill the builder
 		for (int y = 0; y < Height; ++y)
@@ -53,8 +53,9 @@ int main(int argc, char **argv)
 		{
 			const vector<int> &pixel = pixelToNames[x+y*Width];
 			const float weight = 1.f/(float)pixel.size ();
+			const float values[3] = {weight, weight*0.75f, weight*0.5f};
 			for (size_t s = 0; s < pixel.size (); ++s)
-				builder.addCoverage (x, y, weight, pixel[s]);
+				builder.addCoverage (x, y, pixel[s], values);
 		}
 
 		{
@@ -71,6 +72,10 @@ int main(int argc, char **argv)
 		Mask mask;
 		mask.read (filename);
 
+		const int R = mask.findSlice ("R");
+		const int G = mask.findSlice ("G");
+		const int B = mask.findSlice ("B");
+
 		// Check the mask
 		cout << "Check the mask" << endl;
 		// Build the mask of every name
@@ -82,17 +87,25 @@ int main(int argc, char **argv)
 			for (int y=0; y<Height; ++y)
 			for (int x=0; x<Width; ++x)
 			{
-				// The coverage from the file
-				const float coverage = query.getCoverage (x, y);
-
 				// Recompute the coverage from the original image
 				const vector<int> &pixel = pixelToNames[x+y*Width];
 				const float weight = 1.f/(float)pixel.size ();
-				float weightSum = 0;
+				const float values[3] = {weight, weight*0.75f, weight*0.5f};
+				float weightSum[3] = {0, 0, 0};
 				for (size_t s = 0; s < pixel.size (); ++s)
-					weightSum += names[pixel[s]] == names[i] ? (half)weight : (half)0;
+				{
+					weightSum[0] += names[pixel[s]] == names[i] ? (half)values[0] : (half)0;
+					weightSum[1] += names[pixel[s]] == names[i] ? (half)values[1] : (half)0;
+					weightSum[2] += names[pixel[s]] == names[i] ? (half)values[2] : (half)0;
+				}
 
-				Errors += int((half)weightSum != (half)coverage);
+				// The coverage from the file
+				std::vector<float> coverage;
+				query.getSliceData (x, y, coverage);
+
+				Errors += int((half)weightSum[0] != (half)coverage[R]);
+				Errors += int((half)weightSum[1] != (half)coverage[G]);
+				Errors += int((half)weightSum[2] != (half)coverage[B]);
 			}
 		}
 	}

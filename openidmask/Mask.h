@@ -15,6 +15,7 @@
 
 #pragma once
 #include "Sample.h"
+#include "Slice.h"
 
 #include <vector>
 #include <map>
@@ -55,11 +56,7 @@ public:
 	// Returns the pixel n-th sample
 	// This method is thread safe
 	// x and y and samples must be in the valid range
-	inline const Sample getSample (int x, int y, int sample) const;
-
-	// Returns the pixel n-th sample
-	// x and y and samples must be in the valid range
-	inline Sample getSample (int x, int y, int sample);
+	inline void getSample (int x, int y, int sample, Sample &result) const;
 
 	// Returns the sample name
 	// This method is thread safe
@@ -77,6 +74,18 @@ public:
 	// This method is thread safe
 	inline const char *getName (uint32_t id) const;
 
+	// Returns the number of slice in this image
+	// This method is thread safe
+	inline int getSliceN () const;
+
+	// Returns the name of the nth slice
+	// This method is thread safe
+	inline const std::string &getSlice (int slice) const;
+
+	// Find a slice by name.
+	// Returns -1 if the slice is not found.
+	// This method is thread safe
+	inline int findSlice (const char *name) const;
 private:
 
 	// The image resolution
@@ -97,8 +106,11 @@ private:
 	// The pixel id concatenated in a single vector.
 	std::vector<uint32_t>	_Ids;
 
+	// The slices available in this mask
+	std::vector<std::string>	_Slices;
+
 	// The pixel samples concatenated in a single vector.
-	std::vector<half>	_Coverage;
+	std::vector<std::vector<half>>	_SlicesData;
 
 	// Mask version
 	const uint32_t	_Version = 1;
@@ -115,22 +127,18 @@ inline int Mask::getSampleN (int x, int y) const
 	return _PixelsIndexes[offset+1]-_PixelsIndexes[offset];
 }
 
-inline const Sample Mask::getSample (int x, int y, int sample) const
+inline void Mask::getSample (int x, int y, int sample, Sample &result) const
 {
 	const int index = _PixelsIndexes[x+y*_Width]+sample;
-	return {_Ids[index], _Coverage[index]};
-}
-
-inline Sample Mask::getSample (int x, int y, int sample)
-{
-	const int index = _PixelsIndexes[x+y*_Width]+sample;
-	return {_Ids[index], _Coverage[index]};
+	result.Id = _Ids[index];
+	result.Values.clear ();
+	for (size_t s = 0; s < _Slices.size (); ++s)
+		result.Values.push_back (_SlicesData[s][index]);
 }
 
 inline const char *Mask::getSampleName (int x, int y, int sample) const
 {
-	const Sample &s = getSample (x, y, sample);
-	return getName (s.Id);
+	return getName (_Ids[_PixelsIndexes[x+y*_Width]+sample]);
 }
 
 inline uint32_t Mask::getIdN () const
@@ -144,6 +152,22 @@ inline const char *Mask::getName (uint32_t id) const
 		return &_Names[_NamesIndexes[id]];
 	else
 		return "";
+}
+
+inline int Mask::getSliceN () const
+{
+	return (int)_Slices.size ();
+}
+
+inline const std::string &Mask::getSlice (int slice) const
+{
+	return _Slices[slice];
+}
+
+inline int Mask::findSlice (const char *name) const
+{
+	auto ite = std::find (_Slices.begin (), _Slices.end (), name);
+	return ite == _Slices.end () ? -1 : (int)(ite-_Slices.begin ());
 }
 
 }

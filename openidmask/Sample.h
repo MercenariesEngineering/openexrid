@@ -16,6 +16,7 @@
 #pragma once
 #include <vector>
 #include <stdint.h>
+#include <half.h>
 
 namespace openidmask
 {
@@ -24,20 +25,12 @@ namespace openidmask
 class Sample
 {
 public:
-	inline Sample (uint32_t id, float coverage) : Id(id), Coverage (coverage) {}
-	
 	// The Id of the string in the strings vector associated with this coverage value.
 	uint32_t	Id;
 	
-	// The coverage in the pixel for this string.
+	// The values in the pixel for this string.
 	// The sum of the coverage values in a pixel shoud be between [0,1].
-	float		Coverage;
-
-	// Compare the Id. Used by vector::find().
-	inline bool operator== (uint32_t id) const
-	{
-		return Id == id;
-	}
+	std::vector<half> Values;
 };
 
 }

@@ -39,4 +39,5 @@ public:
 	OfxParamHandle MissingFrames;
 	OfxParamHandle Pattern;
 	OfxParamHandle Colors;
+	OfxParamHandle Invert;
 };

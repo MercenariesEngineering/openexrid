@@ -279,6 +279,7 @@ static OfxStatus interactPenUp(OfxImageEffectHandle  effect, OfxInteractHandle i
 		const int upY = size.second-(int)penPos[1]-1;
 
 		std::set<std::string> names;
+		openidmask::Sample sample;
 
 		const int maxX = std::min (std::max (upX, data->DownX)+1, size.first);
 		const int maxY = std::min (std::max (upY, data->DownY)+1, size.first);
@@ -286,23 +287,11 @@ static OfxStatus interactPenUp(OfxImageEffectHandle  effect, OfxInteractHandle i
 		for (int x = std::max (std::min (upX, data->DownX), 0); x < maxX; ++x)
 		{
 			// Get the max coverage sample in the pixel
-			float maxCoverage = 0;
-			uint32_t maxId = ~0U;
 			const int sampleN = instance->Mask.getSampleN (x, y);
 			for (int s = 0; s < sampleN; ++s)
 			{
-				const openidmask::Sample &sample = instance->Mask.getSample (x, y, s);
-				if (sample.Coverage > maxCoverage)
-				{
-					maxId = sample.Id;
-					maxCoverage = sample.Coverage;
-				}
-			}
-
-			// Found something ?
-			if (maxId != ~0U)
-			{
-				const char *name = instance->Mask.getName (maxId);
+				instance->Mask.getSample (x, y, s, sample);
+				const char *name = instance->Mask.getName (sample.Id);
 				names.insert (escapeRegExp (name));
 			}
 		}
