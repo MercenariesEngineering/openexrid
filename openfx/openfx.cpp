@@ -487,7 +487,8 @@ static OfxStatus describeInContext(OfxImageEffectHandle effect, OfxPropertySetHa
 	gPropHost->propSetString(paramProps, kOfxParamPropScriptName, 0, "firstFrame");
 	gPropHost->propSetString(paramProps, kOfxPropLabel, 0, "first frame");
 	gPropHost->propSetInt(paramProps, kOfxParamPropAnimates, 0, 0);
-	gPropHost->propSetString(paramProps, kOfxParamPropDoubleType, 0, kOfxParamDoubleTypeAbsoluteTime);
+	gPropHost->propSetInt(paramProps, kOfxParamPropDisplayMin, 0, 0);
+	gPropHost->propSetInt(paramProps, kOfxParamPropDisplayMax, 0, 100);
 	gPropHost->propSetInt(paramProps, "OfxParamPropLayoutHint", 0, 2);
 
 	gParamHost->paramDefine(paramSet, kOfxParamTypeChoice, "before", &paramProps);
@@ -506,7 +507,8 @@ static OfxStatus describeInContext(OfxImageEffectHandle effect, OfxPropertySetHa
 	gPropHost->propSetString(paramProps, kOfxParamPropScriptName, 0, "lastFrame");
 	gPropHost->propSetString(paramProps, kOfxPropLabel, 0, "last frame");
 	gPropHost->propSetInt(paramProps, kOfxParamPropAnimates, 0, 0);
-	gPropHost->propSetString(paramProps, kOfxParamPropDoubleType, 0, kOfxParamDoubleTypeAbsoluteTime);
+	gPropHost->propSetInt(paramProps, kOfxParamPropDisplayMin, 0, 0);
+	gPropHost->propSetInt(paramProps, kOfxParamPropDisplayMax, 0, 100);
 	gPropHost->propSetInt(paramProps, "OfxParamPropLayoutHint", 0, 2);
 
 	gParamHost->paramDefine(paramSet, kOfxParamTypeChoice, "after", &paramProps);
@@ -524,8 +526,9 @@ static OfxStatus describeInContext(OfxImageEffectHandle effect, OfxPropertySetHa
 	gPropHost->propSetString(paramProps, kOfxParamPropHint, 0, "The original sequence start frame");
 	gPropHost->propSetString(paramProps, kOfxParamPropScriptName, 0, "originalStart");
 	gPropHost->propSetString(paramProps, kOfxPropLabel, 0, "original start");
-	gPropHost->propSetString(paramProps, kOfxParamPropDoubleType, 0, kOfxParamDoubleTypeAbsoluteTime);
 	gPropHost->propSetInt(paramProps, kOfxParamPropAnimates, 0, 0);
+	gPropHost->propSetInt(paramProps, kOfxParamPropDisplayMin, 0, 0);
+	gPropHost->propSetInt(paramProps, kOfxParamPropDisplayMax, 0, 100);
 
 	// The mask pattern
 	gParamHost->paramDefine(paramSet, kOfxParamTypeString, "pattern", &paramProps);
