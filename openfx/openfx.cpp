@@ -14,8 +14,8 @@
 */
 
 #include <set>
-#include <openidmask/Mask.h>
-#include <openidmask/Query.h>
+#include <openexrid/Mask.h>
+#include <openexrid/Query.h>
 #include <ImfDeepScanLineInputFile.h>
 #include <re2/set.h>
 #include <assert.h>
@@ -169,7 +169,7 @@ class Processor
 {
 public :
 	Processor(OfxImageEffectHandle eff, OfxPointD rs, void *dst, 
-		OfxRectI dRect, int dBytesPerLine, OfxRectI  win, openidmask::Query &query, bool colors, bool black)
+		OfxRectI dRect, int dBytesPerLine, OfxRectI  win, openexrid::Query &query, bool colors, bool black)
 		: effect(eff)
 		, renderScale(rs)
 		, dstV(dst)
@@ -192,7 +192,7 @@ protected :
 	OfxRectI dstRect;
 	OfxRectI  window;
 	int dstBytesPerLine;
-	openidmask::Query &Query;
+	openexrid::Query &Query;
 	bool	Colors, Black;
 };
 
@@ -244,7 +244,7 @@ inline OfxRGBColourF haltonColors (int id)
 void Processor::doProcessing(OfxRectI procWindow)
 {
 	OfxRGBAColourF *dst = (OfxRGBAColourF*)dstV;
-	openidmask::Sample sample;
+	openexrid::Sample sample;
 	const int R = Query.TheMask->findSlice ("R");
 	const int G = Query.TheMask->findSlice ("G");
 	const int B = Query.TheMask->findSlice ("B");
@@ -417,7 +417,7 @@ static OfxStatus render(OfxImageEffectHandle effect,
 				}
 				return match^invert;
 			};
-			openidmask::Query query (&instance->Mask, match);
+			openexrid::Query query (&instance->Mask, match);
 
 			// do the rendering
 			Processor fred (effect, renderScale, dst, dstRect, dstRowBytes, renderWindow, query, colors != 0, black);
@@ -476,7 +476,7 @@ static OfxStatus describeInContext(OfxImageEffectHandle effect, OfxPropertySetHa
 
 	// The input filename
 	gParamHost->paramDefine(paramSet, kOfxParamTypeString, "file", &paramProps);
-	gPropHost->propSetString(paramProps, kOfxParamPropHint, 0, "The openidmask file");
+	gPropHost->propSetString(paramProps, kOfxParamPropHint, 0, "The openexrid file");
 	gPropHost->propSetString(paramProps, kOfxParamPropScriptName, 0, "file");
 	gPropHost->propSetString(paramProps, kOfxPropLabel, 0, "file");
 	gPropHost->propSetInt(paramProps, kOfxParamPropAnimates, 0, 0);
@@ -571,7 +571,7 @@ static OfxStatus describe(OfxImageEffectHandle effect)
 	gPropHost->propSetString(effectProps, kOfxImageEffectPropSupportedPixelDepths, 2, kOfxBitDepthFloat);
 
 	// set some labels and the group it belongs to
-	gPropHost->propSetString(effectProps, kOfxPropLabel, 0, "openidmask");
+	gPropHost->propSetString(effectProps, kOfxPropLabel, 0, "openexrid");
 	gPropHost->propSetString(effectProps, kOfxImageEffectPluginPropGrouping, 0, "Image");
 
 	// define the contexts we can be used in
@@ -649,7 +649,7 @@ static OfxPlugin basicPlugin =
 {
 	kOfxImageEffectPluginApi,
 	1,
-	"fr.mercenariesengineering.openidmask",
+	"fr.mercenariesengineering.openexrid",
 	1,
 	0,
 	setHostFunc,

@@ -279,7 +279,7 @@ static OfxStatus interactPenUp(OfxImageEffectHandle  effect, OfxInteractHandle i
 		const int upY = size.second-(int)penPos[1]-1;
 
 		std::set<std::string> names;
-		openidmask::Sample sample;
+		openexrid::Sample sample;
 
 		const int maxX = std::min (std::max (upX, data->DownX)+1, size.first);
 		const int maxY = std::min (std::max (upY, data->DownY)+1, size.first);

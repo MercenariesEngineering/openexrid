@@ -1,7 +1,7 @@
 sinclude ../makefile.config
 
 # Configuration
-PREFIX ?= /usr/local/openidmask
+PREFIX ?= /usr/local/openexrid
 EXR_INCLUDE ?= /usr/include/OpenEXR
 EXR_LIB ?= /usr/lib
 

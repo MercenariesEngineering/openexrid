@@ -1,31 +1,30 @@
 ## Synopsis
 
-This project introduces an open solution to provide dynamic mask images of a 3d rendered image in any compositing software.
+We present a new storage scheme for computer graphic images based on OpenEXR 2.
 
-Using the openidmask node, the user of the compositing software will select a set of rendered objects (by picking them, typing their names or using a regular expression to match their names).
-The node will render a perfect antialized mask for the object selection.
+Using such EXR/Id files, the compositing artist can isolate an object selection (by picking them or using a regular expression to match their names) and color correct them with no edge artefact, which was not possible to achieve without rendering the object selection on its own layer.
+
+The technique is demonstrated in an open source software suite, including a library to read and write the EXR/Id files and an OpenFX plug-in which generates the images in any compositing software.
 
 ## Motivation
 
-During animation and VFX productions, the compositing team needs the rendering team to render some id masks images to perform compositing operations
-on parts of the images. The needed mask images may change from a shot to another one. A lot of mask images may be sometimes requiered.
+During animation and VFX productions, the compositing department needs the rendering team to render some id masks images or to separate the rendering in layers to perform compositing operations
+on parts of the images. The needed mask or layer may change from a shot to another one. A lot of images may be sometimes requiered.
 Sometime masks are missing, the shot goes back to the rendering departement.
 
-We think having a dynamic mask solution may smooth this workflow.
+We think having a file format able to isolate any object may smooth this workflow.
 
 ## Architecture
 
-The dynamic mask id image is a deep EXR image containing the coverage information of every object in every pixel.
+The dynamic image is an OpenEXR 2 image containing the coverage information of every object in every pixel.
 
-The renderer uses the libopenidmask library to build the mask id image during the rendering.
+The renderer uses the openexrid library to build the mask id image during the rendering.
 
 The OpenFX plug-in reads and generates the mask in your prefered compositing tool.
 
 ## Compilation
 
-Under windows, set the environment variable OPENIDMASK_INSTALL with the path to the installation folder.
-
-Compile the project with Visual 2015.
+See the INSTALL file
 
 ## Tests
 

@@ -14,14 +14,14 @@
 */
 
 #pragma once
-#include <openidmask/Mask.h>
+#include <openexrid/Mask.h>
 #include <ofxImageEffect.h>
 
 // private instance data type
 class Instance
 {
 public:
-	openidmask::Mask Mask;
+	openexrid::Mask Mask;
 
 	// Name of the last mask file loaded
 	std::string		LastMaskFilename;

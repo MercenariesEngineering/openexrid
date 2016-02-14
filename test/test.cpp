@@ -1,12 +1,12 @@
 #include <vector>
 #include <iostream>
 #include <string>
-#include "../openidmask/Builder.h"
-#include "../openidmask/Mask.h"
-#include "../openidmask/Query.h"
+#include "../openexrid/Builder.h"
+#include "../openexrid/Mask.h"
+#include "../openexrid/Query.h"
 
 using namespace std;
-using namespace openidmask;
+using namespace openexrid;
 
 // Number max of samples per pixel during the test
 const int SamplesMax = 4;

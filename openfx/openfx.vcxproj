@@ -71,29 +71,37 @@
     <OutDir>$(ProjectDir)$(Platform)\$(Configuration)\</OutDir>
     <IntDir>$(ProjectDir)$(Platform)\$(Configuration)\</IntDir>
     <LinkIncremental>true</LinkIncremental>
-    <TargetName>openidmask</TargetName>
+    <TargetName>openexrid</TargetName>
     <TargetExt>.ofx</TargetExt>
+    <IncludePath>$(ProjectDir)..;$(IncludePath)</IncludePath>
+    <LibraryPath>$(ProjectDir)..\openexrid\$(Platform)\$(Configuration)\;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
-    <TargetName>openidmask</TargetName>
+    <TargetName>openexrid</TargetName>
     <TargetExt>.ofx</TargetExt>
     <OutDir>$(ProjectDir)$(Platform)\$(Configuration)\</OutDir>
     <IntDir>$(ProjectDir)$(Platform)\$(Configuration)\</IntDir>
+    <IncludePath>$(ProjectDir)..;$(IncludePath)</IncludePath>
+    <LibraryPath>$(ProjectDir)..\openexrid\$(Platform)\$(Configuration)\;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <OutDir>$(ProjectDir)$(Platform)\$(Configuration)\</OutDir>
     <IntDir>$(ProjectDir)$(Platform)\$(Configuration)\</IntDir>
     <LinkIncremental>false</LinkIncremental>
-    <TargetName>openidmask</TargetName>
+    <TargetName>openexrid</TargetName>
     <TargetExt>.ofx</TargetExt>
+    <IncludePath>$(ProjectDir)..;$(IncludePath)</IncludePath>
+    <LibraryPath>$(ProjectDir)..\openexrid\$(Platform)\$(Configuration)\;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
-    <TargetName>openidmask</TargetName>
+    <TargetName>openexrid</TargetName>
     <TargetExt>.ofx</TargetExt>
     <OutDir>$(ProjectDir)$(Platform)\$(Configuration)\</OutDir>
     <IntDir>$(ProjectDir)$(Platform)\$(Configuration)\</IntDir>
+    <IncludePath>$(ProjectDir)..;$(IncludePath)</IncludePath>
+    <LibraryPath>$(ProjectDir)..\openexrid\$(Platform)\$(Configuration)\;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -111,7 +119,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Windows</SubSystem>
       <TargetMachine>MachineX86</TargetMachine>
-      <AdditionalDependencies>libopenidmask.lib;IlmImf.lib;IlmThread.lib;Iex.lib;IlmHalf.lib;zlib.lib;opengl32.lib;re2.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>libopenexrid.lib;IlmImf.lib;IlmThread.lib;Iex.lib;IlmHalf.lib;zlib.lib;opengl32.lib;re2.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
       <Message>Creating bundle...</Message>
@@ -136,13 +144,13 @@ copy /Y "$(TargetPath)" /B "$(OutDir)$(ProjectName).ofx.bundle\Contents\Win32\$(
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Windows</SubSystem>
-      <AdditionalDependencies>libopenidmask.lib;IlmImf.lib;IlmThread.lib;Iex.lib;IlmHalf.lib;zlib.lib;opengl32.lib;re2.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>libopenexrid.lib;IlmImf.lib;IlmThread.lib;Iex.lib;IlmHalf.lib;zlib.lib;opengl32.lib;re2.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
       <Message>Creating bundle...</Message>
-      <Command>if not exist "$(HOMEPATH)\.nuke\openidmask.ofx.bundle\Contents\Resources" mkdir "$(HOMEPATH)\.nuke\openidmask.ofx.bundle\Contents\Resources"
-if not exist "$(HOMEPATH)\.nuke\openidmask.ofx.bundle\Contents\Win64" mkdir "$(HOMEPATH)\.nuke\openidmask.ofx.bundle\Contents\Win64"
-copy /Y "$(TargetPath)" /B "$(HOMEPATH)\.nuke\openidmask.ofx.bundle\Contents\Win64\openidmask.ofx" /B
+      <Command>if not exist "$(HOMEPATH)\.nuke\openexrid.ofx.bundle\Contents\Resources" mkdir "$(HOMEPATH)\.nuke\openexrid.ofx.bundle\Contents\Resources"
+if not exist "$(HOMEPATH)\.nuke\openexrid.ofx.bundle\Contents\Win64" mkdir "$(HOMEPATH)\.nuke\openexrid.ofx.bundle\Contents\Win64"
+copy /Y "$(TargetPath)" /B "$(HOMEPATH)\.nuke\openexrid.ofx.bundle\Contents\Win64\openexrid.ofx" /B
 </Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
@@ -161,7 +169,7 @@ copy /Y "$(TargetPath)" /B "$(HOMEPATH)\.nuke\openidmask.ofx.bundle\Contents\Win
       <OptimizeReferences>true</OptimizeReferences>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <TargetMachine>MachineX86</TargetMachine>
-      <AdditionalDependencies>libopenidmask.lib;IlmImf.lib;IlmThread.lib;Iex.lib;IlmHalf.lib;zlib.lib;opengl32.lib;re2.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>libopenexrid.lib;IlmImf.lib;IlmThread.lib;Iex.lib;IlmHalf.lib;zlib.lib;opengl32.lib;re2.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
       <Message>Creating bundle...</Message>
@@ -186,13 +194,13 @@ copy /Y "$(TargetPath)" /B "$(OutDir)$(ProjectName).ofx.bundle\Contents\Win32\$(
       <SubSystem>Windows</SubSystem>
       <OptimizeReferences>true</OptimizeReferences>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
-      <AdditionalDependencies>libopenidmask.lib;IlmImf.lib;IlmThread.lib;Iex.lib;IlmHalf.lib;zlib.lib;opengl32.lib;re2.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>libopenexrid.lib;IlmImf.lib;IlmThread.lib;Iex.lib;IlmHalf.lib;zlib.lib;opengl32.lib;re2.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
       <Message>Creating bundle...</Message>
-      <Command>if not exist "$(HOMEPATH)\.nuke\openidmask.ofx.bundle\Contents\Resources" mkdir "$(HOMEPATH)\.nuke\openidmask.ofx.bundle\Contents\Resources"
-if not exist "$(HOMEPATH)\.nuke\openidmask.ofx.bundle\Contents\Win64" mkdir "$(HOMEPATH)\.nuke\openidmask.ofx.bundle\Contents\Win64"
-copy /Y "$(TargetPath)" /B "$(HOMEPATH)\.nuke\openidmask.ofx.bundle\Contents\Win64\openidmask.ofx" /B
+      <Command>if not exist "$(HOMEPATH)\.nuke\openexrid.ofx.bundle\Contents\Resources" mkdir "$(HOMEPATH)\.nuke\openexrid.ofx.bundle\Contents\Resources"
+if not exist "$(HOMEPATH)\.nuke\openexrid.ofx.bundle\Contents\Win64" mkdir "$(HOMEPATH)\.nuke\openexrid.ofx.bundle\Contents\Win64"
+copy /Y "$(TargetPath)" /B "$(HOMEPATH)\.nuke\openexrid.ofx.bundle\Contents\Win64\openexrid.ofx" /B
 </Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
@@ -207,7 +215,7 @@ copy /Y "$(TargetPath)" /B "$(HOMEPATH)\.nuke\openidmask.ofx.bundle\Contents\Win
     <ClInclude Include="instance.h" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\openidmask\openidmask.vcxproj">
+    <ProjectReference Include="..\openexrid\openexrid.vcxproj">
       <Project>{1c804a06-a8c8-4a6c-b3bf-cffd3c0c2603}</Project>
     </ProjectReference>
   </ItemGroup>

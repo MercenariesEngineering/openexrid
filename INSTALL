@@ -11,3 +11,16 @@
 	or define the different variables in the environment.
 
 3) make install
+
+*****************************
+* Compilation under Windows *
+*****************************
+
+1) Install and compile the following libraries :
+	OpenEXR 2.x
+	re2
+	OFX
+
+2) Set the environment variable OPENEXRID_INSTALL with the path to the installation folder.
+
+3) Compile the project with Visual 2015.
