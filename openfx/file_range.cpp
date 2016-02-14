@@ -100,12 +100,9 @@ OfxStatus onInstanceChanged(OfxImageEffectHandle effect, OfxPropertySetHandle in
 			int start;
 			int end;
 			char *file;
-			int first;
-			if (gParamHost->paramGetValue (instance->FirstFrame, &first) == kOfxStatOK &&
-				gParamHost->paramGetValue (instance->File, &file) == kOfxStatOK &&
+			if (gParamHost->paramGetValue (instance->File, &file) == kOfxStatOK &&
 				getFrameRange (file, start, end))
 			{
-				gParamHost->paramSetValue (instance->OriginalStart, start);
 				gParamHost->paramSetValue (instance->FirstFrame, start);
 				gParamHost->paramSetValue (instance->LastFrame, end);
 			}
@@ -164,14 +161,16 @@ std::string computeFinalName (OfxPropertySetHandle inArgs, Instance *instance, b
 	gParamHost->paramGetValue (instance->FirstFrame, &firstFrame);
 	int lastFrame;
 	gParamHost->paramGetValue (instance->LastFrame, &lastFrame);
-	int originStart;
-	gParamHost->paramGetValue (instance->OriginalStart, &originStart);
+	int frameMode;
+	gParamHost->paramGetValue (instance->Frame, &frameMode);
+	int offset;
+	gParamHost->paramGetValue (instance->Offset, &offset);
 	int before;
 	gParamHost->paramGetValue (instance->Before, &before);
 	int after;
 	gParamHost->paramGetValue (instance->After, &after);
 
-	const int relativeTime = (int)time-firstFrame;
+	const int relativeTime = frameMode==0?(int)time-offset:(int)time+offset-firstFrame;
 	const int len = lastFrame-firstFrame+1;
 
 	const int finalTime =
@@ -179,7 +178,9 @@ std::string computeFinalName (OfxPropertySetHandle inArgs, Instance *instance, b
 		relativeTime < 0 ? clampFrame (before, relativeTime, len, black) :
 		relativeTime >= len ? clampFrame (after, relativeTime, len, black) :
 		relativeTime
-	)+originStart;
+	)+firstFrame;
+
+//	std::cout << "Frame " << finalTime << std::endl;
 
 	std::stringstream ss;
 	ss << std::setw(n) << std::setfill('0') << finalTime;

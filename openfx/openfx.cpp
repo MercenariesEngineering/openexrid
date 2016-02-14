@@ -85,7 +85,8 @@ static OfxStatus createInstance(OfxImageEffectHandle effect)
 	gParamHost->paramGetHandle(paramSet, "lastFrame", &instance->LastFrame, 0);
 	gParamHost->paramGetHandle(paramSet, "before", &instance->Before, 0);
 	gParamHost->paramGetHandle(paramSet, "after", &instance->After, 0);
-	gParamHost->paramGetHandle(paramSet, "originalStart", &instance->OriginalStart, 0);
+	gParamHost->paramGetHandle(paramSet, "frame", &instance->Frame, 0);
+	gParamHost->paramGetHandle(paramSet, "offset", &instance->Offset, 0);
 	gParamHost->paramGetHandle(paramSet, "missingFrames", &instance->MissingFrames, 0);
 
 	gParamHost->paramGetHandle(paramSet, "pattern", &instance->Pattern, 0);
@@ -522,10 +523,19 @@ static OfxStatus describeInContext(OfxImageEffectHandle effect, OfxPropertySetHa
 	gPropHost->propSetString(paramProps, kOfxParamPropChoiceOption, 3, "black");
 	gPropHost->propSetString(paramProps, kOfxParamPropChoiceOption, 4, "error");	
 
-	gParamHost->paramDefine(paramSet, kOfxParamTypeInteger, "originalStart", &paramProps);
-	gPropHost->propSetString(paramProps, kOfxParamPropHint, 0, "The original sequence start frame");
-	gPropHost->propSetString(paramProps, kOfxParamPropScriptName, 0, "originalStart");
-	gPropHost->propSetString(paramProps, kOfxPropLabel, 0, "original start");
+	gParamHost->paramDefine(paramSet, kOfxParamTypeChoice, "frame", &paramProps);
+	gPropHost->propSetString(paramProps, kOfxParamPropHint, 0, "Choose the first frame mode");
+	gPropHost->propSetString(paramProps, kOfxParamPropScriptName, 0, "frame");
+	gPropHost->propSetString(paramProps, kOfxPropLabel, 0, "frame");
+	gPropHost->propSetInt(paramProps, kOfxParamPropAnimates, 0, 0);
+	gPropHost->propSetString(paramProps, kOfxParamPropChoiceOption, 0, "start at");
+	gPropHost->propSetString(paramProps, kOfxParamPropChoiceOption, 1, "offset");
+	gPropHost->propSetInt(paramProps, "OfxParamPropLayoutHint", 0, 2);
+
+	gParamHost->paramDefine(paramSet, kOfxParamTypeInteger, "offset", &paramProps);
+	gPropHost->propSetString(paramProps, kOfxParamPropHint, 0, "The offset or the frame start");
+	gPropHost->propSetString(paramProps, kOfxParamPropScriptName, 0, "offset");
+	gPropHost->propSetString(paramProps, kOfxPropLabel, 0, "offset");
 	gPropHost->propSetInt(paramProps, kOfxParamPropAnimates, 0, 0);
 	gPropHost->propSetInt(paramProps, kOfxParamPropDisplayMin, 0, 0);
 	gPropHost->propSetInt(paramProps, kOfxParamPropDisplayMax, 0, 100);

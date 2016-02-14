@@ -35,7 +35,8 @@ public:
 	OfxParamHandle LastFrame;
 	OfxParamHandle Before;
 	OfxParamHandle After;
-	OfxParamHandle OriginalStart;
+	OfxParamHandle Frame;
+	OfxParamHandle Offset;
 	OfxParamHandle MissingFrames;
 	OfxParamHandle Pattern;
 	OfxParamHandle Colors;
