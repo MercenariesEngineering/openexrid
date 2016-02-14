@@ -60,9 +60,9 @@ void Mask::read (const char *filename)
 		throw runtime_error ("The file has been created by an unknown version of the library");
 
 	// Get the name attribute
-	const Imf::StringAttribute *names = header.findTypedAttribute<Imf::StringAttribute> ("IdNames");
+	const Imf::StringAttribute *names = header.findTypedAttribute<Imf::StringAttribute> ("EXRIdNames");
 	if (!names)
-		throw runtime_error ("The IdNames attribute is missing");
+		throw runtime_error ("The EXRIdNames attribute is missing");
 	
 	// Copy the names
 	_Names = inflate (names->value ());

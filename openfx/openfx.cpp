@@ -274,13 +274,13 @@ void Processor::doProcessing(OfxRectI procWindow)
 				for (int s = 0; s < n; ++s)
 				{
 					Query.TheMask->getSample (_x, _y, s, sample);
-					const float a = A == -1 ? 1.f : sample.Values[A];
+					const float a = A == -1 ? 1.f : float (sample.Values[A]);
 					const OfxRGBColourF h = haltonColors (sample.Id);
 					const bool selected = Query.isSelected (sample.Id);
 					const OfxRGBColourF c = {
-						R == -1 ? 1.f : sample.Values[R], 
-						G == -1 ? 1.f : sample.Values[G],
-						B == -1 ? 1.f : sample.Values[B]};
+						R == -1 ? 1.f : float (sample.Values[R]), 
+						G == -1 ? 1.f : float (sample.Values[G]),
+						B == -1 ? 1.f : float (sample.Values[B])};
 					dstPix->r += selected ? c.r : powf (h.r, 1.f/0.3f)*a;
 					dstPix->g += selected ? c.g : powf (h.g, 1.f/0.3f)*a;
 					dstPix->b += selected ? c.b : powf (h.b, 1.f/0.3f)*a;

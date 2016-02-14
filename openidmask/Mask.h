@@ -21,6 +21,7 @@
 #include <map>
 #include <ImfCompression.h>
 #include <half.h>
+#include <algorithm>
 
 namespace openidmask
 {

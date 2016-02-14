@@ -15,6 +15,7 @@
 
 #include "instance.h"
 #include "dir.h"
+#include <cstring>
 #include "ofxUtilities.h"
 #include <algorithm>
 #include <string>
