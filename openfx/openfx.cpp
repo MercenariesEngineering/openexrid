@@ -92,6 +92,7 @@ static OfxStatus createInstance(OfxImageEffectHandle effect)
 	gParamHost->paramGetHandle(paramSet, "pattern", &instance->Pattern, 0);
 	gParamHost->paramGetHandle(paramSet, "colors", &instance->Colors, 0);
 	gParamHost->paramGetHandle(paramSet, "invert", &instance->Invert, 0);
+	gParamHost->paramGetHandle(paramSet, "alpha", &instance->Alpha, 0);
 
 	// cache away clip handles
 	gEffectHost->clipGetHandle(effect, kOfxImageEffectOutputClipName, &instance->OutputClip, 0);
@@ -170,7 +171,7 @@ class Processor
 {
 public :
 	Processor(OfxImageEffectHandle eff, OfxPointD rs, void *dst, 
-		OfxRectI dRect, int dBytesPerLine, OfxRectI  win, openexrid::Query &query, bool colors, bool black)
+		OfxRectI dRect, int dBytesPerLine, OfxRectI  win, openexrid::Query &query, bool colors, bool black, bool alpha)
 		: effect(eff)
 		, renderScale(rs)
 		, dstV(dst)
@@ -180,6 +181,7 @@ public :
 		, Query (query)
 		, Colors (colors)
 		, Black (black)
+		, Alpha (alpha)
 	{}
 
 	static void multiThreadProcessing(unsigned int threadId, unsigned int nThreads, void *arg);
@@ -194,7 +196,7 @@ protected :
 	OfxRectI  window;
 	int dstBytesPerLine;
 	openexrid::Query &Query;
-	bool	Colors, Black;
+	bool	Colors, Black, Alpha;
 };
 
 // function call once for each thread by the host
@@ -246,9 +248,9 @@ void Processor::doProcessing(OfxRectI procWindow)
 {
 	OfxRGBAColourF *dst = (OfxRGBAColourF*)dstV;
 	openexrid::Sample sample;
-	const int R = Query.TheMask->findSlice ("R");
-	const int G = Query.TheMask->findSlice ("G");
-	const int B = Query.TheMask->findSlice ("B");
+	const int R = Alpha ? -1 : Query.TheMask->findSlice ("R");
+	const int G = Alpha ? -1 : Query.TheMask->findSlice ("G");
+	const int B = Alpha ? -1 : Query.TheMask->findSlice ("B");
 	const int A = Query.TheMask->findSlice ("A");
 	std::vector<float> data;
 
@@ -351,6 +353,8 @@ static OfxStatus render(OfxImageEffectHandle effect,
 		int _invert;
 		gParamHost->paramGetValue(instance->Invert, &_invert);
 		const bool invert = _invert != 0;
+		int alpha;
+		gParamHost->paramGetValue(instance->Alpha, &alpha);
 
 		// Split the string in strings
 		std::vector<std::string> patterns;
@@ -421,7 +425,7 @@ static OfxStatus render(OfxImageEffectHandle effect,
 			openexrid::Query query (&instance->Mask, match);
 
 			// do the rendering
-			Processor fred (effect, renderScale, dst, dstRect, dstRowBytes, renderWindow, query, colors != 0, black);
+			Processor fred (effect, renderScale, dst, dstRect, dstRowBytes, renderWindow, query, colors != 0, black, alpha != 0);
 			fred.process();
 		}
 		catch (const std::exception &e)
@@ -553,14 +557,21 @@ static OfxStatus describeInContext(OfxImageEffectHandle effect, OfxPropertySetHa
 	gPropHost->propSetString(paramProps, kOfxParamPropHint, 0, "Show the image with false colors");
 	gPropHost->propSetString(paramProps, kOfxParamPropScriptName, 0, "colors");
 	gPropHost->propSetInt(paramProps, kOfxParamPropAnimates, 0, 0);
-	gPropHost->propSetString(paramProps, kOfxPropLabel, 0, "Colors");
+	gPropHost->propSetString(paramProps, kOfxPropLabel, 0, "false colors");
 
 	// The false color button
 	gParamHost->paramDefine(paramSet, kOfxParamTypeBoolean, "invert", &paramProps);
 	gPropHost->propSetString(paramProps, kOfxParamPropHint, 0, "Invert the selection");
 	gPropHost->propSetString(paramProps, kOfxParamPropScriptName, 0, "invert");
 	gPropHost->propSetInt(paramProps, kOfxParamPropAnimates, 0, 0);
-	gPropHost->propSetString(paramProps, kOfxPropLabel, 0, "Invert");
+	gPropHost->propSetString(paramProps, kOfxPropLabel, 0, "invert");
+
+	// The false color button
+	gParamHost->paramDefine(paramSet, kOfxParamTypeBoolean, "alpha", &paramProps);
+	gPropHost->propSetString(paramProps, kOfxParamPropHint, 0, "Render the alpha");
+	gPropHost->propSetString(paramProps, kOfxParamPropScriptName, 0, "alpha");
+	gPropHost->propSetInt(paramProps, kOfxParamPropAnimates, 0, 0);
+	gPropHost->propSetString(paramProps, kOfxPropLabel, 0, "alpha");
 
 	return kOfxStatOK;
 }

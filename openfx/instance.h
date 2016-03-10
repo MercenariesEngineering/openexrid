@@ -41,4 +41,5 @@ public:
 	OfxParamHandle Pattern;
 	OfxParamHandle Colors;
 	OfxParamHandle Invert;
+	OfxParamHandle Alpha;
 };
