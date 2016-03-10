@@ -47,7 +47,6 @@ OfxMultiThreadSuiteV1	*gThreadHost = NULL;
 OfxInteractSuiteV1		*gInteractHost = NULL;
 OfxMemorySuiteV1		*gMemoryHost = NULL;
 OfxMessageSuiteV1		*gMessageSuite = NULL;
-bool					gIsNuke = true;
 
 // Remove the - sign
 const char *removeNeg (const string &s)
@@ -103,7 +102,6 @@ static OfxStatus createInstance(OfxImageEffectHandle effect)
 	// get the host name
 	char *returnedHostName;
 	gPropHost->propGetString(gHost->host, kOfxPropName, 0, &returnedHostName);
-	gIsNuke = strstr (returnedHostName, ".nuke") != 0;
 
 	return kOfxStatOK;
 }

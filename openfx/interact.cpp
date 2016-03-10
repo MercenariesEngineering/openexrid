@@ -28,8 +28,6 @@
 #include "ofxUtilities.h"
 #include "instance.h"
 
-extern bool gIsNuke;
-
 #if defined __APPLE__ || defined linux || defined __FreeBSD__
 #  define EXPORT __attribute__((visibility("default")))
 #elif defined _WIN32
@@ -80,25 +78,11 @@ std::string escapeRegExp (const char *s)
 	while (*s)
 	{
 		if (std::find (sc, sc+12, *s) != sc+12)
-			result += gIsNuke ? "\\\\" : "\\";
+			result += "\\";
 		result += *s;
 		++s;
 	}
 	result += "$";
-	return result;
-}
-
-// Escape the backslash
-std::string escape (const char *s)
-{
-	std::string result;
-	while (*s)
-	{
-		if (*s == '\\')
-			result += '\\';
-		result += *s;
-		++s;
-	}
 	return result;
 }
 
@@ -317,8 +301,6 @@ static OfxStatus interactPenUp(OfxImageEffectHandle  effect, OfxInteractHandle i
 		std::string oldPattern = _oldPattern;
 		
 		/* Nuke escapes the \ of the text parameter */
-		if (gIsNuke)
-			oldPattern = escape (oldPattern.c_str ());
 		std::set<std::string> oldNames (split (oldPattern.c_str (), "\n\r"));
 
 		// Shift ?
