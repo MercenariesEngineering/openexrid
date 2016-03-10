@@ -281,21 +281,36 @@ static OfxStatus interactPenUp(OfxImageEffectHandle  effect, OfxInteractHandle i
 		std::set<std::string> names;
 		openexrid::Sample sample;
 
+		const int alpha = instance->Mask.findSlice ("A");
+
 		const int maxX = std::min (std::max (upX, data->DownX)+1, size.first);
 		const int maxY = std::min (std::max (upY, data->DownY)+1, size.first);
 		for (int y = std::max (std::min (upY, data->DownY), 0); y < maxY; ++y)
 		for (int x = std::max (std::min (upX, data->DownX), 0); x < maxX; ++x)
-		{
-			// Get the max coverage sample in the pixel
+ 		{
+ 			// Get the max coverage sample in the pixel
+			float maxCoverage = 0;
+			uint32_t maxId = ~0U;
 			const int sampleN = instance->Mask.getSampleN (x, y);
 			for (int s = 0; s < sampleN; ++s)
 			{
+				openexrid::Sample sample;
 				instance->Mask.getSample (x, y, s, sample);
-				const char *name = instance->Mask.getName (sample.Id);
+				if (alpha == -1 || sample.Values[alpha] > maxCoverage)
+				{
+					maxId = sample.Id;
+					maxCoverage = sample.Values[alpha];
+				}
+			}
+
+			// Found something ?
+			if (maxId != ~0U)
+			{
+				const char *name = instance->Mask.getName (maxId);
 				names.insert (escapeRegExp (name));
 			}
 		}
-
+ 
 		// Get the old pattern
 		const char *_oldPattern;
 		gParamHost->paramGetValue (data->patternParam, &_oldPattern);
