@@ -283,7 +283,8 @@ static OfxStatus interactPenUp(OfxImageEffectHandle  effect, OfxInteractHandle i
 				if (alpha == -1 || sample.Values[alpha] > maxCoverage)
 				{
 					maxId = sample.Id;
-					maxCoverage = sample.Values[alpha];
+					if (alpha != -1)
+						maxCoverage = sample.Values[alpha];
 				}
 			}
 
