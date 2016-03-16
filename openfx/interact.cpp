@@ -268,7 +268,7 @@ static OfxStatus interactPenUp(OfxImageEffectHandle  effect, OfxInteractHandle i
 		const int alpha = instance->Mask.findSlice ("A");
 
 		const int maxX = std::min (std::max (upX, data->DownX)+1, size.first);
-		const int maxY = std::min (std::max (upY, data->DownY)+1, size.first);
+		const int maxY = std::min (std::max (upY, data->DownY)+1, size.second);
 		for (int y = std::max (std::min (upY, data->DownY), 0); y < maxY; ++y)
 		for (int x = std::max (std::min (upX, data->DownX), 0); x < maxX; ++x)
  		{
