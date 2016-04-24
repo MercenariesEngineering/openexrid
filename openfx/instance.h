@@ -30,6 +30,7 @@ public:
 	OfxImageClipHandle OutputClip;
 
 	// handles to a our parameters
+	OfxParamHandle Version;
 	OfxParamHandle File;
 	OfxParamHandle FirstFrame;
 	OfxParamHandle LastFrame;

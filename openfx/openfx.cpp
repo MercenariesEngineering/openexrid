@@ -16,6 +16,7 @@
 #include <set>
 #include <openexrid/Mask.h>
 #include <openexrid/Query.h>
+#include <openexrid/Version.h>
 #include <ImfDeepScanLineInputFile.h>
 #include <re2/set.h>
 #include <assert.h>
@@ -78,6 +79,8 @@ static OfxStatus createInstance(OfxImageEffectHandle effect)
 	Instance *instance = new Instance;
 
 	// cache away param handles
+	gParamHost->paramGetHandle(paramSet, "version", &instance->Version, 0);
+	gParamHost->paramSetValue (instance->Version, openexrid::Version.c_str());
 	gParamHost->paramGetHandle(paramSet, "file", &instance->File, 0);
 
 	gParamHost->paramGetHandle(paramSet, "firstFrame", &instance->FirstFrame, 0);
@@ -570,6 +573,13 @@ static OfxStatus describeInContext(OfxImageEffectHandle effect, OfxPropertySetHa
 	gPropHost->propSetString(paramProps, kOfxParamPropScriptName, 0, "alpha");
 	gPropHost->propSetInt(paramProps, kOfxParamPropAnimates, 0, 0);
 	gPropHost->propSetString(paramProps, kOfxPropLabel, 0, "alpha");
+
+	gParamHost->paramDefine(paramSet, kOfxParamTypeString, "version", &paramProps);
+	gPropHost->propSetString(paramProps, kOfxParamPropHint, 0, "The openexrid version");
+	gPropHost->propSetString(paramProps, kOfxParamPropScriptName, 0, "version");
+	gPropHost->propSetString(paramProps, kOfxPropLabel, 0, "version");
+	gPropHost->propSetInt(paramProps, kOfxParamPropAnimates, 0, 0);
+	gPropHost->propSetInt(paramProps, kOfxParamPropEnabled, 0, 0);
 
 	return kOfxStatOK;
 }
