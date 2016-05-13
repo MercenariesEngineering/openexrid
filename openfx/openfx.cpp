@@ -486,7 +486,9 @@ static OfxStatus describeInContext(OfxImageEffectHandle effect, OfxPropertySetHa
 	gPropHost->propSetString(paramProps, kOfxParamPropScriptName, 0, "file");
 	gPropHost->propSetString(paramProps, kOfxPropLabel, 0, "file");
 	gPropHost->propSetInt(paramProps, kOfxParamPropAnimates, 0, 0);
-	gPropHost->propSetString(paramProps, kOfxParamPropStringMode, 0, kOfxParamStringIsFilePath);
+	
+	// If we set this attribute, Nuke translates the #### tag and we can't offset the time
+	// gPropHost->propSetString(paramProps, kOfxParamPropStringMode, 0, kOfxParamStringIsFilePath);
 
 	gParamHost->paramDefine(paramSet, kOfxParamTypeInteger, "firstFrame", &paramProps);
 	gPropHost->propSetString(paramProps, kOfxParamPropHint, 0, "The frame range where this sequence will be displayed");
@@ -536,6 +538,7 @@ static OfxStatus describeInContext(OfxImageEffectHandle effect, OfxPropertySetHa
 	gPropHost->propSetString(paramProps, kOfxParamPropChoiceOption, 0, "start at");
 	gPropHost->propSetString(paramProps, kOfxParamPropChoiceOption, 1, "offset");
 	gPropHost->propSetInt(paramProps, "OfxParamPropLayoutHint", 0, 2);
+	gPropHost->propSetInt(paramProps, kOfxParamPropDefault, 0, 1);
 
 	gParamHost->paramDefine(paramSet, kOfxParamTypeInteger, "offset", &paramProps);
 	gPropHost->propSetString(paramProps, kOfxParamPropHint, 0, "The offset or the frame start");
