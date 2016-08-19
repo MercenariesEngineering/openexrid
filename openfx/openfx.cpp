@@ -20,6 +20,7 @@
 #include <ImfDeepScanLineInputFile.h>
 #include <re2/set.h>
 #include <assert.h>
+#include <stdexcept>
 #include "instance.h"
 #include "ofxUtilities.h"
 
@@ -237,7 +238,11 @@ inline float halton (float base, int id)
 
 inline OfxRGBColourF haltonColors (int id)
 {
-	return {halton (2, id), halton (3, id), halton (5, id)};
+	OfxRGBColourF	r;
+	r.r = halton (2, id);
+	r.g = halton (3, id);
+	r.b = halton (5, id);
+	return r;
 }
 
 void Processor::doProcessing(OfxRectI procWindow)
@@ -306,6 +311,36 @@ static OfxStatus purgeCaches(OfxImageEffectHandle effect)
 	instance->LastMaskFilename = "";
 	return kOfxStatOK;
 }
+
+class PatternMatcher
+{
+public:
+	re2::RE2::Set			&set;
+	std::vector<std::string>	&patterns;
+	std::vector<int>		&matched;
+	bool				invert;
+	PatternMatcher (re2::RE2::Set &_set, std::vector<std::string> &_patterns, std::vector<int> &_matched, bool _invert) :
+		set (_set), patterns (_patterns), matched (_matched), invert (_invert)	{}
+
+	bool	operator () (const char *name) const
+	{
+		bool match = false;
+		if (!patterns.empty ())
+		{
+			matched.clear ();
+			set.Match (name, &matched);
+			for (std::vector<int>::iterator it = matched.begin (); it != matched.end (); ++it)
+			{
+				// Negative match
+				if (patterns[*it][0] == '-')
+					return invert;
+				else
+					match = true;
+			}
+		}
+		return match^invert;
+	}
+};
 
 // the process code  that the host sees
 static OfxStatus render(OfxImageEffectHandle effect,
@@ -386,32 +421,15 @@ static OfxStatus render(OfxImageEffectHandle effect,
 			re2::RE2::Options			options;
 			re2::RE2::Anchor			anchor = re2::RE2::UNANCHORED;
 			re2::RE2::Set set (options, anchor);
-			for (const auto &pattern : patterns)
-				if (set.Add (removeNeg (pattern), NULL) < 0)
+			for (std::vector<std::string>::const_iterator itp = patterns.begin (); itp != patterns.end (); ++itp)
+				if (set.Add (removeNeg (*itp), NULL) < 0)
 					throw std::runtime_error ("Bad regular expression");
 
 			if (!patterns.empty () && !set.Compile ())
 					throw std::runtime_error ("Bad regular expression");
 			std::vector<int> matched;
 
-			auto match = [&set,&patterns,&matched,invert] (const char *name)->bool
-			{
-				bool match = false;
-				if (!patterns.empty ())
-				{
-					matched.clear ();
-					set.Match (name, &matched);
-					for (auto m : matched)
-					{
-						// Negative match
-						if (patterns[m][0] == '-')
-							return invert;
-						else
-							match = true;
-					}
-				}
-				return match^invert;
-			};
+			PatternMatcher	match (set, patterns, matched, invert);
 			openexrid::Query query (&instance->Mask, match);
 
 			// do the rendering
