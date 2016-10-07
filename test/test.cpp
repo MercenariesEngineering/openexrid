@@ -31,7 +31,7 @@ int main(int argc, char **argv)
 		// Generate some names
 		vector<string> names;
 		for (int i = 0; i < NameN; ++i)
-			names.push_back (to_string (rand()));
+			names.push_back (std::to_string (rand()));
 
 		// The name id per pixels
 		vector<vector<int> >	pixelToNames (Width*Height);

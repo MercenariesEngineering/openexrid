@@ -88,7 +88,8 @@ std::string escapeRegExp (const char *s)
 
 // the interaction routines
 struct MyInteractData {
-	int DownX, DownY;
+	int DownX, DownY;	// Mouse position on button down
+	int MouseX, MouseY;	// Current mouse position
 	bool Down, Shift;
 	OfxParamHandle patternParam;
 
@@ -162,15 +163,12 @@ static OfxStatus interactDraw(OfxImageEffectHandle  effect, OfxInteractHandle in
 
 	if (data->Down)
 	{
-		double penPos[2];
-		gPropHost->propGetDoubleN(drawArgs, kOfxInteractPropPenPosition, 2, penPos);
-
 		// Get the image size
 		const std::pair<int, int> &size = instance->Mask.getSize ();
 		const float x0 = (float)data->DownX;
 		const float y0 = size.second-(float)data->DownY-1;
-		const float x1 = (float)penPos[0];
-		const float y1 = (float)penPos[1];
+		const float x1 = (float)data->MouseX;
+		const float y1 = size.second-(float)data->MouseY-1;
 
 		glPushAttrib (GL_ENABLE_BIT|GL_CURRENT_BIT);
 			// if the we have selected the Xhair, draw it highlit
@@ -200,26 +198,31 @@ static OfxStatus interactDraw(OfxImageEffectHandle  effect, OfxInteractHandle in
 static OfxStatus interactPenMotion(OfxImageEffectHandle effect, OfxInteractHandle interactInstance, OfxPropertySetHandle inArgs)
 {
 	// get my data handle
+	MyInteractData *data = getInteractData(interactInstance);
+
+	double penPos[2];
+	gPropHost->propGetDoubleN(inArgs, kOfxInteractPropPenPosition, 2, penPos);
+	Instance *instance = (Instance*)ofxuGetEffectInstanceData(effect);
+
+	// Get the image size
+	const std::pair<int, int> &size = instance->Mask.getSize ();
+	data->MouseX = (int)penPos[0];
+	data->MouseY = size.second-(int)penPos[1]-1;
+
 	return kOfxStatOK;
 }
 
 static OfxStatus interactPenDown(OfxImageEffectHandle  effect, OfxInteractHandle interactInstance, OfxPropertySetHandle inArgs)
 {
 	// get my data handle
+	OfxStatus status = interactPenMotion (effect, interactInstance, inArgs);
+
 	MyInteractData *data = getInteractData(interactInstance);
-
-	double penPos[2];
-	gPropHost->propGetDoubleN(inArgs, kOfxInteractPropPenPosition, 2, penPos);
-
-	Instance *instance = (Instance*)ofxuGetEffectInstanceData(effect);
-
-	// Get the image size
-	const std::pair<int, int> &size = instance->Mask.getSize ();
-	data->DownX = (int)penPos[0];
-	data->DownY = size.second-(int)penPos[1]-1;
+	data->DownX = data->MouseX;
+	data->DownY = data->MouseY;
 	data->Down = true;
 
-	return kOfxStatOK;
+	return status;
 }
 
 static OfxStatus interactKeyDown (OfxImageEffectHandle  effect, OfxInteractHandle interactInstance, OfxPropertySetHandle inArgs)
@@ -259,18 +262,16 @@ static OfxStatus interactPenUp(OfxImageEffectHandle  effect, OfxInteractHandle i
 	{
 		// Get the image size
 		const std::pair<int, int> &size = instance->Mask.getSize ();
-		const int upX = (int)penPos[0];
-		const int upY = size.second-(int)penPos[1]-1;
 
 		std::set<std::string> names;
 		openexrid::Sample sample;
 
 		const int alpha = instance->Mask.findSlice ("A");
 
-		const int maxX = std::min (std::max (upX, data->DownX)+1, size.first);
-		const int maxY = std::min (std::max (upY, data->DownY)+1, size.second);
-		for (int y = std::max (std::min (upY, data->DownY), 0); y < maxY; ++y)
-		for (int x = std::max (std::min (upX, data->DownX), 0); x < maxX; ++x)
+		const int maxX = std::min (std::max (data->MouseX, data->DownX)+1, size.first);
+		const int maxY = std::min (std::max (data->MouseY, data->DownY)+1, size.second);
+		for (int y = std::max (std::min (data->MouseY, data->DownY), 0); y < maxY; ++y)
+		for (int x = std::max (std::min (data->MouseX, data->DownX), 0); x < maxX; ++x)
  		{
  			// Get the max coverage sample in the pixel
 			float maxCoverage = 0;

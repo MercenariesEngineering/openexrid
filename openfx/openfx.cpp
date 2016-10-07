@@ -268,7 +268,7 @@ void Processor::doProcessing(OfxRectI procWindow)
 		{
 			const int _x = (int)((double)x/renderScale.x);
 			dstPix->r = dstPix->g = dstPix->b = dstPix->a = 0;
-			if (Black)
+			if (Black ||_x < 0 || _x >= size.first || _y < 0 || _y >= size.first )
 				continue;
 
 			if (Colors)
@@ -386,12 +386,6 @@ static OfxStatus render(OfxImageEffectHandle effect,
 				instance->Mask.read (finalName.c_str());
 				instance->LastMaskFilename = finalName;
 			}
-
-			// Check the size
-			std::pair<int,int> size = instance->Mask.getSize ();
-			if (size.first < renderWindow.x2 || renderWindow.x1 < 0 ||
-				size.second < renderWindow.y2 || renderWindow.y1 < 0)
-				return kOfxStatFailed;
 
 			// Initialize re2
 			re2::RE2::Options			options;
