@@ -27,7 +27,6 @@ extern OfxStatus onInstanceChanged(OfxImageEffectHandle effect, OfxPropertySetHa
 extern std::string computeFinalName (OfxPropertySetHandle inArgs, Instance *instance, bool &black);
 extern bool isFileAnimated (OfxPropertySetHandle inArgs, Instance *instance);
 
-
 using namespace Imf;
 using namespace Imath;
 

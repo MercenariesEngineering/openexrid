@@ -30,6 +30,13 @@ See the INSTALL file
 
 Compile and run the /test application.
 
+## Data
+
+You can download those two sample files :
+
+http://mercenariesengineering.github.io/openexrid/forest.exrid <br />
+http://mercenariesengineering.github.io/openexrid/openexrid.exrid
+
 ## Contributors
 
 Mercenaries Engineering, the guys behind Guerilla Render.
