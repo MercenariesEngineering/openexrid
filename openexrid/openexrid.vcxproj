@@ -28,6 +28,7 @@
     <ClInclude Include="Sample.h" />
     <ClInclude Include="Mask.h" />
     <ClInclude Include="Query.h" />
+    <ClInclude Include="Version.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{1C804A06-A8C8-4A6C-B3BF-CFFD3C0C2603}</ProjectGuid>
