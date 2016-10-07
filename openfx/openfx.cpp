@@ -102,10 +102,6 @@ static OfxStatus createInstance(OfxImageEffectHandle effect)
 	// set my private instance data
 	gPropHost->propSetPointer(effectProps, kOfxPropInstanceData, 0, (void *) instance);
 
-	// get the host name
-	char *returnedHostName;
-	gPropHost->propGetString(gHost->host, kOfxPropName, 0, &returnedHostName);
-
 	return kOfxStatOK;
 }
 
@@ -445,6 +441,13 @@ static OfxStatus render(OfxImageEffectHandle effect,
 	return status;
 }
 
+bool isHostNuke ()
+{
+	char *returnedHostName;
+	gPropHost->propGetString(gHost->host, kOfxPropName, 0, &returnedHostName);
+	return strstr (returnedHostName, ".nuke") != 0;
+}
+
 // Set our clip preferences 
 static OfxStatus getClipPreferences(OfxImageEffectHandle effect, OfxPropertySetHandle inArgs, OfxPropertySetHandle outArgs)
 {
@@ -452,7 +455,10 @@ static OfxStatus getClipPreferences(OfxImageEffectHandle effect, OfxPropertySetH
 
 	// Output is pre multiplied
 	gPropHost->propSetString(outArgs, kOfxImageEffectPropPreMultiplication, 0, kOfxImagePreMultiplied);
-	gPropHost->propSetInt(outArgs, kOfxImageEffectFrameVarying, 0, isFileAnimated (inArgs, instance) ? 1 : 0);
+
+	// Nuke translates the #### tag so we don't know if the image is animated or not.
+	const bool animated = isHostNuke () || isFileAnimated (inArgs, instance);
+	gPropHost->propSetInt(outArgs, kOfxImageEffectFrameVarying, 0, animated ? 1 : 0);
 
 	return kOfxStatOK;
 }
@@ -474,6 +480,8 @@ static OfxStatus describeInContext(OfxImageEffectHandle effect, OfxPropertySetHa
 	// our 2 corners are normalised spatial 2D doubles
 	OfxPropertySetHandle paramProps;
 
+	const bool isNuke = isHostNuke ();
+
 	// The input filename
 	gParamHost->paramDefine(paramSet, kOfxParamTypeString, "file", &paramProps);
 	gPropHost->propSetString(paramProps, kOfxParamPropHint, 0, "The openexrid file");
@@ -481,8 +489,7 @@ static OfxStatus describeInContext(OfxImageEffectHandle effect, OfxPropertySetHa
 	gPropHost->propSetString(paramProps, kOfxPropLabel, 0, "file");
 	gPropHost->propSetInt(paramProps, kOfxParamPropAnimates, 0, 0);
 	
-	// If we set this attribute, Nuke translates the #### tag and we can't offset the time
-	// gPropHost->propSetString(paramProps, kOfxParamPropStringMode, 0, kOfxParamStringIsFilePath);
+	gPropHost->propSetString(paramProps, kOfxParamPropStringMode, 0, kOfxParamStringIsFilePath);
 
 	gParamHost->paramDefine(paramSet, kOfxParamTypeInteger, "firstFrame", &paramProps);
 	gPropHost->propSetString(paramProps, kOfxParamPropHint, 0, "The frame range where this sequence will be displayed");
@@ -492,6 +499,11 @@ static OfxStatus describeInContext(OfxImageEffectHandle effect, OfxPropertySetHa
 	gPropHost->propSetInt(paramProps, kOfxParamPropDisplayMin, 0, 0);
 	gPropHost->propSetInt(paramProps, kOfxParamPropDisplayMax, 0, 100);
 	gPropHost->propSetInt(paramProps, "OfxParamPropLayoutHint", 0, 2);
+
+	// Nuke translates the #### tag and we can't offset the time
+	// So for nuke we grey out the time offset attributes
+	if (isNuke)
+		gPropHost->propSetInt(paramProps, kOfxParamPropEnabled, 0, 0);
 
 	gParamHost->paramDefine(paramSet, kOfxParamTypeChoice, "before", &paramProps);
 	gPropHost->propSetString(paramProps, kOfxParamPropHint, 0, "Behaviour before the frame range");
@@ -504,6 +516,11 @@ static OfxStatus describeInContext(OfxImageEffectHandle effect, OfxPropertySetHa
 	gPropHost->propSetString(paramProps, kOfxParamPropChoiceOption, 3, "black");
 	gPropHost->propSetString(paramProps, kOfxParamPropChoiceOption, 4, "error");	
 
+	// Nuke translates the #### tag and we can't offset the time
+	// So for nuke we grey out the time offset attributes
+	if (isNuke)
+		gPropHost->propSetInt(paramProps, kOfxParamPropEnabled, 0, 0);
+
 	gParamHost->paramDefine(paramSet, kOfxParamTypeInteger, "lastFrame", &paramProps);
 	gPropHost->propSetString(paramProps, kOfxParamPropHint, 0, "The frame range where this sequence will be displayed");
 	gPropHost->propSetString(paramProps, kOfxParamPropScriptName, 0, "lastFrame");
@@ -512,6 +529,11 @@ static OfxStatus describeInContext(OfxImageEffectHandle effect, OfxPropertySetHa
 	gPropHost->propSetInt(paramProps, kOfxParamPropDisplayMin, 0, 0);
 	gPropHost->propSetInt(paramProps, kOfxParamPropDisplayMax, 0, 100);
 	gPropHost->propSetInt(paramProps, "OfxParamPropLayoutHint", 0, 2);
+
+	// Nuke translates the #### tag and we can't offset the time
+	// So for nuke we grey out the time offset attributes
+	if (isNuke)
+		gPropHost->propSetInt(paramProps, kOfxParamPropEnabled, 0, 0);
 
 	gParamHost->paramDefine(paramSet, kOfxParamTypeChoice, "after", &paramProps);
 	gPropHost->propSetString(paramProps, kOfxParamPropHint, 0, "Behaviour after the frame range");
@@ -524,6 +546,11 @@ static OfxStatus describeInContext(OfxImageEffectHandle effect, OfxPropertySetHa
 	gPropHost->propSetString(paramProps, kOfxParamPropChoiceOption, 3, "black");
 	gPropHost->propSetString(paramProps, kOfxParamPropChoiceOption, 4, "error");	
 
+	// Nuke translates the #### tag and we can't offset the time
+	// So for nuke we grey out the time offset attributes
+	if (isNuke)
+		gPropHost->propSetInt(paramProps, kOfxParamPropEnabled, 0, 0);
+
 	gParamHost->paramDefine(paramSet, kOfxParamTypeChoice, "frame", &paramProps);
 	gPropHost->propSetString(paramProps, kOfxParamPropHint, 0, "Choose the first frame mode");
 	gPropHost->propSetString(paramProps, kOfxParamPropScriptName, 0, "frame");
@@ -534,6 +561,11 @@ static OfxStatus describeInContext(OfxImageEffectHandle effect, OfxPropertySetHa
 	gPropHost->propSetInt(paramProps, "OfxParamPropLayoutHint", 0, 2);
 	gPropHost->propSetInt(paramProps, kOfxParamPropDefault, 0, 1);
 
+	// Nuke translates the #### tag and we can't offset the time
+	// So for nuke we grey out the time offset attributes
+	if (isNuke)
+		gPropHost->propSetInt(paramProps, kOfxParamPropEnabled, 0, 0);
+
 	gParamHost->paramDefine(paramSet, kOfxParamTypeInteger, "offset", &paramProps);
 	gPropHost->propSetString(paramProps, kOfxParamPropHint, 0, "The offset or the frame start");
 	gPropHost->propSetString(paramProps, kOfxParamPropScriptName, 0, "offset");
@@ -541,6 +573,11 @@ static OfxStatus describeInContext(OfxImageEffectHandle effect, OfxPropertySetHa
 	gPropHost->propSetInt(paramProps, kOfxParamPropAnimates, 0, 0);
 	gPropHost->propSetInt(paramProps, kOfxParamPropDisplayMin, 0, 0);
 	gPropHost->propSetInt(paramProps, kOfxParamPropDisplayMax, 0, 100);
+
+	// Nuke translates the #### tag and we can't offset the time
+	// So for nuke we grey out the time offset attributes
+	if (isNuke)
+		gPropHost->propSetInt(paramProps, kOfxParamPropEnabled, 0, 0);
 
 	// The mask pattern
 	gParamHost->paramDefine(paramSet, kOfxParamTypeString, "pattern", &paramProps);
