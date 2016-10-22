@@ -35,8 +35,14 @@ public:
 	// Add some coverage in the pixel (x,y) for the object named objectName.
 	// The sum of the coverage of a pixel is supposed to be between [0, 1].
 	// This method is not thread safe.
-	void addCoverage (int x, int y, uint32_t id, const float *sliceValues);
-	
+	void addCoverage (int x, int y, uint32_t id, float z, const float *sliceValues);
+
+	// Finish the builder
+	// Call it once before to write
+	// Once the Builder as been finished, no data can be added
+	void finish ();
+
+	// Finish
 	// Write the mask in an EXR file.
 	// names is the concatenated C strings of the object names
 	// namesLength is the size of the names buffer
@@ -46,6 +52,8 @@ private:
 
 	// The image resolution.
 	int	_Width, _Height;
+
+	bool _Finished;
 
 	// The sample list per pixel.
 	std::vector<SampleList>	_Pixels;

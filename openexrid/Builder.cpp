@@ -37,21 +37,59 @@ extern std::string deflate (const char *str, int len);
 
 //**********************************************************************
 
-Builder::Builder (int width, int height, const std::vector<std::string> &slices) : _Width (width), 	_Height (height), _Pixels (width*height), _Slices (slices) {}
+Builder::Builder (int width, int height, const std::vector<std::string> &slices) : _Width (width), 	_Height (height), _Finished (false), _Pixels (width*height), _Slices (slices) {}
 
 //**********************************************************************
 
-void Builder::addCoverage (int x, int y, uint32_t id, const float *sliceValues)
+void Builder::addCoverage (int x, int y, uint32_t id, float z, const float *sliceValues)
 {
 	// The pixel sample list
 	SampleList &sl = _Pixels[x+y*_Width];
-	sl.addCoverage (id, sliceValues, (int)_Slices.size ());
+	sl.addCoverage (id, z, sliceValues, (int)_Slices.size ());
+}
+
+//**********************************************************************
+
+static int PtFuncCompare(void const *a, void const *b)
+{
+	float _a = ((SampleList::Header*)a)->Z;
+	float _b = ((SampleList::Header*)b)->Z;
+	return _a < _b ? -1 : _a > _b ? 1 : 0;
+}
+
+void Builder::finish ()
+{
+	if (_Finished)
+		throw runtime_error ("Builder::finish has been already called");
+
+	const int vn = (int)_Slices.size ();
+	for (vector<SampleList>::iterator ite = _Pixels.begin(); ite != _Pixels.end(); ++ite)
+	{
+		const int sn = ite->getSampleN(vn);
+		for (int s = 0; s < sn; ++s)
+		{
+			SampleList::Header &header = ite->getSampleHeader(s,vn);
+
+			// Average the Z
+			if (header.Count > 0)
+				header.Z /= (float)header.Count;
+		}
+
+		// Sort the samples in the pixel by Z
+		if (sn > 0)
+			qsort (&ite->getSampleHeader(0,vn), sn, sizeof(uint32_t)*(SampleList::HeaderSize+vn), PtFuncCompare);
+	}
+
+	_Finished = true;
 }
 
 //**********************************************************************
 
 void Builder::write (const char *filename, const char *names, int namesLength, Compression compression) const
 {
+	if (!_Finished)
+		throw runtime_error ("Builder::finish has not been called");
+
 	// EXR Header
 	// Right now, the image window is the data window
 	Header header (_Width, _Height);
@@ -84,6 +122,16 @@ void Builder::write (const char *filename, const char *names, int namesLength, C
 						0,
 						sizeof (uint32_t)));
 
+	// A line of Z
+	vector<float> _z;
+	vector<const float*> z (_Width);
+	frameBuffer.insert ("Z",
+						DeepSlice (FLOAT,
+						(char *) (&z[0]),
+						sizeof (float*),
+						0,
+						sizeof (float)));
+
 	const int vn = (int)_Slices.size ();
 
 	// A line of coverage
@@ -107,6 +155,7 @@ void Builder::write (const char *filename, const char *names, int namesLength, C
 	for (int y = 0; y < _Height; y++)
 	{
 		ids.clear ();
+		_z.clear ();
 		values.clear ();
 
 		// For each pixel
@@ -116,9 +165,10 @@ void Builder::write (const char *filename, const char *names, int namesLength, C
 			const int sn = sl.getSampleN(vn);
 			for (int s = 0; s < sn; ++s)
 			{
-				const uint32_t id = sl.getSampleId(s, vn);
+				const SampleList::Header &header = sl.getSampleHeader(s, vn);
 				assert (id < 100);
-				ids.push_back (id);
+				ids.push_back (header.Id);
+				_z.push_back (header.Z);
 				const float *src = sl.getSampleValues(s, vn);
 				for (int v = 0; v < vn; ++v)
 					values.push_back(src[v]);
@@ -134,6 +184,7 @@ void Builder::write (const char *filename, const char *names, int namesLength, C
 
 			// Set the ids pointer, it may have changed
 			id[x] = sn ? &ids[index] : NULL;
+			z[x] = sn ? &_z[index] : NULL;
 			for (int v = 0; v < vn; ++v)
 			{
 				// Set the value pointers, they may have changed

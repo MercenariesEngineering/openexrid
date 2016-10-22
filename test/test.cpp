@@ -17,8 +17,8 @@ const int SamplesMax = 4;
 const int NameN = 100;
 
 // Image resolution
-const int Width = 1920;
-const int Height = 1080;
+const int Width = 192;
+const int Height = 108;
 
 // Number of errors during the test
 int Errors = 0;
@@ -81,7 +81,8 @@ int main(int argc, char **argv)
 			const float weight = 1.f/(float)pixel.size ();
 			const float values[3] = {weight, weight*0.75f, weight*0.5f};
 			for (size_t s = 0; s < pixel.size (); ++s)
-				builder.addCoverage (x, y, pixel[s], values);
+				// Let's use the id as Z value
+				builder.addCoverage (x, y, pixel[s], (float)pixel[s], values);
 		}
 
 		{
@@ -92,6 +93,10 @@ int main(int argc, char **argv)
 				_names += *ite;
 				_names += '\0';
 			}
+
+			cout << "Finish the mask" << endl;
+			builder.finish();
+
 			cout << "Write the mask" << endl;
 			builder.write (filename, _names.c_str (), (int)_names.size());
 		}

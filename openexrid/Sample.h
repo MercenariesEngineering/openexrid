@@ -27,6 +27,9 @@ class Sample
 public:
 	// The Id of the string in the strings vector associated with this coverage value.
 	uint32_t	Id;
+
+	// The average Z of the sample of the object
+	float			Z;
 	
 	// The values in the pixel for this string.
 	// The sum of the coverage values in a pixel shoud be between [0,1].
