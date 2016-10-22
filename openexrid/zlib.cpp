@@ -22,7 +22,7 @@
 // ***************************************************************************
 
 // Deflate using zlib
-std::string deflate (const std::string& str)
+std::string deflate (const char *str, int len)
 {
 	z_stream zs;
 	memset(&zs, 0, sizeof(zs));
@@ -30,8 +30,8 @@ std::string deflate (const std::string& str)
 	if (deflateInit(&zs, Z_BEST_COMPRESSION) != Z_OK)
 		throw (std::runtime_error("deflateInit failed while compressing."));
 
-	zs.next_in = (Bytef*)str.data();
-	zs.avail_in = (uInt)str.size();
+	zs.next_in = (Bytef*)str;
+	zs.avail_in = (uInt)len;
 
 	int ret;
 	char outbuffer[32];

@@ -36,15 +36,9 @@ public:
 	// Build an empty Mask
 	Mask ();
 
-	// Build a mask using the Builder.
-	Mask (const class Builder &builder, const std::vector<std::string> &names);
-
 	// Read a Mask from an EXR file.
 	// This method throws exceptions in case of reading issues.
 	void read (const char *filename);
-
-	// Write the mask in an EXR file.
-	void write (const char *filename, Imf::Compression compression=Imf::ZIPS_COMPRESSION) const;
 
 	// Returns the image size
 	// This method is thread safe
@@ -87,6 +81,9 @@ public:
 	// Returns -1 if the slice is not found.
 	// This method is thread safe
 	inline int findSlice (const char *name) const;
+
+	// Mask version
+	static const uint32_t	Version = 1;
 private:
 
 	// The image resolution
@@ -112,9 +109,6 @@ private:
 
 	// The pixel samples concatenated in a single vector.
 	std::vector<std::vector<half> >	_SlicesData;
-
-	// Mask version
-	static const uint32_t	_Version = 1;
 };
 
 inline std::pair<int,int> Mask::getSize () const 

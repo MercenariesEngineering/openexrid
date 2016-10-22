@@ -85,12 +85,15 @@ int main(int argc, char **argv)
 		}
 
 		{
-			// Build and write a mask
-			cout << "Build the mask id map" << endl;
-			const Mask mask (builder, names);
-
+			// Concat the names
+			std::string _names;
+			for (vector<string>::const_iterator ite = names.begin(); ite != names.end(); ++ite)
+			{
+				_names += *ite;
+				_names += '\0';
+			}
 			cout << "Write the mask" << endl;
-			mask.write (filename);
+			builder.write (filename, _names.c_str (), (int)_names.size());
 		}
 
 		// Read a mask
