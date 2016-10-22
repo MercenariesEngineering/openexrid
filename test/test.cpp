@@ -1,6 +1,8 @@
 #include <vector>
 #include <iostream>
 #include <string>
+#include <cstdio>
+#include <stdexcept>
 #include "../openexrid/Builder.h"
 #include "../openexrid/Mask.h"
 #include "../openexrid/Query.h"
@@ -24,6 +26,26 @@ int Errors = 0;
 // The temporary file
 const char *filename = "temp.exr";
 
+std::string to_string (int d)
+{
+	char buffer[256];
+	std::sprintf (buffer, "%d", d);
+	return std::string (buffer);
+}
+
+class TestMatch
+{
+public:
+	std::vector<std::string>	&names;
+	int				i;
+	TestMatch (std::vector<std::string> &_names, int _i) : names (_names), i (_i)
+	{}
+	bool operator () (const char *name) const
+	{
+		return names[i] == name;
+	}
+};
+
 int main(int argc, char **argv)
 {
 	try
@@ -37,15 +59,19 @@ int main(int argc, char **argv)
 		vector<vector<int> >	pixelToNames (Width*Height);
 
 		// Generate a random image
-		for (auto &pixel : pixelToNames)
+		for (vector<vector<int> >::iterator itp = pixelToNames.begin (); itp != pixelToNames.end (); ++itp)
 		{
 			const int samplesN = rand ()%(SamplesMax+1);
 			for (int s = 0; s < samplesN; ++s)
-				pixel.push_back (rand()%NameN);
+				itp->push_back (rand()%NameN);
 		}
 
 		cout << "Fill a mask id map" << endl;
-		Builder builder (Width, Height, {"R","G","B"});
+		std::vector<std::string> slices;
+		slices.push_back ("R");
+		slices.push_back ("G");
+		slices.push_back ("B");
+		Builder builder (Width, Height, slices);
 
 		// Fill the builder
 		for (int y = 0; y < Height; ++y)
@@ -82,7 +108,7 @@ int main(int argc, char **argv)
 		for (int i = 0; i < NameN; ++i)
 		{
 			// Create a query for this name
-			Query query (&mask, [&names,i](const char *name){return names[i] == name;});
+			Query query (&mask, TestMatch (names, i));
 
 			for (int y=0; y<Height; ++y)
 			for (int x=0; x<Width; ++x)

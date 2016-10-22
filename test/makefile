@@ -1,3 +1,4 @@
+sinclude ../makefile.myconfig
 sinclude ../makefile.config
 
 # Configuration
@@ -6,7 +7,7 @@ EXR_INCLUDE ?= /usr/include/OpenEXR
 EXR_LIB ?= /usr/lib
 
 VERSION ?= release
-CPPFLAGS += -std=c++11 -O3 -Wall -DNDEBUG -fPIC -I $(EXR_INCLUDE)
+CPPFLAGS += -O3 -Wall -DNDEBUG -fPIC -I $(EXR_INCLUDE)
 
 
 PWD = $(shell pwd)

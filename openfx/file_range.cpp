@@ -30,10 +30,8 @@ bool matchFramePattern (const std::string &file, const std::string &pre, const s
 	if (file.compare (0, pre.size (), pre) != 0) return false;
 	if (file.compare (pre.size ()+n, file.npos, post) != 0) return false;
 
-	size_t size;
-	frame = std::stoi (file.substr (pre.size (), n), &size);
-
-	return size == n;
+	frame = atoi (file.substr (pre.size (), n).c_str ());
+	return true;
 }
 
 // Get the frame range of a filename using a pattern

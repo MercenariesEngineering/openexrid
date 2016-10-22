@@ -1,3 +1,4 @@
+sinclude ../makefile.myconfig
 sinclude ../makefile.config
 
 PWD = $(shell pwd)

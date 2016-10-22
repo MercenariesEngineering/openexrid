@@ -111,15 +111,15 @@ private:
 	std::vector<std::string>	_Slices;
 
 	// The pixel samples concatenated in a single vector.
-	std::vector<std::vector<half>>	_SlicesData;
+	std::vector<std::vector<half> >	_SlicesData;
 
 	// Mask version
-	const uint32_t	_Version = 1;
+	static const uint32_t	_Version = 1;
 };
 
 inline std::pair<int,int> Mask::getSize () const 
 {
-	return {_Width, _Height};
+	return std::pair<int,int> (_Width, _Height);
 }
 
 inline int Mask::getSampleN (int x, int y) const
@@ -167,7 +167,7 @@ inline const std::string &Mask::getSlice (int slice) const
 
 inline int Mask::findSlice (const char *name) const
 {
-	auto ite = std::find (_Slices.begin (), _Slices.end (), name);
+	std::vector<std::string>::const_iterator ite = std::find (_Slices.begin (), _Slices.end (), name);
 	return ite == _Slices.end () ? -1 : (int)(ite-_Slices.begin ());
 }
 

@@ -12,6 +12,7 @@ _test: _openexrid
 	make -C test
 
 clean:
+	make -C openfx clean
 	make -C openexrid clean
 	make -C test clean
 

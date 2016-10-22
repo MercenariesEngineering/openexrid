@@ -46,7 +46,7 @@ std::set<std::string> split (const char *str, const std::string &delim)
 		if (*str == '\0' || delim.find (*str) != delim.npos)
 		{
 			if (start < str)
-				result.emplace (start, str);
+				result.insert (std::string (start, str));
 			start = str+1;
 		}
 		if (*str == '\0')
@@ -61,11 +61,12 @@ template<class T>
 std::string join (const T &names, const char *sep)
 {
 	std::string result;
-	for (const auto &name : names)
+	typename T::const_iterator	itn;
+	for (itn = names.begin (); itn != names.end (); ++itn)
 	{
 		if (!result.empty ())
 			result += sep;
-		result += name;
+		result += *itn;
 	}
 	return result;
 }
@@ -309,10 +310,11 @@ static OfxStatus interactPenUp(OfxImageEffectHandle  effect, OfxInteractHandle i
 		if (data->Shift)
 		{
 			// Reverse the selection for the previously selected names
-			for (const auto &name : oldNames)
+			std::set<std::string>::const_iterator	itn;
+			for (itn = oldNames.begin (); itn != oldNames.end (); ++itn)
 			{
 				// Try insert
-				auto r = names.insert (name);
+				std::pair<std::set<std::string>::iterator, bool> r = names.insert (*itn);
 
 				// Already there, remove it
 				if (!r.second)

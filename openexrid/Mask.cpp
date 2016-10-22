@@ -26,6 +26,7 @@
 #include <ImfStringAttribute.h>
 #include <ImathBox.h>
 #include <assert.h>
+#include <stdexcept>
 
 using namespace Imf;
 using namespace Imath;
@@ -110,14 +111,14 @@ void Mask::read (const char *filename)
 	// Read the slices
 	_Slices.clear ();
 	const ChannelList &channels = header.channels ();
-	for (auto channel = channels.begin (); channel != channels.end (); ++channel)
+	for (ChannelList::ConstIterator channel = channels.begin (); channel != channels.end (); ++channel)
 	{
 		if (channel.channel ().type == HALF)
 			_Slices.push_back (channel.name());
 	}
 
 	// For each pixel of a single line, the pointer on the coverage values
-	vector<vector<half*>> slices (_Slices.size ());
+	vector<vector<half*> > slices (_Slices.size ());
 	for (size_t s = 0; s < _Slices.size (); ++s)
 	{
 		slices[s].resize (_Width);
@@ -187,10 +188,10 @@ Mask::Mask (const Builder &builder, const std::vector<std::string> &names) : _Wi
 
 	// Accumulates the string size to build a string index
 	uint32_t index = 0;
-	for (auto &i : _NamesIndexes)
+	for (std::vector<uint32_t>::iterator iti = _NamesIndexes.begin (); iti != _NamesIndexes.end (); ++iti)
 	{
-		const uint32_t tmp = i;
-		i = index;
+		const uint32_t tmp = *iti;
+		*iti = index;
 		index += tmp;
 	}
 
@@ -198,9 +199,9 @@ Mask::Mask (const Builder &builder, const std::vector<std::string> &names) : _Wi
 	_Names.reserve (index);
 
 	// Concatenate the names into _Names
-	for (const auto &name : names)
+	for (std::vector<std::string>::const_iterator itn = names.begin (); itn != names.end (); ++itn)
 	{
-		_Names += name;
+		_Names += *itn;
 		_Names += '\0';
 	}
 
@@ -211,10 +212,11 @@ Mask::Mask (const Builder &builder, const std::vector<std::string> &names) : _Wi
 	size_t indexN = 0;
 	// We need one more index to get the size of the last pixel
 	_PixelsIndexes.reserve (_Width*_Height+1);
-	for (const auto &p : builder._Pixels)
+	std::vector<SampleList>::const_iterator	itp;
+	for (itp = builder._Pixels.begin (); itp != builder._Pixels.end (); ++itp)
 	{
 		_PixelsIndexes.push_back ((uint32_t)indexN);
-		indexN += p.getSampleN (valueN);
+		indexN += itp->getSampleN (valueN);
 	}
 	// One last index to get the size of the last pixel
 	_PixelsIndexes.push_back ((uint32_t)indexN);
@@ -224,14 +226,14 @@ Mask::Mask (const Builder &builder, const std::vector<std::string> &names) : _Wi
 	_SlicesData.resize (_Slices.size ());
 	for (size_t s = 0; s < _Slices.size (); ++s)
 		_SlicesData[s].reserve (indexN);
-	for (const auto &samples : builder._Pixels)
+	for (itp = builder._Pixels.begin (); itp != builder._Pixels.end (); ++itp)
 	{
-		const int sampleN = samples.getSampleN (valueN);
+		const int sampleN = itp->getSampleN (valueN);
 		for (int s = 0; s < sampleN; ++s)
 		{
-			_Ids.push_back (samples.getSampleId (s, valueN));
+			_Ids.push_back (itp->getSampleId (s, valueN));
 			for (size_t sl = 0; sl < _Slices.size (); ++sl)
-				_SlicesData[sl].push_back (samples.getSampleValues (s, valueN)[sl]);
+				_SlicesData[sl].push_back (itp->getSampleValues (s, valueN)[sl]);
 		}
 	}
 }
@@ -272,7 +274,7 @@ void Mask::write (const char *filename, Compression compression) const
 						sizeof (uint32_t)));
 
 	// A line of coverage
-	vector<vector<const half*>> slices (_Slices.size ());
+	vector<vector<const half*> > slices (_Slices.size ());
 	for (size_t s = 0; s < _Slices.size (); ++s)
 	{
 		slices[s].resize (_Width);
