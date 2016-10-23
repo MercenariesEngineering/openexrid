@@ -56,14 +56,22 @@ int main(int argc, char **argv)
 			names.push_back (std::to_string (rand()));
 
 		// The name id per pixels
-		vector<vector<int> >	pixelToNames (Width*Height);
+		struct entry
+		{
+			int Id;
+			float Z;
+			float Values[3];
+		};
+		vector<vector<entry> >	pixelToNames (Width*Height);
 
 		// Generate a random image
-		for (vector<vector<int> >::iterator itp = pixelToNames.begin (); itp != pixelToNames.end (); ++itp)
+		for (vector<vector<entry> >::iterator itp = pixelToNames.begin (); itp != pixelToNames.end (); ++itp)
 		{
 			const int samplesN = rand ()%(SamplesMax+1);
+			const float weight = 1.f/(float)samplesN;
+			const int baseId = rand();
 			for (int s = 0; s < samplesN; ++s)
-				itp->push_back (rand()%NameN);
+				itp->push_back ({(baseId+s*10)%NameN, (float)rand(), {weight*(float)rand()/(float)RAND_MAX, weight*(float)rand()/(float)RAND_MAX, weight*(float)rand()/(float)RAND_MAX}});
 		}
 
 		cout << "Fill a mask id map" << endl;
@@ -77,12 +85,10 @@ int main(int argc, char **argv)
 		for (int y = 0; y < Height; ++y)
 		for (int x = 0; x < Width; ++x)
 		{
-			const vector<int> &pixel = pixelToNames[x+y*Width];
-			const float weight = 1.f/(float)pixel.size ();
-			const float values[3] = {weight, weight*0.75f, weight*0.5f};
+			const vector<entry> &pixel = pixelToNames[x+y*Width];
 			for (size_t s = 0; s < pixel.size (); ++s)
 				// Let's use the id as Z value
-				builder.addCoverage (x, y, pixel[s], (float)pixel[s], values);
+				builder.addCoverage (x, y, pixel[s].Id, pixel[s].Z, pixel[s].Values);
 		}
 
 		{
@@ -122,21 +128,20 @@ int main(int argc, char **argv)
 			for (int x=0; x<Width; ++x)
 			{
 				// Recompute the coverage from the original image
-				const vector<int> &pixel = pixelToNames[x+y*Width];
+				const vector<entry> &pixel = pixelToNames[x+y*Width];
 				const float weight = 1.f/(float)pixel.size ();
-				const float values[3] = {weight, weight*0.75f, weight*0.5f};
 				float weightSum[3] = {0, 0, 0};
 				for (size_t s = 0; s < pixel.size (); ++s)
-				{
-					weightSum[0] += names[pixel[s]] == names[i] ? (half)values[0] : (half)0;
-					weightSum[1] += names[pixel[s]] == names[i] ? (half)values[1] : (half)0;
-					weightSum[2] += names[pixel[s]] == names[i] ? (half)values[2] : (half)0;
-				}
+					for (int v = 0; v < 3; ++v)
+						if (pixel[s].Id == i)
+							weightSum[v] += (float)(half)pixel[s].Values[v];
 
 				// The coverage from the file
 				std::vector<float> coverage;
 				query.getSliceData (x, y, coverage);
 
+				if ((half)weightSum[0] != (half)coverage[R])
+					cout << weightSum[0] << " " << coverage[R] << " " << (weightSum[0]-coverage[R])/weightSum[0] << endl;
 				Errors += int((half)weightSum[0] != (half)coverage[R]);
 				Errors += int((half)weightSum[1] != (half)coverage[G]);
 				Errors += int((half)weightSum[2] != (half)coverage[B]);
