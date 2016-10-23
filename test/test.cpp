@@ -60,7 +60,11 @@ int main(int argc, char **argv)
 		{
 			int Id;
 			float Z;
-			float Values[3];
+			float Values[4];
+			bool operator<(const entry &o) const
+			{
+				return Z < o.Z;
+			}
 		};
 		vector<vector<entry> >	pixelToNames (Width*Height);
 
@@ -71,7 +75,10 @@ int main(int argc, char **argv)
 			const float weight = 1.f/(float)samplesN;
 			const int baseId = rand();
 			for (int s = 0; s < samplesN; ++s)
-				itp->push_back ({(baseId+s*10)%NameN, (float)rand(), {weight*(float)rand()/(float)RAND_MAX, weight*(float)rand()/(float)RAND_MAX, weight*(float)rand()/(float)RAND_MAX}});
+				itp->push_back ({(baseId+s*10)%NameN, (float)((baseId+s*10)%NameN), {weight*(float)rand()/(float)RAND_MAX, weight*(float)rand()/(float)RAND_MAX, weight*(float)rand()/(float)RAND_MAX, weight*(float)rand()/(float)RAND_MAX}});
+
+			// Sort by Z
+			sort (itp->begin(), itp->end ());
 		}
 
 		cout << "Fill a mask id map" << endl;
@@ -79,7 +86,9 @@ int main(int argc, char **argv)
 		slices.push_back ("R");
 		slices.push_back ("G");
 		slices.push_back ("B");
+		slices.push_back ("A");
 		Builder builder (Width, Height, slices);
+		const int TestA = 3;
 
 		// Fill the builder
 		for (int y = 0; y < Height; ++y)
@@ -107,6 +116,27 @@ int main(int argc, char **argv)
 			builder.write (filename, _names.c_str (), (int)_names.size());
 		}
 
+		// Accumulate the pixels values
+		for (int y=0; y<Height; ++y)
+		for (int x=0; x<Width; ++x)
+		{
+			vector<entry> &pixel = pixelToNames[x+y*Width];
+			if (!pixel.empty())
+			{
+				for (int v = 0; v < 4; ++v)
+				{
+					float acc = 0.f;
+					for (size_t s = 0; s < pixel.size (); ++s)
+						pixel[s].Values[v] = (acc += pixel[s].Values[v]);
+				}
+				for (size_t s = pixel.size ()-1; s > 0; --s)
+				{
+					for (int v = 0; v < 4; ++v)
+						pixel[s].Values[v] = (pixel[s].Values[v]-pixel[s-1].Values[v])/(1.f-pixel[s-1].Values[TestA]);
+				}
+			}
+		}
+
 		// Read a mask
 		cout << "Read the mask" << endl;
 		Mask mask;
@@ -115,6 +145,7 @@ int main(int argc, char **argv)
 		const int R = mask.findSlice ("R");
 		const int G = mask.findSlice ("G");
 		const int B = mask.findSlice ("B");
+		const int A = mask.findSlice ("A");
 
 		// Check the mask
 		cout << "Check the mask" << endl;
@@ -129,22 +160,28 @@ int main(int argc, char **argv)
 			{
 				// Recompute the coverage from the original image
 				const vector<entry> &pixel = pixelToNames[x+y*Width];
-				const float weight = 1.f/(float)pixel.size ();
-				float weightSum[3] = {0, 0, 0};
+				float weightSum[4] = {0, 0, 0, 0};
+
+				// Fill the accumulated buffer
+				float prevAlpha = 0.f;
 				for (size_t s = 0; s < pixel.size (); ++s)
-					for (int v = 0; v < 3; ++v)
-						if (pixel[s].Id == i)
-							weightSum[v] += (float)(half)pixel[s].Values[v];
+				{
+					if (pixel[s].Id == i)
+					{
+						for (int v = 0; v < 4; ++v)
+							weightSum[v] += (half)((1.f - prevAlpha)*(half)pixel[s].Values[v]);
+					}
+					prevAlpha += (1.f - prevAlpha)*(half)pixel[s].Values[TestA];
+				}
 
 				// The coverage from the file
 				std::vector<float> coverage;
 				query.getSliceData (x, y, coverage);
 
-				if ((half)weightSum[0] != (half)coverage[R])
-					cout << weightSum[0] << " " << coverage[R] << " " << (weightSum[0]-coverage[R])/weightSum[0] << endl;
-				Errors += int((half)weightSum[0] != (half)coverage[R]);
-				Errors += int((half)weightSum[1] != (half)coverage[G]);
-				Errors += int((half)weightSum[2] != (half)coverage[B]);
+				Errors += int(weightSum[0] != coverage[R]);
+				Errors += int(weightSum[1] != coverage[G]);
+				Errors += int(weightSum[2] != coverage[B]);
+				Errors += int(weightSum[3] != coverage[A]);
 			}
 		}
 	}

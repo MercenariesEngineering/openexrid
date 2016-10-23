@@ -37,7 +37,7 @@ extern std::string inflate (const std::string& str);
 
 // ***************************************************************************
 
-Mask::Mask () : _Width (0), _Height (0) {}
+Mask::Mask () : _Width (0), _Height (0), _A (-1) {}
 
 // ***************************************************************************
 
@@ -115,6 +115,11 @@ void Mask::read (const char *filename)
 			_Slices.push_back (channel.name());
 	}
 
+	std::vector<std::string>::iterator ite = std::find (_Slices.begin(), _Slices.end (), "A");
+	if (ite == _Slices.end())
+		throw runtime_error ("No A channel");
+	_A = (int)(ite-_Slices.begin ());
+
 	// For each pixel of a single line, the pointer on the coverage values
 	vector<vector<half*> > slices (_Slices.size ());
 	for (size_t s = 0; s < _Slices.size (); ++s)
@@ -154,17 +159,37 @@ void Mask::read (const char *filename)
 	for (int y = 0; y < _Height; y++)
 	{
 		// For each pixel
-		for (int x = 0; x < _Width; x++, ++i)
+		for (int x = 0; x < _Width; x++)
 		{
+			const int _i = i+x;
 			// The sample id and coverage pointers for this pixel
-			const uint32_t count = _PixelsIndexes[i+1]-_PixelsIndexes[i];
+			const uint32_t count = _PixelsIndexes[_i+1]-_PixelsIndexes[_i];
 
 			// Avoid invalide indexes
-			id[x] = count ? &_Ids[_PixelsIndexes[i]] : NULL;
+			id[x] = count ? &_Ids[_PixelsIndexes[_i]] : NULL;
 			for (size_t s = 0; s < _Slices.size (); ++s)
-				slices[s][x] = count ? &_SlicesData[s][_PixelsIndexes[i]] : NULL;
+				slices[s][x] = count ? &_SlicesData[s][_PixelsIndexes[_i]] : NULL;
 		}
 		file.readPixels (y);
+
+		const int A = findSlice ("A");
+		for (int x = 0; x < _Width; x++)
+		{
+			const int _i = i+x;
+			const uint32_t count = _PixelsIndexes[_i+1]-_PixelsIndexes[_i];
+			if (count == 0) continue;
+			// Uncumulate the pixels value
+			float prevAlpha = 0.f;
+			for (uint32_t s = 0; s < count; ++s)
+			{
+				const int curr = _PixelsIndexes[_i]+s;
+				const float alpha = (float)_SlicesData[A][curr];
+				for (size_t v = 0; v < _Slices.size (); ++v)
+					_SlicesData[v][curr] = (1.f-prevAlpha)*_SlicesData[v][curr];
+				prevAlpha += (1.f-prevAlpha)*alpha;
+			}
+		}
+		i += _Width;
 	}
 }
 

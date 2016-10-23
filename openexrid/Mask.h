@@ -89,6 +89,9 @@ private:
 	// The image resolution
 	int _Width, _Height;
 
+	// The alpha channel
+	int _A;
+
 	// For each name, the index of the begining of the string in the _Names buffer.
 	std::vector<uint32_t>	_NamesIndexes;
 

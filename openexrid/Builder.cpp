@@ -62,9 +62,18 @@ void Builder::finish ()
 	if (_Finished)
 		throw runtime_error ("Builder::finish has been already called");
 
+	std::vector<std::string>::iterator ite = std::find (_Slices.begin(), _Slices.end (), "A");
+	if (ite == _Slices.end())
+		throw runtime_error ("No A channel");
+	const int A = (int)(ite-_Slices.begin ());
+
 	const int vn = (int)_Slices.size ();
+	std::vector<float> acc;
 	for (vector<SampleList>::iterator ite = _Pixels.begin(); ite != _Pixels.end(); ++ite)
 	{
+		acc.clear ();
+		acc.resize (vn, 0.f);
+
 		const int sn = ite->getSampleN(vn);
 		for (int s = 0; s < sn; ++s)
 		{
@@ -78,6 +87,22 @@ void Builder::finish ()
 		// Sort the samples in the pixel by Z
 		if (sn > 0)
 			qsort (&ite->getSampleHeader(0,vn), sn, sizeof(uint32_t)*(SampleList::HeaderSize+vn), PtFuncCompare);
+
+		// Cumulate the values in the EXR deep image way
+		for (int s = 0; s < sn; ++s)
+		{
+			float *values = ite->getSampleValues (s,vn);
+			for (int v = 0; v < vn; ++v)
+				values[v] = (acc[v] += values[v]);
+		}
+		for (int s = sn-1; s > 0; --s)
+		{
+			float *values = ite->getSampleValues (s,vn);
+			float *valuesPrev = ite->getSampleValues (s-1,vn);
+			const float oma = 1.f-valuesPrev[A];
+			for (int v = 0; v < vn; ++v)
+				values[v] = (values[v]-valuesPrev[v])/oma;
+		}
 	}
 
 	_Finished = true;
@@ -94,6 +119,7 @@ void Builder::write (const char *filename, const char *names, int namesLength, C
 	// Right now, the image window is the data window
 	Header header (_Width, _Height);
 	header.channels().insert ("Id", Channel (UINT));
+	header.channels().insert ("Z", Channel (FLOAT));
 	for (size_t s = 0; s < _Slices.size (); ++s)
 		header.channels().insert (_Slices[s], Channel (HALF));
 	header.setType (DEEPSCANLINE);
@@ -166,7 +192,6 @@ void Builder::write (const char *filename, const char *names, int namesLength, C
 			for (int s = 0; s < sn; ++s)
 			{
 				const SampleList::Header &header = sl.getSampleHeader(s, vn);
-				assert (id < 100);
 				ids.push_back (header.Id);
 				_z.push_back (header.Z);
 				const float *src = sl.getSampleValues(s, vn);
