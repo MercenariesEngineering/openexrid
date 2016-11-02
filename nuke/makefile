@@ -5,12 +5,12 @@ PWD = $(shell pwd)
 SRCS = ${wildcard *.cpp}
 OBJS = $(SRCS:%.cpp=$(VERSION)/%.o)
 
-all: $(VERSION) $(VERSION)/openexrid.ofx
+all: $(VERSION) $(VERSION)/DeepOpenEXRId.so
 
 $(VERSION):	
 	mkdir -p $(VERSION)
 
-$(VERSION)/openexrid.ofx: $(OBJS)
+$(VERSION)/DeepOpenEXRId.so: $(OBJS)
 	g++ -o $@ $(OBJS) --shared $(LDFLAGS)
 
 $(OBJS): $(VERSION)/%.o: %.cpp
@@ -19,9 +19,10 @@ $(OBJS): $(VERSION)/%.o: %.cpp
 clean:
 	rm -f $(VERSION)/*.o $(VERSION)/*.a $(VERSION)/*.d $(VERSION)/*.ofx
 
-install: $(VERSION)/openexrid.ofx
-	mkdir -p $(PREFIX)/openexrid.ofx.bundle/Contents/Linux-x86-64
-	cp $(VERSION)/openexrid.ofx $(PREFIX)/openexrid.ofx.bundle/Contents/Linux-x86-64
+install: $(VERSION)/DeepOpenEXRId.so
+	mkdir -p $(PREFIX)/openexrid_nuke_10_linux
+	cp $(VERSION)/DeepOpenEXRId.so $(PREFIX)/openexrid_nuke_10_linux
+	cp menu.py $(PREFIX)/openexrid_nuke_10_linux
 
 DEPS = $(SRCS:%.cpp=$(VERSION)/%.d)
 sinclude $(DEPS)
