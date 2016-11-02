@@ -101,7 +101,7 @@ void Builder::finish ()
 			float *valuesPrev = ite->getSampleValues (s-1,vn);
 			const float oma = 1.f-valuesPrev[A];
 			for (int v = 0; v < vn; ++v)
-				values[v] = (values[v]-valuesPrev[v])/oma;
+				values[v] = (values[v]-valuesPrev[v])/(oma > 0.f ? oma : 1.f);
 		}
 	}
 
