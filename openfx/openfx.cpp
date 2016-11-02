@@ -282,9 +282,9 @@ void Processor::doProcessing(OfxRectI procWindow)
 					const OfxRGBColourF h = haltonColors (sample.Id);
 					const bool selected = Query.isSelected (sample.Id);
 					const OfxRGBColourF c = {
-						R == -1 ? 1.f : float (sample.Values[R]), 
-						G == -1 ? 1.f : float (sample.Values[G]),
-						B == -1 ? 1.f : float (sample.Values[B])};
+						R == -1 ? a : float (sample.Values[R]), 
+						G == -1 ? a : float (sample.Values[G]),
+						B == -1 ? a : float (sample.Values[B])};
 					dstPix->r += selected ? c.r : powf (h.r, 1.f/0.3f)*a;
 					dstPix->g += selected ? c.g : powf (h.g, 1.f/0.3f)*a;
 					dstPix->b += selected ? c.b : powf (h.b, 1.f/0.3f)*a;
