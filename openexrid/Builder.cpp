@@ -16,6 +16,8 @@
 #include "Builder.h"
 #include "Mask.h"
 
+
+#include <stdexcept>
 #include <algorithm>
 #include <assert.h>
 

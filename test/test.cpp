@@ -46,6 +46,18 @@ public:
 	}
 };
 
+// The name id per pixels
+struct entry
+{
+	int Id;
+	float Z;
+	float Values[4];
+	bool operator<(const entry &o) const
+	{
+		return Z < o.Z;
+	}
+};
+
 int main(int argc, char **argv)
 {
 	try
@@ -53,19 +65,8 @@ int main(int argc, char **argv)
 		// Generate some names
 		vector<string> names;
 		for (int i = 0; i < NameN; ++i)
-			names.push_back (std::to_string (rand()));
+			names.push_back (::to_string (rand()));
 
-		// The name id per pixels
-		struct entry
-		{
-			int Id;
-			float Z;
-			float Values[4];
-			bool operator<(const entry &o) const
-			{
-				return Z < o.Z;
-			}
-		};
 		vector<vector<entry> >	pixelToNames (Width*Height);
 
 		// Generate a random image
@@ -75,7 +76,16 @@ int main(int argc, char **argv)
 			const float weight = 1.f/(float)samplesN;
 			const int baseId = rand();
 			for (int s = 0; s < samplesN; ++s)
-				itp->push_back ({(baseId+s*10)%NameN, (float)((baseId+s*10)%NameN), {weight*(float)rand()/(float)RAND_MAX, weight*(float)rand()/(float)RAND_MAX, weight*(float)rand()/(float)RAND_MAX, weight*(float)rand()/(float)RAND_MAX}});
+			{
+				entry	e;
+				e.Id = (baseId+s*10)%NameN;
+				e.Z = (float)((baseId+s*10)%NameN);
+				e.Values[0] = weight*(float)rand()/(float)RAND_MAX;
+				e.Values[1] = weight*(float)rand()/(float)RAND_MAX;
+				e.Values[2] = weight*(float)rand()/(float)RAND_MAX;
+				e.Values[3] = weight*(float)rand()/(float)RAND_MAX;
+				itp->push_back (e);
+			}
 
 			// Sort by Z
 			sort (itp->begin(), itp->end ());
