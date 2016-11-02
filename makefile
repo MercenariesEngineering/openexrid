@@ -1,6 +1,6 @@
 sinclude makefile.config
 
-all: _openexrid _test _openfx
+all: _openexrid _test _openfx _nuke
 
 _openexrid:
 	make -C openexrid
@@ -10,6 +10,9 @@ _openfx:
 
 _test: _openexrid
 	make -C test
+
+_nuke:
+	make -C nuke
 
 clean:
 	make -C openfx clean
