@@ -17,11 +17,13 @@ _nuke:
 clean:
 	make -C openfx clean
 	make -C openexrid clean
+	make -C nuke clean
 	make -C test clean
 
 install:
 	make -C openexrid install
 	make -C openfx install
+	make -C nuke install
 
 dotest: _test _openexrid
 	test/$(VERSION)/test
