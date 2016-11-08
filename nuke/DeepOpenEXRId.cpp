@@ -20,6 +20,7 @@
 #include "DDImage/MetaData.h"
 #include "DDImage/Interest.h"
 #include <re2/set.h>
+#include <iterator>
 
 using namespace DD::Image;
 using namespace std;
@@ -88,11 +89,29 @@ Op* DeepOpenEXRId::op()
 	return this;
 }
 
+const char* const kapMode[] = {
+  "Replace",
+  "Add",
+  "Remove",
+  "Keep",
+  NULL
+};
+
+enum TMode
+{
+	ModeReplace=0,
+	ModeAdd,
+	ModeRemove,
+	ModeKeep
+};
+
 void DeepOpenEXRId::knobs(Knob_Callback f)
 {
 	// create the knob needed to get mouse interaction:
 	CustomKnob1(PickingKnob, f, this, "kludge");
-  
+
+	Enumeration_knob(f, &_mode, kapMode, "pick_mode", "pick mode");
+
 	Multiline_String_knob(f, &_patterns, "patterns", 0, 20);	
 	Tooltip(f, 
 		"Each line is a regular expression matching object names like :\n"
@@ -328,26 +347,6 @@ static std::string escapeRegExp (const char *s)
 	return result;
 }
 
-// Split a string in a string set
-static std::set<std::string> split (const char *str, const std::string &delim)
-{
-	set<string> result;
-	const char *start = str;
-	while (true)
-	{
-		if (*str == '\0' || delim.find (*str) != delim.npos)
-		{
-			if (start < str)
-				result.insert (string (start, str));
-			start = str+1;
-		}
-		if (*str == '\0')
-			break;
-		++str;
-	}
-	return result;
-}
-
 static std::string escapeBackslash (const std::string &str)
 {
 	string result;
@@ -361,8 +360,32 @@ static std::string escapeBackslash (const std::string &str)
 	return result;
 }
 
+// Split a string in a string set
+static std::set<std::string> getOldName (const char *str)
+{
+	const std::string delim ("\r\n");
+	set<string> result;
+	const char *start = str;
+	while (true)
+	{
+		if (*str == '\0' || delim.find (*str) != delim.npos)
+		{
+			if (start < str)
+				result.insert (escapeBackslash (string (start, str)));
+			start = str+1;
+		}
+		if (*str == '\0')
+			break;
+		++str;
+	}
+	return result;
+}
+
 void DeepOpenEXRId::select (float x0, float y0, float x1, float y1, bool invert)
 {
+	if (_mode == ModeKeep)
+		return;
+
 	DeepOp* in = input0();
 	DeepPlane inPlane;
 
@@ -375,6 +398,7 @@ void DeepOpenEXRId::select (float x0, float y0, float x1, float y1, bool invert)
 	int t = (int)ceil(max(y0,y1));
 	r += (int)(r==l);
 	t += (int)(t==b);
+
 	DD::Image::Box box (l,b,r,t);
 	if (!in->deepEngine(box, needed, inPlane))
 		return;
@@ -415,28 +439,23 @@ void DeepOpenEXRId::select (float x0, float y0, float x1, float y1, bool invert)
 		}
 	}
 
-	if (invert)
-	{	
-		set<string> oldNames = split (_patterns, "\r\n");
+	set<string> oldNames = getOldName (_patterns);
+	set<string> result;
 
-		// Reverse the selection for the previously selected names
-		set<string>::const_iterator	itn;
-		for (itn = oldNames.begin (); itn != oldNames.end (); ++itn)
-		{
-			// Try insert
-			pair<set<string>::iterator, bool> r = names.insert (escapeBackslash (*itn));
-
-			// Already there, remove it
-			if (!r.second)
-				names.erase (r.first);
-		}
-	}
+	if (_mode == ModeReplace && !invert)
+		result = names;
+	else if (_mode == ModeReplace && invert)
+		std::set_symmetric_difference (names.begin(), names.end(), oldNames.begin(), oldNames.end(), std::inserter(result, result.end()));
+	else if (_mode == ModeAdd)
+		std::set_union (names.begin(), names.end(), oldNames.begin(), oldNames.end(), std::inserter(result, result.end()));
+	else if (_mode == ModeRemove)
+		std::set_difference (oldNames.begin(), oldNames.end(), names.begin(), names.end(), std::inserter(result, result.end()));
 
 	// Build a final string with the patterns
 	string patterns;
 	{
-		set<string>::iterator ite = names.begin();
-		while (ite != names.end())
+		set<string>::iterator ite = result.begin();
+		while (ite != result.end())
 		{
 			if (!patterns.empty())
 				patterns += "\n";

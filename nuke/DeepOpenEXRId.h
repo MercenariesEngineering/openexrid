@@ -24,6 +24,7 @@ class DeepOpenEXRId : public DD::Image::DeepFilterOp
 	const char *_patterns;
 	bool _colors, _invert, _alpha, _keepVis;
 	const char *_version;
+	int _mode;
     
 public:
   DeepOpenEXRId(Node* node) : DeepFilterOp(node) {
@@ -33,6 +34,7 @@ public:
 	_alpha = false;
 	_keepVis = true;
 	_version = NULL;
+	_mode = 0;
   }
 
   const char* node_help() const;
