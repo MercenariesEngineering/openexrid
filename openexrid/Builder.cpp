@@ -112,14 +112,36 @@ void Builder::finish ()
 
 //**********************************************************************
 
-void Builder::write (const char *filename, const char *names, int namesLength, Compression compression) const
+void Builder::write (const char *filename, const char *names, int namesLength, bool computeDataWindow, Compression compression) const
 {
 	if (!_Finished)
 		throw runtime_error ("Builder::finish has not been called");
 
+	const int vn = (int)_Slices.size ();
+
+	Imath::Box2i dataW;
+
+	// If required, compute the data window
+	if (computeDataWindow)
+	{
+		for (int y = 0; y < _Height; ++y)
+		for (int x = 0; x < _Width; ++x)
+		{
+			if (_Pixels[x+y*_Width].getSampleN (vn) > 0)
+				dataW.extendBy (Imath::V2i (x, y));
+		}
+
+		// Exr doesn't like empty images
+		if (dataW.isEmpty())
+			dataW.extendBy (Imath::V2i(0,0));
+	}
+	else
+			// Or use the whole image
+			dataW = Imath::Box2i (Imath::V2i(0,0),Imath::V2i(_Width-1,_Height-1));
+
 	// EXR Header
 	// Right now, the image window is the data window
-	Header header (_Width, _Height);
+	Header header (_Width, _Height, dataW);
 	header.channels().insert ("Id", Channel (UINT));
 	header.channels().insert ("Z", Channel (FLOAT));
 	for (size_t s = 0; s < _Slices.size (); ++s)
@@ -160,8 +182,6 @@ void Builder::write (const char *filename, const char *names, int namesLength, C
 						0,
 						sizeof (float)));
 
-	const int vn = (int)_Slices.size ();
-
 	// A line of coverage
 	vector<half> values;
 	vector<vector<const half*> > slices (_Slices.size ());
@@ -179,9 +199,10 @@ void Builder::write (const char *filename, const char *names, int namesLength, C
 	file.setFrameBuffer(frameBuffer);
 
 	// For each line
-	int i = 0;
-	for (int y = 0; y < _Height; y++)
+	for (int y = dataW.min.y; y <= dataW.max.y; y++)
 	{
+		const int lineStart = y*_Width;
+
 		ids.clear ();
 		_z.clear ();
 		values.clear ();
@@ -189,7 +210,7 @@ void Builder::write (const char *filename, const char *names, int namesLength, C
 		// For each pixel
 		for (int x = 0; x < _Width; x++)
 		{
-			const SampleList &sl = _Pixels[i+x];
+			const SampleList &sl = _Pixels[lineStart+x];
 			const int sn = sl.getSampleN(vn);
 			for (int s = 0; s < sn; ++s)
 			{
@@ -205,9 +226,9 @@ void Builder::write (const char *filename, const char *names, int namesLength, C
 		}
 
 		int index = 0;
-		for (int x = 0; x < _Width; x++, ++i)
+		for (int x = 0; x < _Width; x++)
 		{
-			const int sn = _Pixels[i].getSampleN(vn);
+			const int sn = _Pixels[lineStart+x].getSampleN(vn);
 
 			// Set the ids pointer, it may have changed
 			id[x] = sn ? &ids[index] : NULL;

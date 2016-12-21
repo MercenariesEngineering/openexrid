@@ -72,6 +72,13 @@ int main(int argc, char **argv)
 		// Generate a random image
 		for (vector<vector<entry> >::iterator itp = pixelToNames.begin (); itp != pixelToNames.end (); ++itp)
 		{
+			const size_t x = (itp - pixelToNames.begin ())%Width;
+			const size_t y = (itp - pixelToNames.begin ())/Width;
+
+			// Compute an empty rectangle around to test the dataWindow
+			if (x == 0 || x == Width-1 || y == 0 || y == Height-1)
+				continue;
+
 			const int samplesN = rand ()%(SamplesMax+1);
 			const float weight = 1.f/(float)samplesN;
 			const int baseId = rand();
@@ -123,7 +130,7 @@ int main(int argc, char **argv)
 			builder.finish();
 
 			cout << "Write the mask" << endl;
-			builder.write (filename, _names.c_str (), (int)_names.size());
+			builder.write (filename, _names.c_str (), (int)_names.size(), true);
 		}
 
 		// Accumulate the pixels values

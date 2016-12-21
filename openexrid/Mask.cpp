@@ -46,10 +46,11 @@ void Mask::read (const char *filename)
 	DeepScanLineInputFile file (filename);
 	const Header& header = file.header();
 
-	// The data window is supposed full for now..
+	const Box2i displayWindow = header.displayWindow();
+	_Width = displayWindow.max.x - displayWindow.min.x + 1;
+	_Height = displayWindow.max.y - displayWindow.min.y + 1;
+
 	const Box2i dataWindow = header.dataWindow();
-	_Width = dataWindow.max.x - dataWindow.min.x + 1;
-	_Height = dataWindow.max.y - dataWindow.min.y + 1;
 
 	// Check the version
 	const Imf::IntAttribute *version = header.findTypedAttribute<Imf::IntAttribute> ("EXRIdVersion");
@@ -93,7 +94,8 @@ void Mask::read (const char *filename)
 	}
 
 	// Allocate the pixel indexes
-	_PixelsIndexes.resize (_Width*_Height+1);
+	_PixelsIndexes.clear ();
+	_PixelsIndexes.resize (_Width*_Height+1, 0);
 
 	// Initialize the frame buffer
 	DeepFrameBuffer frameBuffer;
@@ -126,7 +128,7 @@ void Mask::read (const char *filename)
 	file.setFrameBuffer(frameBuffer);
 
 	// Read the whole pixel sample counts
-	file.readPixelSampleCounts(0, _Height-1);
+	file.readPixelSampleCounts(dataWindow.min.y, dataWindow.max.y);
 
 	// Accumulate the sample counts to get the indexes
 	// The current index
@@ -150,13 +152,13 @@ void Mask::read (const char *filename)
 	}
 
 	// For each line
-	int i = 0;
-	for (int y = 0; y < _Height; y++)
+	for (int y = dataWindow.min.y; y <= dataWindow.max.y; y++)
 	{
+		const int lineStart = y*_Width;
 		// For each pixel
 		for (int x = 0; x < _Width; x++)
 		{
-			const int _i = i+x;
+			const int _i = lineStart+x;
 			// The sample id and coverage pointers for this pixel
 			const uint32_t count = _PixelsIndexes[_i+1]-_PixelsIndexes[_i];
 
@@ -173,7 +175,7 @@ void Mask::read (const char *filename)
 			const int A = findSlice ("A");
 			for (int x = 0; x < _Width; x++)
 			{
-				const int _i = i+x;
+				const int _i = lineStart+x;
 				const uint32_t count = _PixelsIndexes[_i+1]-_PixelsIndexes[_i];
 				if (count == 0) continue;
 				// Uncumulate the pixels value
@@ -188,7 +190,6 @@ void Mask::read (const char *filename)
 				}
 			}
 		}
-		i += _Width;
 	}
 }
 
