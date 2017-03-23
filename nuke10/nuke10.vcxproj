@@ -18,8 +18,17 @@
       <Platform>x64</Platform>
     </ProjectConfiguration>
   </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\nuke\DeepOpenEXRId.cpp" />
+    <ClCompile Include="..\nuke\PickingKnob.cpp" />
+    <ClCompile Include="..\nuke\zlib.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\nuke\DeepOpenEXRId.h" />
+    <ClInclude Include="..\nuke\PickingKnob.h" />
+  </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{502BFE7B-77B3-4C2F-A8BD-4602D61C5B86}</ProjectGuid>
+    <ProjectGuid>{3679261B-E93D-4CA2-A69A-499975520C01}</ProjectGuid>
     <RootNamespace>ExamplePlugin</RootNamespace>
     <Keyword>Win32Proj</Keyword>
   </PropertyGroup>
@@ -57,20 +66,20 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup>
     <_ProjectFileVersion>10.0.40219.1</_ProjectFileVersion>
-    <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(SolutionDir)$(Platform)\$(Configuration)\</OutDir>
-    <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(Platform)\$(Configuration)\</IntDir>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(Configuration)\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(Configuration)\</IntDir>
     <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</LinkIncremental>
-    <OutDir Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(SolutionDir)$(Platform)\$(Configuration)\</OutDir>
-    <IntDir Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(Platform)\$(Configuration)\</IntDir>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(Configuration)\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(Configuration)\</IntDir>
     <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</LinkIncremental>
-    <IncludePath Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(VCInstallDir)PlatformSDK\include;$(VCInstallDir)include;$(WindowsSdkDir)include;c:\Program Files\Nuke10.0v4\include;$(GALIBS2010)\include</IncludePath>
-    <LibraryPath Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(VCInstallDir)lib\amd64;$(VCInstallDir)atlmfc\lib\amd64;$(WindowsSdkDir)lib\x64;$(GALIBS2010)\lib\x64\Release;c:\Program Files\Nuke10.0v4;$(LibraryPath)</LibraryPath>
+    <IncludePath Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(VCInstallDir)PlatformSDK\include;$(VCInstallDir)include;$(WindowsSdkDir)include;$(GALIBS2010)\include\nuke10;$(GALIBS2010)\include</IncludePath>
+    <LibraryPath Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(VCInstallDir)lib\amd64;$(VCInstallDir)atlmfc\lib\amd64;$(WindowsSdkDir)lib\x64;$(GALIBS2010)\lib\x64\Release;$(GALIBS2010)\lib\nuke10;$(LibraryPath)</LibraryPath>
     <TargetName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">DeepOpenEXRId</TargetName>
     <TargetName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">DeepOpenEXRId</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <IncludePath>$(VCInstallDir)PlatformSDK\include;$(VCInstallDir)include;$(WindowsSdkDir)include;c:\Program Files\Nuke10.0v4\include;$(GALIBS2010)\include</IncludePath>
-    <LibraryPath>$(VCInstallDir)lib\amd64;$(VCInstallDir)atlmfc\lib\amd64;$(WindowsSdkDir)lib\x64;$(GALIBS2010)\lib\x64\Release;c:\Program Files\Nuke10.0v4;$(LibraryPath)</LibraryPath>
+    <IncludePath>$(VCInstallDir)PlatformSDK\include;$(VCInstallDir)include;$(WindowsSdkDir)include;$(GALIBS2010)\include\nuke10;$(GALIBS2010)\include</IncludePath>
+    <LibraryPath>$(VCInstallDir)lib\amd64;$(VCInstallDir)atlmfc\lib\amd64;$(WindowsSdkDir)lib\x64;$(GALIBS2010)\lib\x64\Release;$(GALIBS2010)\lib\nuke10;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <Midl>
@@ -147,15 +156,6 @@
       <Outputs>$(HOMEDRIVE)\$(HOMEPATH)\.nuke\$(TargetFilename)</Outputs>
     </CustomBuildStep>
   </ItemDefinitionGroup>
-  <ItemGroup>
-    <ClCompile Include="DeepOpenEXRId.cpp" />
-    <ClCompile Include="PickingKnob.cpp" />
-    <ClCompile Include="zlib.cpp" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="DeepOpenEXRId.h" />
-    <ClInclude Include="PickingKnob.h" />
-  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

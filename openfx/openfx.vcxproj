@@ -80,8 +80,8 @@
     <LinkIncremental>true</LinkIncremental>
     <TargetName>openexrid</TargetName>
     <TargetExt>.ofx</TargetExt>
-    <OutDir>$(ProjectDir)$(Platform)\$(Configuration)\</OutDir>
-    <IntDir>$(ProjectDir)$(Platform)\$(Configuration)\</IntDir>
+    <OutDir>$(Configuration)\</OutDir>
+    <IntDir>$(Configuration)\</IntDir>
     <IncludePath>$(ProjectDir)..;$(IncludePath)</IncludePath>
     <LibraryPath>$(ProjectDir)..\openexrid\$(Platform)\$(Configuration)\;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
@@ -98,8 +98,8 @@
     <LinkIncremental>false</LinkIncremental>
     <TargetName>openexrid</TargetName>
     <TargetExt>.ofx</TargetExt>
-    <OutDir>$(ProjectDir)$(Platform)\$(Configuration)\</OutDir>
-    <IntDir>$(ProjectDir)$(Platform)\$(Configuration)\</IntDir>
+    <OutDir>$(Configuration)\</OutDir>
+    <IntDir>$(Configuration)\</IntDir>
     <IncludePath>$(ProjectDir)..;$(IncludePath)</IncludePath>
     <LibraryPath>$(ProjectDir)..\openexrid\$(Platform)\$(Configuration)\;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
