@@ -6,3 +6,5 @@ Debug
 *.opensdf
 *.user
 release
+*.zip
+*.tar.gz
