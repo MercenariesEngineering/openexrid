@@ -6,6 +6,8 @@
 	OpenEXR 2.x
 	re2
 	OFX
+	Nuke9, 10 or 10.5
+	Compile with gcc 4.1.2 for the Nuke plug-in
 
 2) Edit the makefile.conf file and set the correct location of those libraries
 	or define the different variables in the environment.
