@@ -66,7 +66,7 @@ bool getFrameRange (const std::string &file, int &start, int &end)
 	if (!dir)
 		return false;
 	dirent *entry;
-	while (entry = readdir (dir))
+	while ((entry = readdir (dir)))
 	{
 		int frame;
 		if (matchFramePattern (entry->d_name, pre, post, tagS-parentDir.size(), n, frame))

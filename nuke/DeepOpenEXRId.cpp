@@ -253,9 +253,6 @@ bool DeepOpenEXRId::doDeepEngine(DD::Image::Box box, const ChannelSet& channels,
 
 	for (DD::Image::Box::iterator it = box.begin(); it != box.end(); it++) {
 
-		const int x = it.x;
-		const int y = it.y;
-      
 		DeepPixel pixel = inPlane.getPixel(it);
 
 		DeepOutPixel pels;
@@ -267,7 +264,7 @@ bool DeepOpenEXRId::doDeepEngine(DD::Image::Box box, const ChannelSet& channels,
 		const float _id = pixel.getOrderedSample(sample, idChannel);
 		const int id = (int)_id;
 		if (id < 0 ||
-			id >= idStates.size() ||
+			id >= (int)idStates.size() ||
 			idStates[id] == _invert)
 		{
 			const float alpha = pixel.getOrderedSample(sample, Chan_Alpha);
@@ -398,9 +395,6 @@ void DeepOpenEXRId::select (float x0, float y0, float x1, float y1, bool invert)
 	set<int> ids;
 	for (DD::Image::Box::iterator it = box.begin(); it != box.end(); it++) {
 
-		const int x = it.x;
-		const int y = it.y;
-      
 		DeepPixel pixel = inPlane.getPixel(it);
 		for (int sample = (int)pixel.getSampleCount()-1; sample >= 0; --sample) {
 

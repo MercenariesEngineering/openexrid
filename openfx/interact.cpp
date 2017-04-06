@@ -344,7 +344,8 @@ OfxStatus overlayMain(const char *action,  const void *handle, OfxPropertySetHan
 	{
 		// fetch the effect instance from the interact
 		OfxImageEffectHandle effect;
-		gPropHost->propGetPointer(props, kOfxPropEffectInstance, 0, (void **) &effect); 
+		char *ptr = (char*)&effect;	// Cast first in char* to silent the "strict aliasing" warning
+		gPropHost->propGetPointer(props, kOfxPropEffectInstance, 0, (void **)ptr);
 
 		if(strcmp(action, kOfxActionCreateInstance) == 0)
 			return interactCreateInstance(effect, interact);
