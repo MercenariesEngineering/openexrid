@@ -49,12 +49,6 @@ public:
 
   void _validate(bool for_real);
 
-  void getDeepRequests 	(DD::Image::Box  	box,
-		const DD::Image::ChannelSet &  	channels,
-		int  	count,
-		std::vector< DD::Image::RequestData > &  	requests 
-	);
-
   bool doDeepEngine(DD::Image::Box box, const DD::Image::ChannelSet& channels, DD::Image::DeepOutputPlane& plane);
   
   void select (float x0, float y0, float x1, float y1, bool invert);

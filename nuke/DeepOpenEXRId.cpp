@@ -148,17 +148,6 @@ void DeepOpenEXRId::_validate(bool for_real)
 	DeepFilterOp::_validate(for_real);
 }
 
-void DeepOpenEXRId::getDeepRequests 	(DD::Image::Box  	box,
-	const DD::Image::ChannelSet &  	channels,
-	int  	count,
-	std::vector< RequestData > &  	requests 
-)
-{
-	// The plug-in needs the Id channel, the deep front and the alpha channels
-	const Channel id = DD::Image::getChannel ("other.Id");
-	requests.push_back (RequestData (this, box, channels+id+Mask_Alpha+Mask_DeepFront, count));
-}
-
 bool DeepOpenEXRId::_getNames (std::vector<std::string> &names)
 {
 	names.clear ();
