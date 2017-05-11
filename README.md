@@ -44,10 +44,10 @@ Compile and run the /test application.
 
 ## Data
 
-You can download those two sample files :
+You can download this sample file :
 
-http://mercenariesengineering.github.io/openexrid/forest.exrid <br />
-http://mercenariesengineering.github.io/openexrid/openexrid.exrid
+[![Sample file](https://github.com/MercenariesEngineering/openexrid/raw/master/data/sample_motionblur_transparency.png)](https://github.com/MercenariesEngineering/openexrid/raw/master/data/sample_motionblur_transparency.exr "Sample file")
+
 
 ## Contributors
 
