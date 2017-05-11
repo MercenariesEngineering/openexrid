@@ -43,11 +43,11 @@ Builder::Builder (int width, int height, const std::vector<std::string> &slices)
 
 //**********************************************************************
 
-void Builder::addCoverage (int x, int y, uint32_t id, float z, const float *sliceValues)
+void Builder::addCoverage (int x, int y, uint32_t id, float z, float weight, const float *sliceValues)
 {
 	// The pixel sample list
 	SampleList &sl = _Pixels[x+y*_Width];
-	sl.addCoverage (id, z, sliceValues, (int)_Slices.size ());
+	sl.addCoverage (id, z, weight, sliceValues, (int)_Slices.size ());
 }
 
 //**********************************************************************
@@ -59,7 +59,7 @@ static int PtFuncCompare(void const *a, void const *b)
 	return _a < _b ? -1 : _a > _b ? 1 : 0;
 }
 
-void Builder::finish ()
+void Builder::finish (const std::vector<float> &weightSums)
 {
 	if (_Finished)
 		throw runtime_error ("Builder::finish has been already called");
@@ -71,22 +71,17 @@ void Builder::finish ()
 
 	const int vn = (int)_Slices.size ();
 	std::vector<float> acc;
-	for (vector<SampleList>::iterator ite = _Pixels.begin(); ite != _Pixels.end(); ++ite)
+	int index = 0;
+	for (vector<SampleList>::iterator ite = _Pixels.begin(); ite != _Pixels.end(); ++ite, ++index)
 	{
 		acc.clear ();
 		acc.resize (vn, 0.f);
 
-		const int sn = ite->getSampleN(vn);
-		for (int s = 0; s < sn; ++s)
-		{
-			SampleList::Header &header = ite->getSampleHeader(s,vn);
-
-			// Average the Z
-			if (header.Count > 0)
-				header.Z /= (float)header.Count;
-		}
+		// Normalize the values by the weight sum
+		ite->normalize (weightSums[index], vn);
 
 		// Sort the samples in the pixel by Z
+		const int sn = ite->getSampleN (vn);
 		if (sn > 0)
 			qsort (&ite->getSampleHeader(0,vn), sn, sizeof(uint32_t)*(SampleList::HeaderSize+vn), PtFuncCompare);
 

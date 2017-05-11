@@ -52,6 +52,7 @@ struct entry
 	int Id;
 	float Z;
 	float Values[4];
+	float Weight;
 	bool operator<(const entry &o) const
 	{
 		return Z < o.Z;
@@ -87,10 +88,11 @@ int main(int argc, char **argv)
 				entry	e;
 				e.Id = (baseId+s*10)%NameN;
 				e.Z = (float)((baseId+s*10)%NameN);
-				e.Values[0] = weight*(float)rand()/(float)RAND_MAX;
-				e.Values[1] = weight*(float)rand()/(float)RAND_MAX;
-				e.Values[2] = weight*(float)rand()/(float)RAND_MAX;
-				e.Values[3] = weight*(float)rand()/(float)RAND_MAX;
+				e.Values[0] = (float)rand()/(float)RAND_MAX;
+				e.Values[1] = (float)rand()/(float)RAND_MAX;
+				e.Values[2] = (float)rand()/(float)RAND_MAX;
+				e.Values[3] = (float)rand()/(float)RAND_MAX;
+				e.Weight = weight;
 				itp->push_back (e);
 			}
 
@@ -114,9 +116,10 @@ int main(int argc, char **argv)
 			const vector<entry> &pixel = pixelToNames[x+y*Width];
 			for (size_t s = 0; s < pixel.size (); ++s)
 				// Let's use the id as Z value
-				builder.addCoverage (x, y, pixel[s].Id, pixel[s].Z, pixel[s].Values);
+				builder.addCoverage (x, y, pixel[s].Id, pixel[s].Z, pixel[s].Weight, pixel[s].Values);
 		}
 
+		std::vector<float> pixelWeights (Width*Height, 0.f);
 		{
 			// Concat the names
 			std::string _names;
@@ -126,8 +129,16 @@ int main(int argc, char **argv)
 				_names += '\0';
 			}
 
+			// Build the final weight array
+			for (int i =0; i < Width*Height; ++i)
+			{
+				const vector<entry> &pixel = pixelToNames[i];
+				for (size_t s = 0; s < pixel.size (); ++s)
+					pixelWeights[i] += pixel[s].Weight;
+			}
+
 			cout << "Finish the mask" << endl;
-			builder.finish();
+			builder.finish (pixelWeights);
 
 			cout << "Write the mask" << endl;
 			builder.write (filename, _names.c_str (), (int)_names.size(), true);
@@ -140,6 +151,18 @@ int main(int argc, char **argv)
 			vector<entry> &pixel = pixelToNames[x+y*Width];
 			if (!pixel.empty())
 			{
+				// First normalize the pixel using the weights
+				const float weightSum = pixelWeights[x+y*Width];
+				for (int v = 0; v < 4; ++v)
+				{
+					for (size_t s = 0; s < pixel.size (); ++s)
+					{
+						if (weightSum != 0)
+							pixel[s].Values[v] = pixel[s].Values[v]*pixel[s].Weight/weightSum;
+					}
+				}
+
+				// The accumulates the fragments in a deep fashion way
 				for (int v = 0; v < 4; ++v)
 				{
 					float acc = 0.f;

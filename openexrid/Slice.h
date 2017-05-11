@@ -36,7 +36,7 @@ public:
 	{
 		uint32_t	Id;			// Object Id
 		float			Z;			// Accumulated Z
-		uint32_t	Count;	// Number of accumulated samples
+		float			Weight;	// Accumulated Weight per fragment to average Z
 	};
 	
 
@@ -58,13 +58,9 @@ public:
 	{
 		return (float*)&_Data[sample*(valueN+HeaderSize)+HeaderSize];
 	}
-	void addCoverage (uint32_t id, float z, const float *sliceValues, int valueN)
+	void addCoverage (uint32_t id, float z, float weight, const float *sliceValues, int valueN)
 	{
-		// Check non zero
-		bool allZero = true;
-		for (int v = 0; v < valueN; ++v)
-			allZero &= sliceValues[v] == 0.f;
-		if (allZero) return;
+		if (weight == 0.f) return;
 
 		const int sn = getSampleN (valueN);
 		for (int s = 0; s < sn; ++s)
@@ -72,11 +68,11 @@ public:
 			Header &header = getSampleHeader (s, valueN);
 			if (header.Id == id)
 			{
-				header.Z += z;
-				++header.Count;
+				header.Z += z*weight;
+				header.Weight += weight;
 				float *values = getSampleValues (s, valueN);
 				for (int v = 0; v < valueN; ++v)
-					values[v] += sliceValues[v];
+					values[v] += sliceValues[v]*weight;
 				return;
 			}
 		}
@@ -88,13 +84,35 @@ public:
 		// The id
 		Header &header = *(Header*)&_Data[index];
 		header.Id = id;
-		header.Z = z;
-		header.Count = 1;
+		header.Z = z*weight;
+		header.Weight = weight;
 
 		// The values
 		for (int v = 0; v < valueN; ++v)
-			*(float*)&_Data[index+v+HeaderSize] = sliceValues[v];
+			*(float*)&_Data[index+v+HeaderSize] = sliceValues[v]*weight;
 	}
+
+	// Normalize the samples by the weight sum
+	void normalize (float weightSum, int valueN)
+	{
+		const int sn = getSampleN (valueN);
+		for (int s = 0; s < sn; ++s)
+		{
+			SampleList::Header &header = getSampleHeader(s,valueN);
+
+			// Average the Z using the fragment weight sum, not the pixel weight sum
+			if (header.Weight != 0)
+				header.Z /= header.Weight;
+
+			if (weightSum != 0.f)
+			{
+				float *values = getSampleValues (s,valueN);
+				for (int v = 0; v < valueN; ++v)
+					values[v] /= weightSum;
+			}
+		}
+	}
+
 private:
 	std::vector<uint32_t>	_Data;
 };

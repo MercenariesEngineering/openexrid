@@ -32,15 +32,18 @@ public:
 	// Initialize a builder
 	Builder (int width, int height, const std::vector<std::string> &slices);
 
-	// Add some coverage in the pixel (x,y) for the object named objectName.
-	// The sum of the coverage of a pixel is supposed to be between [0, 1].
+	// Add a contribution in the pixel (x,y) for the object 'id'.
+	// The sliceValues will be multiplied internally by the weight.
+	// The z is the contribution depth, it is used to generate an approximate deep Z value.
 	// This method is not thread safe.
-	void addCoverage (int x, int y, uint32_t id, float z, const float *sliceValues);
+	void addCoverage (int x, int y, uint32_t id, float z, float weight, const float *sliceValues);
 
 	// Finish the builder
 	// Call it once before to write
-	// Once the Builder as been finished, no data can be added
-	void finish ();
+	// Once the Builder as been finished, no data can be added.
+	// weightSums is the accumulated weights for each pixel
+	// which will be used to normalize the contributions.
+	void finish (const std::vector<float> &weightSums);
 
 	// Finish
 	// Write the mask in an EXR file.
