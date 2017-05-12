@@ -44,11 +44,23 @@ Compile and run the /test application.
 
 ## Data
 
-You can download this sample file :
+![](http://guerillarender.com/download/poilus_S155P130.png) </br>
+[poilus_S155P130.exr](http://guerillarender.com/download/poilus_S155P130.exr "Motion blur and transparency test file") </br>
+An OpenEXRId frame of the [Poilus](https://vimeo.com/177237096) movie. Thanks to Guillaume AUBERVAL, Léa DOZOUL, Simon GOMEZ, Timothé HEK, Hugo LAGRANGE, Antoine LAROYE and David LASHCARI.
 
-[![Sample file](https://github.com/MercenariesEngineering/openexrid/raw/master/data/sample_motionblur_transparency.png)](https://github.com/MercenariesEngineering/openexrid/raw/master/data/sample_motionblur_transparency.exr "Sample file")
-
+![](https://github.com/MercenariesEngineering/openexrid/raw/master/data/sample_motionblur_transparency.png) </br>
+[sample_motionblur_transparency.exr](https://github.com/MercenariesEngineering/openexrid/raw/master/data/sample_motionblur_transparency.exr "Motion blur and transparency test file") </br>
+This test file contains motion blur and transparency. This file is in the repository/data folder.
 
 ## Contributors
 
 Mercenaries Engineering, the guys behind Guerilla Render.
+
+## Thanks for feedback, ideas and help
+
+Chase Basich </br>
+Alexis Casas </br>
+Rachid Chick </br>
+Stefan Habel </br>
+Philippe Leprince </br>
+Philippe Llerena </br>
