@@ -59,7 +59,7 @@ struct entry
 	}
 };
 
-int main(int argc, char **argv)
+int _main(int argc, char **argv)
 {
 	try
 	{
@@ -238,3 +238,212 @@ int main(int argc, char **argv)
 	return Errors;
 }
 
+/// ********************************* prototype
+
+const string characters ("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_-");
+
+string generateName (int nameSize)
+{
+	string s;
+	for (size_t i = 0; i < nameSize; ++i)
+		s += characters[rand ()%characters.size()];
+	return s;
+}
+
+void fill (vector<string> &pathes, size_t begin, size_t end, const string &parent, int nameSize)
+{
+	const size_t size = end-begin;
+	string newPath = parent + "/" + generateName(nameSize);
+	if (size == 0)
+		return;
+	if (size == 1)
+		pathes[begin] = newPath;
+	else
+	{
+		const size_t middle = begin+size/2;
+		fill (pathes, begin, middle, newPath, nameSize);
+		fill (pathes, middle, end, newPath, nameSize);
+	}
+}
+
+vector<string> buildPathes (int objectCount, int nameSize)
+{
+	vector<string> pathes (objectCount);
+	fill (pathes, 0, pathes.size (), "", nameSize);
+	return pathes;
+}
+
+float randf ()
+{
+	return (float)rand()/(float)RAND_MAX;
+}
+
+void drawQuad (int x, int y, int size, int id, float z, Builder &builder, float coverage)
+{
+	const float rgba[] = {randf()/coverage,randf()/coverage,randf()/coverage,randf()/coverage};
+	for (int _y = 0; _y < size; ++_y)
+	for (int _x = 0; _x < size; ++_x)
+		builder.addCoverage (x+_x, y+_y, id, z, 1.f, rgba);
+}
+
+vector<char> concat (const vector<string> &strings)
+{
+	vector<char> result;
+	for (size_t i = 0; i < strings.size (); ++i)
+	{
+		const string &s = strings[i];
+		for (size_t j = 0; j < s.size (); ++j)
+			result.push_back (s[j]);
+		result.push_back ('\0');
+	}
+	return result;
+}
+
+float averageSize (const vector<string> &pathes)
+{
+	float sum = 0;
+	for (size_t i = 0; i < pathes.size (); ++i)
+		sum += (float)pathes[i].size();
+	return sum / (float)pathes.size();
+}
+
+size_t getFileSize (const char *file)
+{
+	struct stat _stat;
+	stat (file, &_stat);
+	return _stat.st_size;
+}
+
+void generate (int argc, char **argv)
+{
+	if (argc < 6)
+	{
+		cout << "USAGE : TEST generate width height nameSize objectCount coverage fileOut" << endl;
+		return;
+	}
+
+	int arg = 2;
+	const int width = atoi (argv[arg++]);
+	const int height = atoi (argv[arg++]);
+	const int nameSize = atoi (argv[arg++]);
+	const int objectCount = atoi (argv[arg++]);
+	const float coverage = (float)atof (argv[arg++]);
+	const char *fileOut = argv[arg++];
+
+	const float squareSize = sqrt ((float)(width*height*coverage)/(float)objectCount);
+	const int squareMin = (int)squareSize;
+
+	vector<string> pathes (buildPathes (objectCount, nameSize));
+
+	vector<string> slices;
+	slices.push_back ("R");
+	slices.push_back ("G");
+	slices.push_back ("B");
+	slices.push_back ("A");
+	Builder builder (width, height, slices);
+
+	// Probability to take the upper size
+	const float probabilityUp = (squareSize*squareSize - squareMin*squareMin) / ((squareMin+1)*(squareMin+1) - squareMin*squareMin);
+
+	float realCoverage = 0;
+	for (size_t i = 0; i < pathes.size(); ++i)
+	{
+//		cout << pathes[i] << endl;
+
+		// Square position
+		const int square = (randf() < probabilityUp) ? squareMin+1 : squareMin;
+		const int x = rand()%(width-square);
+		const int y = rand()%(height-square);
+		realCoverage += square*square;
+		drawQuad (x, y, square, (int)i, (float)i, builder, coverage);
+	}
+	realCoverage /= (float)(width*height);
+
+	vector<float> weights (width*height, 1.f);
+	builder.finish (weights);
+	const vector<char> names = concat (pathes);
+	builder.write (fileOut, names.data(), (int)names.size(), false, Imf::ZIPS_COMPRESSION);
+
+
+	const string fileOutNoString = string(fileOut)+".nostring";
+	const string fileOutNoId = string(fileOut)+".noid";
+	builder.write (fileOutNoString.c_str(), names.data(), (int)names.size(), false, Imf::ZIPS_COMPRESSION, true, false);
+	builder.write (fileOutNoId.c_str(), names.data(), (int)names.size(), false, Imf::ZIPS_COMPRESSION, false, true);
+	
+	extern std::string deflate (const char *str, int len);
+	const string compressed = deflate (names.data(), (int)names.size());
+
+	cout << "File size: " << getFileSize(fileOut) << endl;
+	const size_t idSize = getFileSize(fileOut)-getFileSize(fileOutNoId.c_str());
+	cout << "File id size: " << idSize << endl;
+	const size_t stringSize = getFileSize(fileOut)-getFileSize(fileOutNoString.c_str());
+	cout << "File strings size: " << stringSize << endl;
+	cout << "string/Id cost: " << 100.f*(float)stringSize/(float)idSize << "%" << endl;
+	cout << "Coverage: " << realCoverage << endl;
+	cout << "Average path size: " << averageSize (pathes) << endl;
+	cout << "String size: " << names.size() << endl;
+	cout << "Compressed strings size: " << compressed.size() << " (" << 100.f*(float)compressed.size()/(float)names.size() << "%)" << endl;
+	cout << "Compressed strings bytes per ids: " << (float)compressed.size()/(float)pathes.size() << endl;
+	cout << "String cost: " << 100.f*(float)(getFileSize(fileOut)-getFileSize(fileOutNoString.c_str()))/getFileSize(fileOut) << "%" << endl;
+	cout << "Id cost: " << 100.f*(float)idSize/(float)getFileSize(fileOut) << "%" << endl;
+	cout << "string/Id cost: " << 100.f*(float)stringSize/(float)idSize << "%" << endl;
+}
+
+float computeCoverage (const Mask &mask)
+{
+	const int w = (int)mask.getSize ().first;
+	const int h = (int)mask.getSize ().second;
+	int sum = 0;
+	for (int y = 0; y < h; ++y)
+	for (int x = 0; x < w; ++x)
+	{
+		sum += mask.getSampleN (x, y);
+	}
+	return (float)sum/(float)(w*h);
+}
+
+void read (int argc, char **argv)
+{
+	if (argc < 3)
+	{
+		cout << "USAGE : TEST read fileIn" << endl;
+		return;
+	}
+
+	int arg = 2;
+	const char *fileIn = argv[arg++];
+
+	Mask mask;
+	mask.read (fileIn);
+
+	vector<string> pathes;
+	for (uint32_t i = 0; i < mask.getIdN(); ++i)
+	{
+		cout << mask.getName (i) << endl;
+		pathes.push_back (mask.getName (i));
+	}
+
+	const vector<char> names = concat (pathes);
+	extern std::string deflate (const char *str, int len);
+	const string compressed = deflate (names.data(), (int)names.size());
+
+	cout << "Width: " << mask.getSize ().first << endl;
+	cout << "Height: " << mask.getSize ().second << endl;
+	cout << "Coverage: " << computeCoverage(mask) << endl;
+	cout << "Average path size: " << averageSize (pathes) << endl;
+	cout << "String size: " << names.size() << endl;
+	cout << "Compressed strings size: " << compressed.size() << " (" << 100.f*(float)compressed.size()/(float)names.size() << "%)" << endl;
+	cout << "Compressed strings bytes per ids: " << (float)compressed.size()/(float)pathes.size() << endl;
+}
+
+int main (int argc, char **argv)
+{
+	if (argc > 1 && strcmp (argv[1], "generate") == 0)
+		generate (argc, argv);
+	else if (argc > 1 && strcmp (argv[1], "read") == 0)
+		read (argc, argv);
+	else
+		cout << "USAGE : TEST [generate|read]" << endl;
+
+	return 0;
+}
