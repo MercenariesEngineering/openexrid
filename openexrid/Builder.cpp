@@ -107,7 +107,7 @@ void Builder::finish (const std::vector<float> &weightSums)
 
 //**********************************************************************
 
-void Builder::write (const char *filename, const char *names, int namesLength, bool computeDataWindow, Compression compression) const
+void Builder::write (const char *filename, const char *names, int namesLength, bool computeDataWindow, Compression compression, bool writeId, bool writeNames) const
 {
 	if (!_Finished)
 		throw runtime_error ("Builder::finish has not been called");
@@ -137,7 +137,8 @@ void Builder::write (const char *filename, const char *names, int namesLength, b
 	// EXR Header
 	// Right now, the image window is the data window
 	Header header (_Width, _Height, dataW);
-	header.channels().insert ("Id", Channel (UINT));
+	if (writeId)
+		header.channels().insert ("Id", Channel (UINT));
 	header.channels().insert ("Z", Channel (FLOAT));
 	for (size_t s = 0; s < _Slices.size (); ++s)
 		header.channels().insert (_Slices[s], Channel (HALF));
@@ -146,7 +147,8 @@ void Builder::write (const char *filename, const char *names, int namesLength, b
 
 	// Write the names in an Attribute
 	header.insert ("EXRIdVersion", Imf::IntAttribute (Mask::Version));
-	header.insert ("EXRIdNames", Imf::StringAttribute (deflate (names, namesLength)));
+	if (writeNames)
+		header.insert ("EXRIdNames", Imf::StringAttribute (deflate (names, namesLength)));
 
 	DeepScanLineOutputFile file (filename, header);
 	DeepFrameBuffer frameBuffer;
@@ -160,7 +162,8 @@ void Builder::write (const char *filename, const char *names, int namesLength, b
 	// A line of id
 	vector<uint32_t> ids;
 	vector<const uint32_t*> id (_Width);
-	frameBuffer.insert ("Id",
+	if (writeId)
+		frameBuffer.insert ("Id",
 						DeepSlice (UINT,
 						(char *) (&id[0]),
 						sizeof (uint32_t*),
