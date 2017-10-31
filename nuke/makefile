@@ -20,6 +20,9 @@ clean:
 	rm -f $(VERSION)/*.o $(VERSION)/*.a $(VERSION)/*.d $(VERSION)/*.ofx
 
 install: $(VERSION)/DeepOpenEXRId.so
+	mkdir -p $(PREFIX)/$(NUKE_VERSION)
+	cp $(VERSION)/DeepOpenEXRId.so $(PREFIX)/$(NUKE_VERSION)/
+	strip $(PREFIX)/$(NUKE_VERSION)/DeepOpenEXRId.so
 	cp $(VERSION)/DeepOpenEXRId.so ~/.nuke/
 	cp ../nuke/menu.py ~/.nuke/
 

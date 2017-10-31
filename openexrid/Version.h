@@ -20,6 +20,6 @@
 namespace openexrid
 {
 
-std::string Version = "1.0-beta.10";
+std::string Version = "1.0-beta.11";
 
 }
