@@ -128,11 +128,22 @@ void Builder::write (const char *filename, const char *names, int namesLength, b
 
 		// Exr doesn't like empty images
 		if (dataW.isEmpty())
+		{
 			dataW.extendBy (Imath::V2i(0,0));
+		}
+		else
+		{
+			dataW.min.x = std::max (0, int (dataW.min.x)-1);
+			dataW.max.x = std::min (int (_Width-1), int (dataW.max.x)+1);
+			dataW.min.y = std::max (0, int (dataW.min.y)-1);
+			dataW.max.y = std::min (int (_Height-1), int (dataW.max.y)+1);
+		}
 	}
 	else
-			// Or use the whole image
-			dataW = Imath::Box2i (Imath::V2i(0,0),Imath::V2i(_Width-1,_Height-1));
+	{
+		// Or use the whole image
+		dataW = Imath::Box2i (Imath::V2i(0,0),Imath::V2i(_Width-1,_Height-1));
+	}
 
 	// EXR Header
 	// Right now, the image window is the data window
