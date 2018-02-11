@@ -19,6 +19,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\nuke\b64.cpp" />
     <ClCompile Include="..\nuke\DeepOpenEXRId.cpp" />
     <ClCompile Include="..\nuke\PickingKnob.cpp" />
     <ClCompile Include="..\nuke\zlib.cpp" />

@@ -150,6 +150,16 @@ void DeepOpenEXRId::_validate(bool for_real)
 
 bool DeepOpenEXRId::_getNames (std::vector<std::string> &names)
 {
+	const MetaData::Bundle &metadata = fetchMetaData ("exr/EXRIdVersion");
+	const int EXRIdVersion = atoi(metadata.getString ("exr/EXRIdVersion").c_str());
+  if (EXRIdVersion == 3)
+    return _getNames_v3 (names);
+  else
+    return _getNames_v2 (names);
+}
+
+bool DeepOpenEXRId::_getNames_v2 (std::vector<std::string> &names)
+{
 	names.clear ();
 
 	// Get the metadata
@@ -170,6 +180,33 @@ bool DeepOpenEXRId::_getNames (std::vector<std::string> &names)
 		names.push_back (namesUnpacked.c_str()+index);
 		index = namesUnpacked.find ('\0', index)+1;
 	}
+	return true;
+}
+
+bool DeepOpenEXRId::_getNames_v3 (std::vector<std::string> &names)
+{
+	names.clear ();
+
+	// Get the metadata
+	const MetaData::Bundle &metadata = fetchMetaData ("exr/EXRIdNames");
+	const string namesPacked = metadata.getString ("exr/EXRIdNames");
+	if (namesPacked.empty())
+	{
+		error("No EXRIdNames metadata");
+		return false;
+	}
+
+	extern std::string b64decode (const std::string& str);
+	extern std::string inflate (const std::string& str);
+	const string namesUnpacked = inflate (b64decode(namesPacked));
+
+	size_t index = 0;
+	while (index < namesUnpacked.size())
+	{
+		names.push_back (namesUnpacked.c_str()+index);
+		index = namesUnpacked.find ('\n', index)+1;
+	}
+
 	return true;
 }
 

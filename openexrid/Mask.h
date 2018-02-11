@@ -83,7 +83,7 @@ public:
 	inline int findSlice (const char *name) const;
 
 	// Mask version
-	static const uint32_t	Version = 2;
+	static const uint32_t	Version = 3;
 private:
 
 	// The image resolution

@@ -35,6 +35,7 @@ using namespace openexrid;
 using namespace std;
 
 // Compression
+extern std::string b64encode (const std::string &data);
 extern std::string deflate (const char *str, int len);
 
 //**********************************************************************
@@ -157,7 +158,7 @@ void Builder::write (const char *filename, const char *names, int namesLength, b
 
 	// Write the names in an Attribute
 	header.insert ("EXRIdVersion", Imf::IntAttribute (Mask::Version));
-	header.insert ("EXRIdNames", Imf::StringAttribute (deflate (names, namesLength)));
+	header.insert ("EXRIdNames", Imf::StringAttribute (b64encode(deflate (names, namesLength))));
 
 	DeepScanLineOutputFile file (filename, header);
 	DeepFrameBuffer frameBuffer;

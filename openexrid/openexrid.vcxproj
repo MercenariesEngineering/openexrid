@@ -19,6 +19,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="b64.cpp" />
     <ClCompile Include="Builder.cpp" />
     <ClCompile Include="Mask.cpp" />
     <ClCompile Include="zlib.cpp" />

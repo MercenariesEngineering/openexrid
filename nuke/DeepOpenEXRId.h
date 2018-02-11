@@ -56,4 +56,6 @@ public:
   static const Description d;
 private:
 	bool _getNames (std::vector<std::string> &names);
+	bool _getNames_v2 (std::vector<std::string> &names);
+	bool _getNames_v3 (std::vector<std::string> &names);
 };

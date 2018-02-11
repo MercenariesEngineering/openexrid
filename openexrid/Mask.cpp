@@ -33,6 +33,7 @@ using namespace std;
 using namespace openexrid;
 
 // Compression
+extern std::string b64decode (const std::string& str);
 extern std::string inflate (const std::string& str);
 
 // ***************************************************************************
@@ -65,7 +66,10 @@ void Mask::read (const char *filename)
 		throw runtime_error ("The EXRIdNames attribute is missing");
 	
 	// Copy the names
-	_Names = inflate (names->value ());
+	if (version->value() < 3)
+		_Names = inflate (names->value ());
+	else
+		_Names = inflate (b64decode(names->value ()));
 
 	// Count the names
 	int namesN = 0;
