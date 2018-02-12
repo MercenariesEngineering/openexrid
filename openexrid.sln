@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 14
-VisualStudioVersion = 14.0.23107.0
+VisualStudioVersion = 14.0.25420.1
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "openexrid", "openexrid\openexrid.vcxproj", "{1C804A06-A8C8-4A6C-B3BF-CFFD3C0C2603}"
 EndProject
@@ -17,6 +17,10 @@ EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "nuke10", "nuke10\nuke10.vcxproj", "{3679261B-E93D-4CA2-A69A-499975520C01}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "nuke10.5", "nuke10.5\nuke10.5.vcxproj", "{7AB3A1D4-D908-415B-9A0A-BA35543DA197}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "nuke11", "nuke11\nuke11.vcxproj", "{6C31CC58-63AC-4F84-A0E9-1668F46CBE7C}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "nuke11.1", "nuke11.1\nuke11.1.vcxproj", "{260BDC4A-ED54-4AEB-B0B5-99357837A8A4}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -74,6 +78,22 @@ Global
 		{7AB3A1D4-D908-415B-9A0A-BA35543DA197}.Release|x64.Build.0 = Release|x64
 		{7AB3A1D4-D908-415B-9A0A-BA35543DA197}.Release|x86.ActiveCfg = Release|Win32
 		{7AB3A1D4-D908-415B-9A0A-BA35543DA197}.Release|x86.Build.0 = Release|Win32
+		{6C31CC58-63AC-4F84-A0E9-1668F46CBE7C}.Debug|x64.ActiveCfg = Debug|x64
+		{6C31CC58-63AC-4F84-A0E9-1668F46CBE7C}.Debug|x64.Build.0 = Debug|x64
+		{6C31CC58-63AC-4F84-A0E9-1668F46CBE7C}.Debug|x86.ActiveCfg = Debug|Win32
+		{6C31CC58-63AC-4F84-A0E9-1668F46CBE7C}.Debug|x86.Build.0 = Debug|Win32
+		{6C31CC58-63AC-4F84-A0E9-1668F46CBE7C}.Release|x64.ActiveCfg = Release|x64
+		{6C31CC58-63AC-4F84-A0E9-1668F46CBE7C}.Release|x64.Build.0 = Release|x64
+		{6C31CC58-63AC-4F84-A0E9-1668F46CBE7C}.Release|x86.ActiveCfg = Release|Win32
+		{6C31CC58-63AC-4F84-A0E9-1668F46CBE7C}.Release|x86.Build.0 = Release|Win32
+		{260BDC4A-ED54-4AEB-B0B5-99357837A8A4}.Debug|x64.ActiveCfg = Debug|x64
+		{260BDC4A-ED54-4AEB-B0B5-99357837A8A4}.Debug|x64.Build.0 = Debug|x64
+		{260BDC4A-ED54-4AEB-B0B5-99357837A8A4}.Debug|x86.ActiveCfg = Debug|Win32
+		{260BDC4A-ED54-4AEB-B0B5-99357837A8A4}.Debug|x86.Build.0 = Debug|Win32
+		{260BDC4A-ED54-4AEB-B0B5-99357837A8A4}.Release|x64.ActiveCfg = Release|x64
+		{260BDC4A-ED54-4AEB-B0B5-99357837A8A4}.Release|x64.Build.0 = Release|x64
+		{260BDC4A-ED54-4AEB-B0B5-99357837A8A4}.Release|x86.ActiveCfg = Release|Win32
+		{260BDC4A-ED54-4AEB-B0B5-99357837A8A4}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -82,8 +82,8 @@
     <TargetExt>.ofx</TargetExt>
     <OutDir>$(Configuration)\</OutDir>
     <IntDir>$(Configuration)\</IntDir>
-    <IncludePath>$(ProjectDir)..;$(IncludePath)</IncludePath>
-    <LibraryPath>$(ProjectDir)..\openexrid\$(Platform)\$(Configuration)\;$(LibraryPath)</LibraryPath>
+    <IncludePath>$(ProjectDir)..;$(IncludePath);$(GALIBS2015)\include</IncludePath>
+    <LibraryPath>$(ProjectDir)..\openexrid\$(Configuration)\;$(LibraryPath);$(GALIBS2015)\lib\$(Platform)\$(Configuration)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <OutDir>$(ProjectDir)$(Platform)\$(Configuration)\</OutDir>
@@ -100,8 +100,8 @@
     <TargetExt>.ofx</TargetExt>
     <OutDir>$(Configuration)\</OutDir>
     <IntDir>$(Configuration)\</IntDir>
-    <IncludePath>$(ProjectDir)..;$(IncludePath)</IncludePath>
-    <LibraryPath>$(ProjectDir)..\openexrid\$(Platform)\$(Configuration)\;$(LibraryPath)</LibraryPath>
+    <IncludePath>$(ProjectDir)..;$(IncludePath);$(GALIBS2015)\include</IncludePath>
+    <LibraryPath>$(ProjectDir)..\openexrid\$(Configuration)\;$(LibraryPath);$(GALIBS2015)\lib\$(Platform)\$(Configuration)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -148,9 +148,9 @@ copy /Y "$(TargetPath)" /B "$(OutDir)$(ProjectName).ofx.bundle\Contents\Win32\$(
     </Link>
     <PostBuildEvent>
       <Message>Creating bundle...</Message>
-      <Command>if not exist "$(HOMEPATH)\.nuke\openexrid.ofx.bundle\Contents\Resources" mkdir "$(HOMEPATH)\.nuke\openexrid.ofx.bundle\Contents\Resources"
-if not exist "$(HOMEPATH)\.nuke\openexrid.ofx.bundle\Contents\Win64" mkdir "$(HOMEPATH)\.nuke\openexrid.ofx.bundle\Contents\Win64"
-copy /Y "$(TargetPath)" /B "$(HOMEPATH)\.nuke\openexrid.ofx.bundle\Contents\Win64\openexrid.ofx" /B
+      <Command>if not exist "$(USERPROFILE)\.nuke\openexrid.ofx.bundle\Contents\Resources" mkdir "$(USERPROFILE)\.nuke\openexrid.ofx.bundle\Contents\Resources"
+if not exist "$(USERPROFILE)\.nuke\openexrid.ofx.bundle\Contents\Win64" mkdir "$(USERPROFILE)\.nuke\openexrid.ofx.bundle\Contents\Win64"
+copy /Y "$(TargetPath)" /B "$(USERPROFILE)\.nuke\openexrid.ofx.bundle\Contents\Win64\openexrid.ofx" /B
 </Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
@@ -198,9 +198,9 @@ copy /Y "$(TargetPath)" /B "$(OutDir)$(ProjectName).ofx.bundle\Contents\Win32\$(
     </Link>
     <PostBuildEvent>
       <Message>Creating bundle...</Message>
-      <Command>if not exist "$(HOMEPATH)\.nuke\openexrid.ofx.bundle\Contents\Resources" mkdir "$(HOMEPATH)\.nuke\openexrid.ofx.bundle\Contents\Resources"
-if not exist "$(HOMEPATH)\.nuke\openexrid.ofx.bundle\Contents\Win64" mkdir "$(HOMEPATH)\.nuke\openexrid.ofx.bundle\Contents\Win64"
-copy /Y "$(TargetPath)" /B "$(HOMEPATH)\.nuke\openexrid.ofx.bundle\Contents\Win64\openexrid.ofx" /B
+      <Command>if not exist "$(USERPROFILE)\.nuke\openexrid.ofx.bundle\Contents\Resources" mkdir "$(USERPROFILE)\.nuke\openexrid.ofx.bundle\Contents\Resources"
+if not exist "$(USERPROFILE)\.nuke\openexrid.ofx.bundle\Contents\Win64" mkdir "$(USERPROFILE)\.nuke\openexrid.ofx.bundle\Contents\Win64"
+copy /Y "$(TargetPath)" /B "$(USERPROFILE)\.nuke\openexrid.ofx.bundle\Contents\Win64\openexrid.ofx" /B
 </Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>

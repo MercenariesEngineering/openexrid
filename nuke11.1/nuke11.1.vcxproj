@@ -29,7 +29,7 @@
     <ClInclude Include="..\nuke\PickingKnob.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{6C31CC58-63AC-4F84-A0E9-1668F46CBE7C}</ProjectGuid>
+    <ProjectGuid>{260BDC4A-ED54-4AEB-B0B5-99357837A8A4}</ProjectGuid>
     <RootNamespace>ExamplePlugin</RootNamespace>
     <Keyword>Win32Proj</Keyword>
   </PropertyGroup>
@@ -79,12 +79,12 @@
     <TargetName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">DeepOpenEXRId</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);$(GALIBS2015)\include\nuke11;$(GALIBS2015)\include</IncludePath>
-    <LibraryPath>$(VC_LibraryPath_x64);$(WindowsSDK_LibraryPath_x64);$(NETFXKitsDir)Lib\um\x64;$(GALIBS2015)\lib\nuke11;$(GALIBS2015)\lib\$(Platform)\$(Configuration)</LibraryPath>
+    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);$(GALIBS2015)\include\nuke11.1;$(GALIBS2015)\include</IncludePath>
+    <LibraryPath>$(VC_LibraryPath_x64);$(WindowsSDK_LibraryPath_x64);$(NETFXKitsDir)Lib\um\x64;$(GALIBS2015)\lib\nuke11.1;$(GALIBS2015)\lib\$(Platform)\$(Configuration)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);$(GALIBS2015)\include\nuke11;$(GALIBS2015)\include</IncludePath>
-    <LibraryPath>$(VC_LibraryPath_x64);$(WindowsSDK_LibraryPath_x64);$(NETFXKitsDir)Lib\um\x64;$(GALIBS2015)\lib\nuke11;$(GALIBS2015)\lib\$(Platform)\$(Configuration)</LibraryPath>
+    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);$(GALIBS2015)\include\nuke11.1;$(GALIBS2015)\include</IncludePath>
+    <LibraryPath>$(VC_LibraryPath_x64);$(WindowsSDK_LibraryPath_x64);$(NETFXKitsDir)Lib\um\x64;$(GALIBS2015)\lib\nuke11.1;$(GALIBS2015)\lib\$(Platform)\$(Configuration)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <Midl>
