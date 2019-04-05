@@ -29,7 +29,7 @@
     <ClInclude Include="..\nuke\PickingKnob.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{260BDC4A-ED54-4AEB-B0B5-99357837A8A4}</ProjectGuid>
+    <ProjectGuid>{4B5D7663-6990-48BD-B990-31F61C42000C}</ProjectGuid>
     <RootNamespace>ExamplePlugin</RootNamespace>
     <Keyword>Win32Proj</Keyword>
   </PropertyGroup>
