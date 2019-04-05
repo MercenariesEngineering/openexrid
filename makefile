@@ -1,6 +1,6 @@
 sinclude makefile.config
 
-all: _openexrid _test _openfx _nuke9 _nuke10 _nuke105 _nuke11 _nuke111 _nuke112
+all: _openexrid _test _openfx _nuke9 _nuke10 _nuke105 _nuke11 _nuke111 _nuke112 _nuke113
 
 _openexrid:
 	make -C openexrid
@@ -29,6 +29,9 @@ _nuke111:
 _nuke112:
 	make -C nuke11.2
 
+_nuke113:
+	make -C nuke11.3
+
 clean:
 	make -C openfx clean
 	make -C openexrid clean
@@ -38,6 +41,7 @@ clean:
 	make -C nuke11 clean
 	make -C nuke11.1 clean
 	make -C nuke11.2 clean
+	make -C nuke11.3 clean
 	make -C test clean
 
 install:
@@ -49,6 +53,7 @@ install:
 	make -C nuke11 install
 	make -C nuke11.1 install
 	make -C nuke11.2 install
+	make -C nuke11.3 install
 
 dotest: _test _openexrid
 	test/$(VERSION)/test

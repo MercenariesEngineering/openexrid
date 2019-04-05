@@ -11,10 +11,10 @@ $(VERSION):
 	mkdir -p $(VERSION)
 
 $(VERSION)/DeepOpenEXRId.so: $(OBJS)
-	g++ -o $@ $(OBJS) --shared $(LDFLAGS)
+	$(CXX) -o $@ $(OBJS) --shared $(LDFLAGS)
 
 $(OBJS): $(VERSION)/%.o: $(PWD)/../nuke/%.cpp
-	g++ -c -I.. $(CPPFLAGS) -I $(NUKE_INCLUDE) $< -o $@
+	$(CXX) -c -I.. $(CPPFLAGS) -I $(NUKE_INCLUDE) $< -o $@
 
 clean:
 	rm -f $(VERSION)/*.o $(VERSION)/*.a $(VERSION)/*.d $(VERSION)/*.ofx

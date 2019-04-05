@@ -15,7 +15,7 @@ $(VERSION)/libopenexrid.a: $(OBJS)
 	ranlib $(VERSION)/libopenexrid.a
 
 $(OBJS): $(VERSION)/%.o: %.cpp
-	g++ -c $(CPPFLAGS) $< -o $@
+	$(CXX) -c $(CPPFLAGS) $< -o $@
 
 clean:
 	rm -f $(VERSION)/*.o $(VERSION)/*.a $(VERSION)/*.d

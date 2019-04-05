@@ -11,10 +11,10 @@ $(VERSION):
 	mkdir -p $(VERSION)
 
 $(VERSION)/openexrid.ofx: $(OBJS)
-	g++ -o $@ $(OBJS) --shared $(LDFLAGS)
+	$(CXX) -o $@ $(OBJS) --shared $(LDFLAGS)
 
 $(OBJS): $(VERSION)/%.o: %.cpp
-	g++ -c -I.. $(CPPFLAGS) $< -o $@
+	$(CXX) -c -I.. $(CPPFLAGS) $< -o $@
 
 clean:
 	rm -f $(VERSION)/*.o $(VERSION)/*.a $(VERSION)/*.d $(VERSION)/*.ofx
