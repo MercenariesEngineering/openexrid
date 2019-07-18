@@ -18,17 +18,31 @@
 #include "DDImage/DeepFilterOp.h"
 #include "DDImage/Knobs.h"
 
+#include <OpenImageIO/ustring.h>
+
 // The DeepOpenEXRId plugin
 class DeepOpenEXRId : public DD::Image::DeepFilterOp
 {
 	const char *_patterns;
+  const char *_LPEs;
 	bool _colors, _invert, _alpha, _keepVis;
 	const char *_version;
 	int _mode;
-    
+
+
+  struct LPEEvent
+  {
+    OIIO::ustring Type;
+    OIIO::ustring Scattering;
+    OIIO::ustring Label;
+  };
+
+  typedef std::vector<LPEEvent> LightPath;
+
 public:
   DeepOpenEXRId(Node* node) : DeepFilterOp(node) {
-	_patterns = NULL;
+  _patterns = NULL;
+	_LPEs = NULL;
 	_colors = false;
 	_invert = false;
 	_alpha = false;
@@ -58,4 +72,5 @@ private:
 	bool _getNames (std::vector<std::string> &names);
 	bool _getNames_v2 (std::vector<std::string> &names);
 	bool _getNames_v3 (std::vector<std::string> &names);
+  bool _getLightPaths (std::vector<LightPath> &lightpaths);
 };

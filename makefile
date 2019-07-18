@@ -1,6 +1,7 @@
 sinclude makefile.config
 
-all: _openexrid _test _openfx _nuke9 _nuke10 _nuke105 _nuke11 _nuke111 _nuke112 _nuke113
+#all: _openexrid _test _openfx _nuke9 _nuke10 _nuke105 _nuke11 _nuke111 _nuke112 _nuke113
+all: _openexrid _nuke113
 
 _openexrid:
 	make -C openexrid

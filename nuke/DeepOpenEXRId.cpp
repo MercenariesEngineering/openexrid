@@ -22,10 +22,36 @@
 #include <re2/set.h>
 #include <iterator>
 
+#ifdef WIN32
+#pragma warning(push, 0)
+#endif
+#include <OSL/oslconfig.h>
+#include <OSL/optautomata.h>
+#include "OSL/lpeparse.h"
+#ifdef WIN32
+#pragma warning(pop)
+#endif
+// Defined by oiio
+#undef copysign
+// STOP is used as a keywoard inside oslclosure.h
+#undef STOP
+#include <OSL/oslclosure.h>
+
 using namespace DD::Image;
 using namespace std;
 
 static const char* CLASS = "DeepOpenEXRId";
+
+#include <stdarg.h>
+void	log (const char *fmt, ...)
+{
+	FILE	*f = fopen ("/tmp/exrid.log", "a");
+	va_list args;
+	va_start (args, fmt);
+	vfprintf (f, fmt, args);
+	fprintf (f, "\n");
+	fclose (f);
+}
 
 // Remove the - sign
 static inline const char *removeNeg (const std::string &s)
@@ -115,11 +141,19 @@ void DeepOpenEXRId::knobs(Knob_Callback f)
 	Multiline_String_knob(f, &_patterns, "patterns", 0, 20);	
 	Tooltip(f, 
 		"Each line is a regular expression matching object names like :\n"
-		"\"plane\" : any objects with a name containing \"plane\"\n"
-		"\"plane.*light\" : any object with a name containing \"plane\" followed by \"light\"\n"
-		"\"^plane\" : any object with a name starting by \"plane\"\n"
-		"\"plane$ \" : any object with a name finishing by \"plane\"\n\n"
-		"If the pattern is prefixed by the - character, the objects matching the pattern wille be exclude"
+		"\"plane\": any objects with a name containing \"plane\"\n"
+		"\"plane.*light\": any object with a name containing \"plane\" followed by \"light\"\n"
+		"\"^plane\": any object with a name starting by \"plane\"\n"
+		"\"plane$ \": any object with a name finishing by \"plane\"\n\n"
+		"If the pattern is prefixed by the - character, the objects matching the pattern wille be excluded"
+		);
+
+	Multiline_String_knob(f, &_LPEs, "LPEs", 0, 20);	
+	Tooltip(f, 
+		"Each line is a light path expression:\n"
+		"\"C.*L\": All light paths from the camera to any light (beauty)\n"
+		"\"CDL\" : Direct diffuse (either reflection, transmission and volume) from all lights\n"
+		"\"CD.+L\" : Indirect diffuse from all lights"
 		);
 
 	Bool_knob(f, &_colors, "colors", "false colors");
@@ -158,6 +192,9 @@ bool DeepOpenEXRId::_getNames (std::vector<std::string> &names)
     return _getNames_v2 (names);
 }
 
+extern std::string b64decode (const std::string& str);
+extern std::string inflate (const std::string& str);
+
 bool DeepOpenEXRId::_getNames_v2 (std::vector<std::string> &names)
 {
 	names.clear ();
@@ -171,7 +208,6 @@ bool DeepOpenEXRId::_getNames_v2 (std::vector<std::string> &names)
 		return false;
 	}
 
-	extern std::string inflate (const std::string& str);
 	const string namesUnpacked = inflate (namesPacked);
 
 	size_t index = 0;
@@ -196,15 +232,64 @@ bool DeepOpenEXRId::_getNames_v3 (std::vector<std::string> &names)
 		return false;
 	}
 
-	extern std::string b64decode (const std::string& str);
-	extern std::string inflate (const std::string& str);
-	const string namesUnpacked = inflate (b64decode(namesPacked));
+	const string namesUnpacked = inflate (b64decode (namesPacked));
 
 	size_t index = 0;
 	while (index < namesUnpacked.size())
 	{
-		names.push_back (namesUnpacked.c_str()+index);
-		index = namesUnpacked.find ('\n', index)+1;
+		size_t	eol = namesUnpacked.find ('\n', index);
+		if (eol == std::string::npos)
+		{
+			names.push_back (namesUnpacked.substr (index));
+			break;
+		}
+		else
+			names.push_back (namesUnpacked.substr (index, eol-index));
+		index = eol+1;
+	}
+
+	return true;
+}
+
+bool DeepOpenEXRId::_getLightPaths (std::vector<LightPath> &lightpaths)
+{
+	// Get the metadata
+	const MetaData::Bundle &metadata = fetchMetaData ("exr/EXRIdPaths");
+	const string pathsPacked = metadata.getString ("exr/EXRIdPaths");
+	if (pathsPacked.empty())
+	{
+		return false;
+	}
+
+	const string pathsUnpacked = inflate (b64decode (pathsPacked));
+
+	const char	*buffer = pathsUnpacked.c_str ();
+
+	while (*buffer != '\0')
+	{
+		LightPath	lp;
+		while (*buffer != '\0' && *buffer != '\n')
+		{
+			std::string	type, scattering, label;
+			while (*buffer != '\0' && *buffer != '\t')
+				type += *(buffer++);
+			if (*buffer == '\t')
+				++buffer;
+			while (*buffer != '\0' && *buffer != '\t')
+				scattering += *(buffer++);
+			if (*buffer == '\t')
+				++buffer;
+			while (*buffer != '\0' && *buffer != '\t')
+				label += *(buffer++);
+			if (*buffer == '\t')
+				++buffer;
+
+			lp.emplace_back (LPEEvent {OIIO::ustring (type),OIIO::ustring (scattering),OIIO::ustring (label)});
+		}
+
+		lightpaths.emplace_back (lp);
+		if (*buffer == '\n')
+			++buffer;
 	}
 
 	return true;
@@ -215,19 +300,31 @@ bool DeepOpenEXRId::doDeepEngine(DD::Image::Box box, const ChannelSet& channels,
 	if (!input0() || _patterns == NULL)
 		return true;
 
+	// Split the pattern text entry in patterns
+	vector<string> patterns;
+	splitPatterns (patterns, _patterns);
+
+	vector<string> lpepatterns;
+	splitPatterns (lpepatterns, _LPEs);
+
 	DeepOp* in = input0();
 
 	// Get the Id channel
 	DD::Image::ChannelSet requiredChannels = DD::Image::Mask_Alpha;
 	Channel idChannel = DD::Image::getChannel ("other.Id");
 
-	vector<string> names;
+	std::vector<string> names;
 	if (!_getNames (names))
 		return false;
 
-	// Split the pattern text entry in patterns
-	vector<string> patterns;
-	splitPatterns (patterns, _patterns);
+	Channel lpeidChannel = Channel (-1);
+	std::vector<LightPath> lightpaths;
+	bool	useLightPaths = !lpepatterns.empty () && _getLightPaths (lightpaths);
+	if (useLightPaths)
+		lpeidChannel = DD::Image::getChannel ("other.LPEId");
+
+	// State of each name, true selected
+	vector<bool> idStates (names.size(), false);
 
 	// Build a single regular expression automata for all the user patterns
 	re2::RE2::Options options;
@@ -241,9 +338,6 @@ bool DeepOpenEXRId::doDeepEngine(DD::Image::Box box, const ChannelSet& channels,
 			return false;
 		}
 	}
-
-	// State of each name, true selected
-	vector<bool> idStates (names.size(), false);
 
 	if (!patterns.empty ())
 	{
@@ -273,10 +367,83 @@ bool DeepOpenEXRId::doDeepEngine(DD::Image::Box box, const ChannelSet& channels,
 		}
 	}
 
+
+	// State of each light path, true selected
+	vector<bool> lpeidStates (lightpaths.size (), false);
+
+	if (useLightPaths)
+	{
+		OSL::NdfAutomata ndfautomata;
+
+		for (auto &reg : lpepatterns)
+		{
+			const std::vector<OIIO::ustring> userEvents = {OIIO::ustring("I")};
+			OSL::Parser parser (&userEvents, nullptr);
+			OSL::LPexp *e = parser.parse (reg.c_str ());
+			if (parser.error ())
+			{
+				error ("LPE: Parse error: %s", parser.getErrorMsg ());
+				return false;
+			}
+			else
+			{
+				auto exp = new OSL::lpexp::Rule (e, (void*)reg.c_str ());
+				exp->genAuto (ndfautomata);
+			}
+
+			delete e;
+		}
+
+		OSL::DfAutomata dfautomata;
+		ndfautoToDfauto (ndfautomata, dfautomata);
+
+		OSL::DfOptimizedAutomata	automaton;
+		automaton.compileFrom (dfautomata);
+
+		uint32_t	id = 0;
+		for (const auto &lightpath : lightpaths)
+		{
+			int	state = 0;
+
+			for (const auto &e : lightpath)
+			{
+				if ((state = automaton.getTransition (state, e.Type)) < 0 ||
+					(state = automaton.getTransition (state, e.Scattering)) < 0 ||
+					(state = automaton.getTransition (state, e.Label)) < 0 ||
+					(state = automaton.getTransition (state, OSL::Labels::STOP)) < 0)
+					break;
+			}
+
+			if (state > 0)
+			{
+				int nMatchExp = 0;
+				const char **matchExps = 
+					(const char**)automaton.getRules (state, nMatchExp);
+
+				if (nMatchExp > 0)
+				{
+					for (int i = 0; i < nMatchExp; ++i)
+					{
+						if (matchExps[i] != NULL)
+						{
+							lpeidStates[id] = true;
+							break;
+						}
+					}
+				}
+			}
+				
+			++id;
+		}
+	}
+
+
 	DeepPlane inPlane;
 
 	ChannelSet needed = channels;
 	needed += idChannel;
+	if (useLightPaths)
+		needed += lpeidChannel;
 	needed += Mask_DeepFront;
 	needed += Mask_Alpha;
 
@@ -296,59 +463,68 @@ bool DeepOpenEXRId::doDeepEngine(DD::Image::Box box, const ChannelSet& channels,
 
 		// Alpha of the previous samples
 		float prevVis = 0.f;
-		for (int sample = (int)pixel.getSampleCount()-1; sample >= 0; --sample) {
-
-		const float _id = pixel.getOrderedSample(sample, idChannel);
-		const int id = (int)_id;
-		if (id < 0 ||
-			id >= (int)idStates.size() ||
-			idStates[id] == _invert)
+		for (int sample = (int)pixel.getSampleCount()-1; sample >= 0; --sample)
 		{
-			const float alpha = pixel.getOrderedSample(sample, Chan_Alpha);
-			if (_colors)
+			const float	_id = pixel.getOrderedSample(sample, idChannel);
+			const int	id = (int)_id;
+			const bool	idselected = (id >= 0) && (id < (int)idStates.size()) && (idStates[id] != _invert);
+
+			float		_lpeid = 0;
+			int			lpeid = 0;
+			bool		lpeidselected = true;
+			if (useLightPaths)
 			{
-				// Display unselected samples with false colors
-				foreach (channel, channels) 
+				_lpeid = pixel.getOrderedSample (sample, lpeidChannel);
+				lpeid = (int)_lpeid;
+				lpeidselected = (lpeid >= 0) && (lpeid < (int)lpeidStates.size ()) && lpeidStates[lpeid];
+			}
+
+			if (!idselected || !lpeidselected)
+			{
+				const float alpha = pixel.getOrderedSample(sample, Chan_Alpha);
+				if (_colors)
 				{
-					if (channel == idChannel)
-						pels.push_back(_id);
-					else if (channel == Chan_Alpha)
-						pels.push_back(alpha);
-					else if (channel == Chan_DeepFront ||
-						channel == Chan_DeepBack)
-						pels.push_back(pixel.getOrderedSample(sample, channel));
-					else
+					// Display unselected samples with false colors
+					foreach (channel, channels) 
 					{
-						const float v = alpha*halton (primes[channel%3], id);
-						pels.push_back(v);
+						if (channel == idChannel)
+							pels.push_back(_id);
+						else if (channel == lpeidChannel)
+							pels.push_back(_lpeid);
+						else if (channel == Chan_Alpha)
+							pels.push_back(alpha);
+						else if (channel == Chan_DeepFront || channel == Chan_DeepBack)
+							pels.push_back(pixel.getOrderedSample(sample, channel));
+						else
+							pels.push_back (alpha*halton (primes[channel%3], id));
 					}
+				}
+				else
+				{
+					// Not selected, keep the previous visibility
+					prevVis += (1.f-prevVis)*alpha;
 				}
 			}
 			else
 			{
-				// Not selected, keep the previous visibility
-				prevVis += (1.f-prevVis)*alpha;
-			}
-		}
-		else
-		{
-			foreach (channel, channels) 
-			{
-				if (channel == idChannel)
-					pels.push_back(_id);
-				else if (channel == Chan_DeepFront ||
-					channel == Chan_DeepBack)
-					pels.push_back(pixel.getOrderedSample(sample, channel));
-				else
+				foreach (channel, channels) 
 				{
-					const float v = pixel.getOrderedSample(sample, _alpha ? Chan_Alpha : channel);
-					pels.push_back(v*(_keepVis ? (1.f-prevVis) : 1.f));
+					if (channel == idChannel)
+						pels.push_back(_id);
+					if (channel == lpeidChannel)
+						pels.push_back(_lpeid);
+					else if (channel == Chan_DeepFront || channel == Chan_DeepBack)
+						pels.push_back(pixel.getOrderedSample(sample, channel));
+					else
+					{
+						const float v = pixel.getOrderedSample(sample, _alpha ? Chan_Alpha : channel);
+						pels.push_back(v*(_keepVis ? (1.f-prevVis) : 1.f));
+					}
 				}
 			}
 		}
-    }
-        
-    plane.addPixel(pels);
+
+		plane.addPixel(pels);
 	}
 
 	return true;
@@ -434,7 +610,6 @@ void DeepOpenEXRId::select (float x0, float y0, float x1, float y1, bool invert)
 
 		DeepPixel pixel = inPlane.getPixel(it);
 		for (int sample = (int)pixel.getSampleCount()-1; sample >= 0; --sample) {
-
 			const float _id = pixel.getOrderedSample(sample, idChannel);
 			ids.insert ((int)_id);
 			if (click)
