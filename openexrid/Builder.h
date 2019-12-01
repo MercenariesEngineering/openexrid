@@ -50,7 +50,8 @@ public:
 	// names is the concatenated C strings of the object names
 	// namesLength is the size of the names buffer
 	// If computeDataWindow is true, compute the dataWindow of the none empty pixel and store it in the EXR header
-	void write (const char *filename, const char *names, int namesLength, bool computeDataWindow, Imf::Compression compression=Imf::ZIPS_COMPRESSION) const;
+	void write (const char *filename, const char *names, int namesLength, const char *namesHash,
+		bool computeDataWindow, Imf::Compression compression=Imf::ZIPS_COMPRESSION) const;
 
 private:
 

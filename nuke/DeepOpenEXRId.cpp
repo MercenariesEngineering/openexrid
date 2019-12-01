@@ -13,29 +13,16 @@
 
 */
 
+#include <iterator>
+
+#include "../openexrid/Version.h"
+
 #include "DeepOpenEXRId.h"
 #include "PickingKnob.h"
-#include "../openexrid/Version.h"
+#include "md5.h"
 
 #include "DDImage/MetaData.h"
 #include "DDImage/Interest.h"
-#include <re2/set.h>
-#include <iterator>
-
-#ifdef WIN32
-#pragma warning(push, 0)
-#endif
-#include <OSL/oslconfig.h>
-#include <OSL/optautomata.h>
-#include "OSL/lpeparse.h"
-#ifdef WIN32
-#pragma warning(pop)
-#endif
-// Defined by oiio
-#undef copysign
-// STOP is used as a keywoard inside oslclosure.h
-#undef STOP
-#include <OSL/oslclosure.h>
 
 using namespace DD::Image;
 using namespace std;
@@ -43,15 +30,36 @@ using namespace std;
 static const char* CLASS = "DeepOpenEXRId";
 
 #include <stdarg.h>
+
+#define LOG
+//#define TIMING_LOG
+
+#ifdef LOG
 void	log (const char *fmt, ...)
 {
-	FILE	*f = fopen ("/tmp/exrid.log", "a");
-	va_list args;
-	va_start (args, fmt);
-	vfprintf (f, fmt, args);
-	fprintf (f, "\n");
-	fclose (f);
+/*
+	{
+		FILE	*f = fopen ("/tmp/exrid.log", "a");
+		va_list args;
+		va_start (args, fmt);
+		vfprintf (f, fmt, args);
+		fprintf (f, "\n");
+		fclose (f);
+	}
+*/
+	{
+		va_list args;
+		va_start (args, fmt);
+		vprintf (fmt, args);
+		printf ("\n");
+	}
 }
+#else
+static inline void log (const char *fmt, ...) {}
+#endif
+
+extern std::string b64decode (const std::string& str);
+extern std::string inflate (const std::string& str);
 
 // Remove the - sign
 static inline const char *removeNeg (const std::string &s)
@@ -182,130 +190,386 @@ void DeepOpenEXRId::_validate(bool for_real)
 	DeepFilterOp::_validate(for_real);
 }
 
-bool DeepOpenEXRId::_getNames (std::vector<std::string> &names)
+static void	unpackStringToArray (const std::string &s, std::vector<std::string> &array, char separator)
 {
-	const MetaData::Bundle &metadata = fetchMetaData ("exr/EXRIdVersion");
-	const int EXRIdVersion = atoi(metadata.getString ("exr/EXRIdVersion").c_str());
-  if (EXRIdVersion == 3)
-    return _getNames_v3 (names);
-  else
-    return _getNames_v2 (names);
+	const char	*p = s.c_str ();
+	const char	*end = p + s.size ();
+	while (p < end)
+	{
+		std::string	str;
+		while (p < end && *p != separator)
+			str += *(p++);
+		array.emplace_back (std::move (str));
+		if (p < end)
+			++p;
+	}
 }
 
-extern std::string b64decode (const std::string& str);
-extern std::string inflate (const std::string& str);
-
-bool DeepOpenEXRId::_getNames_v2 (std::vector<std::string> &names)
+static std::string MD5DigestToString (const uint8_t *digest)
 {
-	names.clear ();
-
-	// Get the metadata
-	const MetaData::Bundle &metadata = fetchMetaData ("exr/EXRIdNames");
-	const string namesPacked = metadata.getString ("exr/EXRIdNames");
-	if (namesPacked.empty())
+	std::string	r;
+	static const char	*hex = "0123456789abcdef";
+	for (int i = 0; i < 16; ++i)
 	{
-		error("No EXRIdNames metadata");
-		return false;
+		r += hex[(digest[i] >> 4) & 0xf];
+		r += hex[digest[i] & 0xf];
 	}
-
-	const string namesUnpacked = inflate (namesPacked);
-
-	size_t index = 0;
-	while (index < namesUnpacked.size())
-	{
-		names.push_back (namesUnpacked.c_str()+index);
-		index = namesUnpacked.find ('\0', index)+1;
-	}
-	return true;
+	return r;
 }
 
-bool DeepOpenEXRId::_getNames_v3 (std::vector<std::string> &names)
+static std::string	hashCString (const char *p)
 {
-	names.clear ();
+	md5_context	md5;
+	md5_starts (&md5);
+	md5_update (&md5, (const uint8_t*)p, strlen (p));
+	uint8_t	digest[16];
+	md5_finish (&md5, digest);
+	return MD5DigestToString (digest);
+}
 
-	// Get the metadata
-	const MetaData::Bundle &metadata = fetchMetaData ("exr/EXRIdNames");
-	const string namesPacked = metadata.getString ("exr/EXRIdNames");
-	if (namesPacked.empty())
+static std::string LightPathToString (const DeepOpenEXRId::LightPath &lp)
+{
+	std::string	fulllpe;
+
+	auto	addToken = [&] (const OIIO::ustring &t)
 	{
-		error("No EXRIdNames metadata");
-		return false;
-	}
-
-	const string namesUnpacked = inflate (b64decode (namesPacked));
-
-	size_t index = 0;
-	while (index < namesUnpacked.size())
-	{
-		size_t	eol = namesUnpacked.find ('\n', index);
-		if (eol == std::string::npos)
-		{
-			names.push_back (namesUnpacked.substr (index));
-			break;
-		}
+		if (t.empty ())
+			fulllpe += '.';
+		else if (t.size () == 1)
+			fulllpe += std::string (t.c_str ());
 		else
-			names.push_back (namesUnpacked.substr (index, eol-index));
-		index = eol+1;
+			fulllpe += "'" + std::string (t.c_str ()) + "'";
+	};
+
+	for (auto &token : lp)
+	{
+		fulllpe += "<";
+		addToken (token.Type);
+		addToken (token.Scattering);
+		if (!token.Label.empty ())
+			addToken (token.Label);
+		fulllpe += ">";
 	}
+
+	return fulllpe;
+}
+
+std::shared_ptr<DeepOpenEXRId::ExrIdData> DeepOpenEXRId::_getExrIdData ()
+{
+	const MetaData::Bundle &metadata = fetchMetaData (NULL);
+
+	// Note: Add a EXRIdHash metadata to speedup the digesting of the metadata
+	string hash = metadata.getString ("exr/EXRIdHash");
+
+	// No hash present, compute one directly from the metadata
+	// Note: this is fairly slow hence why we suggest adding the metadata hash
+	if (hash.empty ())
+	{
+		const int EXRIdVersion = atoi (metadata.getString ("exr/EXRIdVersion").c_str());
+		const string namesPacked = metadata.getString ("exr/EXRIdNames");
+		const string pathsPacked = metadata.getString ("exr/EXRIdPaths");
+
+		md5_context	md5;
+		md5_starts (&md5);
+		md5_update (&md5, (const uint8_t*)(&EXRIdVersion), sizeof (EXRIdVersion));
+		md5_update (&md5, (const uint8_t*)(namesPacked.c_str ()), namesPacked.size ());
+		md5_update (&md5, (const uint8_t*)(pathsPacked.c_str ()), pathsPacked.size ());
+
+		uint8_t	digest[16];
+		md5_finish (&md5, digest);
+
+		hash = MD5DigestToString (digest);
+	}
+
+	return ExrIdDataCache.get (hash, [&] ()
+	{
+		log ("Loading EXRId data ...");
+
+		std::shared_ptr<DeepOpenEXRId::ExrIdData>	data = std::make_shared<DeepOpenEXRId::ExrIdData> ();
+
+		data->Hash = hash;
+
+		const int EXRIdVersion = atoi (metadata.getString ("exr/EXRIdVersion").c_str());
+		const string namesPacked = metadata.getString ("exr/EXRIdNames");
+		const string pathsPacked = metadata.getString ("exr/EXRIdPaths");
+
+		// Load names
+		if (!namesPacked.empty ())
+		{
+			if (EXRIdVersion == 2)
+			{
+				const string namesUnpacked = inflate (namesPacked);
+				unpackStringToArray (namesUnpacked, data->Names, '\0');
+			}
+			else
+			{
+				const string namesUnpacked = inflate (b64decode (namesPacked));
+				unpackStringToArray (namesUnpacked, data->Names, '\n');
+			}
+		}
+
+		// Load light paths
+		if (!pathsPacked.empty())
+		{
+			const string pathsUnpacked = inflate (b64decode (pathsPacked));
+
+			const char	*buffer = pathsUnpacked.c_str ();
+
+			while (*buffer != '\0')
+			{
+				LightPath	lp;
+				while (*buffer != '\0' && *buffer != '\n')
+				{
+					std::string	type, scattering, label;
+					while (*buffer != '\0' && *buffer != '\t')
+						type += *(buffer++);
+					if (*buffer == '\t')
+						++buffer;
+					while (*buffer != '\0' && *buffer != '\t')
+						scattering += *(buffer++);
+					if (*buffer == '\t')
+						++buffer;
+					while (*buffer != '\0' && *buffer != '\t')
+						label += *(buffer++);
+					if (*buffer == '\t')
+						++buffer;
+
+					lp.emplace_back (LPEEvent {OIIO::ustring (type),OIIO::ustring (scattering),OIIO::ustring (label)});
+				}
+
+				data->LightPaths.emplace_back (lp);
+				if (*buffer == '\n')
+					++buffer;
+			}
+		}
+
+		log ("Unpacked %d names and %d lightpaths", int (data->Names.size ()), int (data->LightPaths.size ()));
+
+		return data;
+	});
+}
+
+static re2::RE2::Options	_DefaultRe2Options;
+
+DeepOpenEXRId::NameAutomaton::NameAutomaton () :
+	RegEx (re2::RE2::Options (), re2::RE2::UNANCHORED)	{}
+
+DeepOpenEXRId::NameAutomatonPtr	DeepOpenEXRId::_getNamesAutomaton ()
+{
+	// Note: we could keep a hash of _patterns and invalidate it with knob_changed
+	// but _patterns is not supposed to grow incontrollably, so there negigeable gain here
+	std::string	hash = hashCString (_patterns);
+	return NameAutomatonCache.get (hash, [&] ()
+	{
+		log ("Compiling name automaton ...");
+
+		std::shared_ptr<NameAutomaton>	set = std::make_shared<NameAutomaton> ();
+
+		set->Hash = hash;
+
+		// Split the pattern text entry in patterns
+		splitPatterns (set->Patterns, _patterns);
+		if (set->Patterns.empty ())
+			NameAutomatonPtr ();
+
+		for (auto &pattern : set->Patterns)
+		{
+			std::string	err;
+			if (set->RegEx.Add (removeNeg (pattern), &err) < 0)
+			{
+				error ("Bad regular expression '%s': %s", pattern.c_str (), err.c_str ());
+				return NameAutomatonPtr ();
+			}
+		}
+
+		if (!set->RegEx.Compile ())
+		{
+			error ("Automaton compilation error");
+			return NameAutomatonPtr ();
+		}
+
+		log ("Compiled %d regexes", int (set->Patterns.size ()));
+
+		return set;
+	});
+}
+
+bool	DeepOpenEXRId::NameAutomaton::match (const std::string &name, std::vector<int> &tmp) const
+{
+	tmp.clear ();
+	RegEx.Match (name, &tmp);
+
+	// No match?
+	if (tmp.empty ())
+		return false;
+
+	// Negative match?
+	for (auto patternid : tmp)
+		if (Patterns[patternid][0] == '-')
+			return false;
 
 	return true;
 }
 
-bool DeepOpenEXRId::_getLightPaths (std::vector<LightPath> &lightpaths)
+DeepOpenEXRId::LPEAutomatonPtr	DeepOpenEXRId::_getLPEAutomaton ()
 {
-	// Get the metadata
-	const MetaData::Bundle &metadata = fetchMetaData ("exr/EXRIdPaths");
-	const string pathsPacked = metadata.getString ("exr/EXRIdPaths");
-	if (pathsPacked.empty())
+	// Note: we could keep a hash of _LPEs and invalidate it with knob_changed
+	// but _LPEs is not supposed to grow incontrollably, so there negigeable gain here
+	std::string	hash = hashCString (_LPEs);
+	return LPEAutomatonCache.get (hash, [&] ()
 	{
-		return false;
-	}
+		log ("Compiling lpe automaton ...");
 
-	const string pathsUnpacked = inflate (b64decode (pathsPacked));
+		std::shared_ptr<LPEAutomaton>	set = std::make_shared<LPEAutomaton> ();
 
-	const char	*buffer = pathsUnpacked.c_str ();
+		set->Hash = hash;
 
-	while (*buffer != '\0')
-	{
-		LightPath	lp;
-		while (*buffer != '\0' && *buffer != '\n')
+		splitPatterns (set->Patterns, _LPEs);
+		if (set->Patterns.empty ())
+			return LPEAutomatonPtr ();
+
+		OSL::NdfAutomata ndfautomata;
+		size_t	patternid = 0;
+		for (auto &pattern : set->Patterns)
 		{
-			std::string	type, scattering, label;
-			while (*buffer != '\0' && *buffer != '\t')
-				type += *(buffer++);
-			if (*buffer == '\t')
-				++buffer;
-			while (*buffer != '\0' && *buffer != '\t')
-				scattering += *(buffer++);
-			if (*buffer == '\t')
-				++buffer;
-			while (*buffer != '\0' && *buffer != '\t')
-				label += *(buffer++);
-			if (*buffer == '\t')
-				++buffer;
+			const std::vector<OIIO::ustring> userEvents = {OIIO::ustring("I")};
+			OSL::Parser parser (&userEvents, NULL);
+			OSL::LPexp *e = parser.parse (removeNeg (pattern));
+			if (parser.error ())
+			{
+				error ("Bad light path expression '%s': %s", pattern.c_str (), parser.getErrorMsg ());
+				return LPEAutomatonPtr ();
+			}
+			else
+			{
+				auto exp = new OSL::lpexp::Rule (e, (void*)pattern.c_str ());
+				exp->genAuto (ndfautomata);
+			}
 
-			lp.emplace_back (LPEEvent {OIIO::ustring (type),OIIO::ustring (scattering),OIIO::ustring (label)});
+			delete e;
+			++patternid;
 		}
 
-		lightpaths.emplace_back (lp);
-		if (*buffer == '\n')
-			++buffer;
-	}
+		OSL::DfAutomata dfautomata;
+		ndfautoToDfauto (ndfautomata, dfautomata);
+
+		set->LPEx.compileFrom (dfautomata);
+
+		log ("Compiled %d lpes", int (set->Patterns.size ()));
+
+		return set;
+	});
+}
+
+bool	DeepOpenEXRId::LPEAutomaton::match (const LightPath &lightpath) const
+{
+	int	state = 0;
+
+	// Move the automaton event by event
+	// Check that each transition doesn't move us outside the automaton
+	for (const auto &event : lightpath)
+		if ((state = LPEx.getTransition (state, event.Type)) < 0 ||
+			(state = LPEx.getTransition (state, event.Scattering)) < 0 ||
+			(state = LPEx.getTransition (state, event.Label)) < 0 ||
+			(state = LPEx.getTransition (state, OSL::Labels::STOP)) < 0)
+			return false;
+
+	int nMatchExp = 0;
+	const char **matchExps = (const char **)LPEx.getRules (state, nMatchExp);
+
+	// No match?
+	if (nMatchExp <= 0)
+		return false;
+
+	// Negative match?
+	for (int ilpe = 0; ilpe < nMatchExp; ++ilpe)
+		if (matchExps[ilpe][0] == '-')
+			return false;
 
 	return true;
+}
+
+DeepOpenEXRId::StatePtr	DeepOpenEXRId::_getState (
+	const ExrIdDataPtr &exrid,
+	const NameAutomatonPtr &namesregex,
+	const LPEAutomatonPtr &lperegex)
+{
+	// Quick digest of the input metadata and name patterns and lpes
+	md5_context	md5;
+	md5_starts (&md5);
+	if (exrid != NULL)
+		md5_update (&md5, (const uint8_t*)(exrid->Hash.c_str ()), exrid->Hash.size ());
+	if (namesregex != NULL)
+		md5_update (&md5, (const uint8_t*)(namesregex->Hash.c_str ()), namesregex->Hash.size ());
+	if (lperegex != NULL)
+		md5_update (&md5, (const uint8_t*)(lperegex->Hash.c_str ()), lperegex->Hash.size ());
+
+	uint8_t	digest[16];
+	md5_finish (&md5, digest);
+
+	std::string	hash = MD5DigestToString (digest);
+
+	return StateCache.get (hash, [&] ()
+	{
+		log ("Building exrid active state ...");
+
+		std::shared_ptr<State>	st = std::make_shared<State> ();
+
+		// State of each name, true selected
+		vector<bool>	&idStates = st->IdStates;
+		idStates.resize (exrid->Names.size (), false);
+
+		int	nids = 0;
+		vector<int> matched;
+		// Match every names against the patterns
+		if (namesregex != NULL)
+			for (size_t i = 0; i < exrid->Names.size (); ++i)
+				nids += int (idStates[i] = namesregex->match (exrid->Names[i], matched));
+
+		// State of each light path, true selected
+		vector<bool>	&lpeidStates = st->LPEIdStates;
+		lpeidStates.resize (exrid->LightPaths.size (), false);
+
+		int	nlpeids = 0;
+		// Match every light paths against the patterns
+		if (lperegex != NULL)
+			for (size_t i = 0; i < exrid->LightPaths.size (); ++i)
+				nlpeids += int (lpeidStates[i] = lperegex->match (exrid->LightPaths[i]));
+
+		log ("Generated %d active names and %d active lpes", nids, nlpeids);
+
+		return st;
+	});
 }
 
 bool DeepOpenEXRId::doDeepEngine(DD::Image::Box box, const ChannelSet& channels, DeepOutputPlane& plane)
 {
-	if (!input0() || _patterns == NULL)
+	if (!input0 () || _patterns == NULL)
 		return true;
 
-	// Split the pattern text entry in patterns
-	vector<string> patterns;
-	splitPatterns (patterns, _patterns);
+#ifdef TIMING_LOG
+	std::chrono::time_point<std::chrono::system_clock> _start = std::chrono::system_clock::now ();
+#endif
 
-	vector<string> lpepatterns;
-	splitPatterns (lpepatterns, _LPEs);
+	// Load the EXRId metadata
+	ExrIdDataPtr		exrid = _getExrIdData ();
+	if (exrid->Names.empty ())
+		return false;
+
+	// Load the pattern regex and lpe automata
+	NameAutomatonPtr	namesregex = _getNamesAutomaton ();
+	LPEAutomatonPtr		lperegex = _getLPEAutomaton ();
+
+	// Load the active names and light paths ids
+	StatePtr			st = _getState (exrid, namesregex, lperegex);
+
+#ifdef TIMING_LOG
+	std::chrono::time_point<std::chrono::system_clock> _end = std::chrono::system_clock::now ();
+	auto microseconds = std::chrono::duration_cast<std::chrono::microseconds>(_end - _start);
+	log ("metadata loaded in %dus", int (microseconds.count ()));
+#endif
+
+	bool	useLightPaths = lperegex != NULL && !exrid->LightPaths.empty ();
 
 	DeepOp* in = input0();
 
@@ -313,130 +577,13 @@ bool DeepOpenEXRId::doDeepEngine(DD::Image::Box box, const ChannelSet& channels,
 	DD::Image::ChannelSet requiredChannels = DD::Image::Mask_Alpha;
 	Channel idChannel = DD::Image::getChannel ("other.Id");
 
-	std::vector<string> names;
-	if (!_getNames (names))
-		return false;
-
+	// Get the LPEId channel
 	Channel lpeidChannel = Channel (-1);
-	std::vector<LightPath> lightpaths;
-	bool	useLightPaths = !lpepatterns.empty () && _getLightPaths (lightpaths);
 	if (useLightPaths)
 		lpeidChannel = DD::Image::getChannel ("other.LPEId");
 
-	// State of each name, true selected
-	vector<bool> idStates (names.size(), false);
-
-	// Build a single regular expression automata for all the user patterns
-	re2::RE2::Options options;
-	re2::RE2::Anchor anchor = re2::RE2::UNANCHORED;
-	re2::RE2::Set set (options, anchor);
-	for (vector<string>::const_iterator itp = patterns.begin (); itp != patterns.end (); ++itp)
-	{
-		if (set.Add (removeNeg (*itp), NULL) < 0)
-		{
-			error("Bad regular expression");
-			return false;
-		}
-	}
-
-	if (!patterns.empty ())
-	{
-		if (!set.Compile ())
-		{
-			error("Bad regular expression");
-			return false;
-		}
-
-		// Match every names against the patterns
-		vector<int> matched;
-		for (size_t i = 0; i < names.size(); ++i)
-		{
-			matched.clear ();
-			set.Match (names[i], &matched);
-			for (vector<int>::iterator it = matched.begin (); it != matched.end (); ++it)
-			{
-				// Negative match
-				if (patterns[*it][0] == '-')
-				{
-					idStates[i] = false;
-					break;
-				}
-				else
-					idStates[i] = true;
-			}
-		}
-	}
-
-
-	// State of each light path, true selected
-	vector<bool> lpeidStates (lightpaths.size (), false);
-
-	if (useLightPaths)
-	{
-		OSL::NdfAutomata ndfautomata;
-
-		for (auto &reg : lpepatterns)
-		{
-			const std::vector<OIIO::ustring> userEvents = {OIIO::ustring("I")};
-			OSL::Parser parser (&userEvents, nullptr);
-			OSL::LPexp *e = parser.parse (reg.c_str ());
-			if (parser.error ())
-			{
-				error ("LPE: Parse error: %s", parser.getErrorMsg ());
-				return false;
-			}
-			else
-			{
-				auto exp = new OSL::lpexp::Rule (e, (void*)reg.c_str ());
-				exp->genAuto (ndfautomata);
-			}
-
-			delete e;
-		}
-
-		OSL::DfAutomata dfautomata;
-		ndfautoToDfauto (ndfautomata, dfautomata);
-
-		OSL::DfOptimizedAutomata	automaton;
-		automaton.compileFrom (dfautomata);
-
-		uint32_t	id = 0;
-		for (const auto &lightpath : lightpaths)
-		{
-			int	state = 0;
-
-			for (const auto &e : lightpath)
-			{
-				if ((state = automaton.getTransition (state, e.Type)) < 0 ||
-					(state = automaton.getTransition (state, e.Scattering)) < 0 ||
-					(state = automaton.getTransition (state, e.Label)) < 0 ||
-					(state = automaton.getTransition (state, OSL::Labels::STOP)) < 0)
-					break;
-			}
-
-			if (state > 0)
-			{
-				int nMatchExp = 0;
-				const char **matchExps = 
-					(const char**)automaton.getRules (state, nMatchExp);
-
-				if (nMatchExp > 0)
-				{
-					for (int i = 0; i < nMatchExp; ++i)
-					{
-						if (matchExps[i] != NULL)
-						{
-							lpeidStates[id] = true;
-							break;
-						}
-					}
-				}
-			}
-				
-			++id;
-		}
-	}
-
+	if (int (lpeidChannel) < 0)
+		useLightPaths = false;
 
 	DeepPlane inPlane;
 
@@ -467,7 +614,7 @@ bool DeepOpenEXRId::doDeepEngine(DD::Image::Box box, const ChannelSet& channels,
 		{
 			const float	_id = pixel.getOrderedSample(sample, idChannel);
 			const int	id = (int)_id;
-			const bool	idselected = (id >= 0) && (id < (int)idStates.size()) && (idStates[id] != _invert);
+			const bool	idselected = st->idSelected (id);
 
 			float		_lpeid = 0;
 			int			lpeid = 0;
@@ -476,7 +623,7 @@ bool DeepOpenEXRId::doDeepEngine(DD::Image::Box box, const ChannelSet& channels,
 			{
 				_lpeid = pixel.getOrderedSample (sample, lpeidChannel);
 				lpeid = (int)_lpeid;
-				lpeidselected = (lpeid >= 0) && (lpeid < (int)lpeidStates.size ()) && lpeidStates[lpeid];
+				lpeidselected = st->lpeidSelected (lpeid);
 			}
 
 			if (!idselected || !lpeidselected)
@@ -617,22 +764,15 @@ void DeepOpenEXRId::select (float x0, float y0, float x1, float y1, bool invert)
 		}
 	}
 
-	vector<string> id2names;
-	if (!_getNames (id2names))
+	auto	exrid = _getExrIdData ();
+	if (exrid == NULL)
 		return;
 
 	// Build a final string set
 	set<string> names;
-	{
-		set<int>::iterator ite = ids.begin();
-		while (ite != ids.end())
-		{
-			const int id = *ite;
-			if (id >= 0 && id < (int)id2names.size())
-				names.insert (escapeRegExp (id2names[id].c_str()));
-			++ite;
-		}
-	}
+	for (auto id : ids)
+		if (id >= 0 && id < (int)exrid->Names.size())
+			names.insert (escapeRegExp (exrid->Names[id].c_str()));
 
 	set<string> oldNames = getOldName (_patterns);
 	set<string> result;
@@ -648,15 +788,11 @@ void DeepOpenEXRId::select (float x0, float y0, float x1, float y1, bool invert)
 
 	// Build a final string with the patterns
 	string patterns;
+	for (auto &pattern : result)
 	{
-		set<string>::iterator ite = result.begin();
-		while (ite != result.end())
-		{
-			if (!patterns.empty())
-				patterns += "\n";
-			patterns += *ite;
-			++ite;
-		}
+		if (!patterns.empty())
+			patterns += "\n";
+		patterns += pattern;
 	}
 	knob("patterns")->set_text (patterns.c_str());
 }

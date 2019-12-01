@@ -1,5 +1,6 @@
 x64
 Debug
+debug
 *.filters
 *.sdf
 .vs

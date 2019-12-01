@@ -108,7 +108,8 @@ void Builder::finish (const std::vector<float> &weightSums)
 
 //**********************************************************************
 
-void Builder::write (const char *filename, const char *names, int namesLength, bool computeDataWindow, Compression compression) const
+void Builder::write (const char *filename, const char *names, int namesLength, const char *namesHash,
+	bool computeDataWindow, Compression compression) const
 {
 	if (!_Finished)
 		throw runtime_error ("Builder::finish has not been called");
@@ -159,6 +160,9 @@ void Builder::write (const char *filename, const char *names, int namesLength, b
 	// Write the names in an Attribute
 	header.insert ("EXRIdVersion", Imf::IntAttribute (Mask::Version));
 	header.insert ("EXRIdNames", Imf::StringAttribute (b64encode(deflate (names, namesLength))));
+	// Add the hash if provided
+	if (namesHash != NULL)
+		header.insert ("EXRIdHash", Imf::StringAttribute (std::string (namesHash)));
 
 	DeepScanLineOutputFile file (filename, header);
 	DeepFrameBuffer frameBuffer;

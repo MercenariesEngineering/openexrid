@@ -20,28 +20,31 @@ so_ext = ".dll" if platform.system() == "Windows" else ".so"
 archive_type = "zip" if platform.system() == "Windows" else "gztar"
 
 nuke_versions = []
-for x in os.listdir("."):
+for x in os.listdir("build/release/lib"):
 	if re.match("nuke[0-9.]+", x):
 		nuke_versions.append (x)
 
 cwd = os.getcwd()
 tmpdir = tempfile.mkdtemp ()
 os.chdir (tmpdir)
+print ("Archiving in "+tmpdir)
 zip_filename = cwd + "/openexrid-" + version + "-" + zipfile_platform
 
 try:
-	os.makedirs (ofx_dst)
-	shutil.copy (cwd + "/openfx/release/openexrid.ofx", ofx_dst)
-	strip (ofx_dst + "/openexrid.ofx")
-	shutil.copy (cwd + "/LICENSE", ".")
+	os.mkdir ("openexrid")
+
+	os.makedirs ("openexrid/"+ofx_dst)
+	shutil.copy (cwd + "/build/release/lib/openexrid.ofx", "openexrid/"+ofx_dst)
+	strip ("openexrid/" + ofx_dst + "/openexrid.ofx")
+	shutil.copy (cwd + "/LICENSE", "openexrid/")
 
 	for nuke in nuke_versions:
-		os.mkdir (nuke)
-		shutil.copy (cwd + "/" + nuke + "/release/DeepOpenEXRId" + so_ext, nuke)
-		strip (nuke + "/DeepOpenEXRId" + so_ext)
-		shutil.copy (cwd + "/nuke/menu.py", nuke)
+		os.mkdir ("openexrid/"+nuke)
+		shutil.copy (cwd + "/build/release/lib/" + nuke + "/DeepOpenEXRId" + so_ext, "openexrid/"+nuke)
+		strip ("openexrid/"+nuke + "/DeepOpenEXRId" + so_ext)
+		shutil.copy (cwd + "/nuke/menu.py", "openexrid/"+nuke)
 
-	shutil.make_archive (zip_filename, archive_type, tmpdir)
+	shutil.make_archive (zip_filename, archive_type, ".", "openexrid")
 
 finally:
 	os.chdir (cwd)

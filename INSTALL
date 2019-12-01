@@ -2,17 +2,51 @@
 * Compilation under linux *
 ***************************
 
-1) Install the following libraries :
-	OpenEXR 2.x
-	re2
-	OFX
-	Nuke9, 10 or 10.5
-	Compile with gcc 4.1.2 for the Nuke plug-in
+Prerequisites:
+--------------
 
-2) Edit the makefile.conf file and set the correct location of those libraries
-	or define the different variables in the environment.
+- CMake 3.10
+  We provide a CMake solution to build the lib and plugins for Nuke and OFX.
+  You can work your way out of CMake, though ...
 
-3) make install
+- gcc 4.8.2
+  Although you can use any c++11 capable compiler to build the OpenEXRId lib,
+  compiling the Nuke plugins might not be pratical.
+
+- OpenEXR and IlmBase 2.2.0
+
+- re2
+  We use the 2019-06-01 release, but we may have success with earlier versions
+
+- OpenImageIO 1.6.18
+
+- zlib 1.2.11
+
+
+Building with CMake:
+--------------------
+
+From the openexrid root:
+
+$ mkdir -p build/release
+$ cd build/release
+$ cmake -G "Unix Makefiles" -D CMAKE_BUILD_TYPE=Release -D CMAKE_C_COMPILER=gcc-4.8 -D CMAKE_CXX_COMPILER=g++-4.8 ../../
+$ make
+
+
+Alternatively:
+--------------
+
+Our build system is base on Conan and CMake inside Docker (to help generate as binary compatible binaries as possible.)
+
+Once you have a Docker ready, just run ./linux-docker-build.sh, which:
+- builds the docker image based on Centos6.6 (and also compiles gcc-4.8 and fetches all necessary dependencies)
+- updates the dependencies using Conan
+- and build all libs and plugins
+
+Note that we've fixed the path to the NDK in the linux-docker-build.sh file. Feel free to suit your own installation.
+
+The resulting files are located in build/release.
 
 *****************************
 * Compilation under Windows *
