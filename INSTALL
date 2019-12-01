@@ -44,6 +44,9 @@ Once you have a Docker ready, just run ./linux-docker-build.sh, which:
 - updates the dependencies using Conan
 - and build all libs and plugins
 
+While updating Conan dependencies, the whole .conan/data are stored in the conan_data folder. This to avoid
+polluting your own .conan/data with our stuff. Chances are, you probably won't use gcc-4.8 anytime soon :)
+
 Note that we've fixed the path to the NDK in the linux-docker-build.sh file. Feel free to suit your own installation.
 
 The resulting files are located in build/release.

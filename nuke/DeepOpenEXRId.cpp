@@ -31,7 +31,7 @@ static const char* CLASS = "DeepOpenEXRId";
 
 #include <stdarg.h>
 
-#define LOG
+//#define LOG
 //#define TIMING_LOG
 
 #ifdef LOG
