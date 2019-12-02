@@ -614,7 +614,7 @@ bool DeepOpenEXRId::doDeepEngine(DD::Image::Box box, const ChannelSet& channels,
 		{
 			const float	_id = pixel.getOrderedSample(sample, idChannel);
 			const int	id = (int)_id;
-			const bool	idselected = st->idSelected (id);
+			const bool	idselected = (st->idSelected (id) != _invert);
 
 			float		_lpeid = 0;
 			int			lpeid = 0;
