@@ -35,11 +35,7 @@ class OpenEXRIdConan(ConanFile):
             self.options["zlib"].fPIC=True
 
     def source(self):
-        #tools.download("https://github.com/MercenariesEngineering/openexrid/archive/%.tar.gz" % self.version,
-        #               "openexrid.tar.gz")
-        #tools.untargz("openexrid.tar.gz")
-        #os.unlink("openexrid.tar.gz")
-        shutil.copytree ("/tmp/openexrid", "./openexrid-%s" % self.version)
+        self.run("git clone http://github.com/MercenariesEngineering/openexrid.git --branch %s" % self.version)
 
     def build(self):
         cmake = CMake(self)
@@ -47,11 +43,11 @@ class OpenEXRIdConan(ConanFile):
         cmake.definitions["USE_CONAN"] = True
         cmake.definitions["BUILD_LIB"] = True
         cmake.definitions["BUILD_PLUGINS"] = False
-        cmake.configure(source_dir="%s/openexrid-%s" % (self.source_folder, self.version))
+        cmake.configure(source_dir="%s/openexrid" % self.source_folder)
         cmake.build()
         
     def package(self):
-        self.copy("*.h", dst="include/openexrid", src="openexrid-%s/openexrid" % self.version)
+        self.copy("*.h", dst="include/openexrid", src="openexrid/openexrid")
         self.copy("*.lib", dst="lib", keep_path=False)
         self.copy("*.a", dst="lib", keep_path=False)
 
