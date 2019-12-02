@@ -2,52 +2,39 @@
 CMAKE_MINIMUM_REQUIRED(VERSION 3.10)
 PROJECT(openexrid)
 
-SET(NDK_105_PATH /usr/local/Nuke10.5)
-SET(NDK_112_PATH /usr/local/Nuke11.2)
-SET(NDK_113_PATH /usr/local/Nuke11.3)
-SET(NDK_120_PATH /usr/local/Nuke12.0)
-SET(OFX_PATH /usr/local/openfx)
+IF(NOT DEFINED BUILD_LIB)
+	SET(BUILD_LIB 1)
+ENDIF()
+
+IF(NOT DEFINED BUILD_PLUGINS)
+	SET(BUILD_PLUGINS 1)
+ENDIF()
 
 SET(OPENEXRID_ROOT "${CMAKE_CURRENT_LIST_DIR}")
-
 INCLUDE(cmake/compile_definitions.cmake)
 INCLUDE(cmake/output_folders.cmake)
-INCLUDE(cmake/precompiled_headers.cmake)
-SET(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_LIST_DIR}/cmake/Modules")
-
 
 IF(USE_CONAN)
-# Note: All the conan stuff happens here
-# Replace all this with more classic FIND_LIBRARY and such if you don't build with conan
+	include(${CMAKE_BINARY_DIR}/conanbuildinfo.cmake)
+	conan_basic_setup()
+	set(OPENEXR_LOCATION ${CONAN_OPENEXR_ROOT})
+	set(OPENIMAGEIO_ROOT ${CONAN_OPENIMAGEIO_ROOT})
+ENDIF()
 
-IF(WIN32)
-	INCLUDE(${CMAKE_CURRENT_LIST_DIR}/Conan/conanbuildinfo_multi.cmake)
-ELSEIF(UNIX)
-	INCLUDE(${CMAKE_CURRENT_LIST_DIR}/Conan/conanbuildinfo.cmake)
-ENDIF(WIN32)
-CONAN_BASIC_SETUP(TARGETS)
-
-SET(LIBOPENEXRID_LIBS CONAN_PKG::IlmBase CONAN_PKG::OpenEXR CONAN_PKG::zlib)
-SET(NUKE_PLUGIN_LIBS CONAN_PKG::OpenImageIO CONAN_PKG::re2 CONAN_PKG::IlmBase CONAN_PKG::OpenEXR CONAN_PKG::zlib)
-
-# End of the conan stuff
-ELSE()
-
-# Not using conan?
-# Well, then, let CMake find the packages ..
+SET(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_SOURCE_DIR}/cmake/Modules)
 FIND_PACKAGE ( OpenEXR REQUIRED )
 FIND_PACKAGE ( IlmBase REQUIRED )
 FIND_PACKAGE ( ZLIB REQUIRED )
-FIND_PACKAGE ( OpenImageIO REQUIRED )
-FIND_PACKAGE ( re2 REQUIRED )
 
-# ... And add them to the set of libs to build with
-# These defs are used by the nuke plugins CMakeLists.txt and the openfx CMakeLists.txt
-SET(LIBOPENEXRID_LIBS IlmBase OpenEXR zlib)
-SET(NUKE_PLUGIN_LIBS OpenImageIO re2 IlmBase OpenEXR zlib)
-
-ENDIF(USE_CONAN)
-
+IF(BUILD_PLUGINS)
+	FIND_PACKAGE ( re2 REQUIRED )
+	FIND_PACKAGE ( OpenImageIO REQUIRED )
+	FIND_PACKAGE ( Nuke105 )
+	FIND_PACKAGE ( Nuke112 )
+	FIND_PACKAGE ( Nuke113 )
+	FIND_PACKAGE ( Nuke120 )
+	FIND_PACKAGE ( OFX )
+ENDIF()
 
 SET(CMAKE_CONFIGURATION_TYPES "Release;RelWithDebInfo;Debug")
 SET(CMAKE_CXX_STANDARD 11)
@@ -78,16 +65,27 @@ ELSEIF(UNIX)
 	SET(CMAKE_SKIP_RPATH TRUE)
 ENDIF(WIN32)
 
-# Third parties dependencies
-#FIND_PACKAGE(OpenGL REQUIRED)
-
 #####################
 # Projects to compile
 
-ADD_SUBDIRECTORY (openexrid)
-ADD_SUBDIRECTORY (openfx)
-ADD_SUBDIRECTORY (nuke10.5)
-ADD_SUBDIRECTORY (nuke11.2)
-ADD_SUBDIRECTORY (nuke11.3)
-ADD_SUBDIRECTORY (nuke12.0)
+IF(BUILD_LIB)
+	ADD_SUBDIRECTORY (openexrid)
+ENDIF()
 
+IF(BUILD_PLUGINS)
+	IF(OFX_FOUND)
+		ADD_SUBDIRECTORY (openfx)
+	ENDIF()
+	IF(Nuke105_FOUND)
+		ADD_SUBDIRECTORY (nuke10.5)
+	ENDIF()
+	IF(Nuke112_FOUND)
+		ADD_SUBDIRECTORY (nuke11.2)
+	ENDIF()
+	IF(Nuke113_FOUND)
+		ADD_SUBDIRECTORY (nuke11.3)
+	ENDIF()
+	IF(Nuke120_FOUND)
+		ADD_SUBDIRECTORY (nuke12.0)
+	ENDIF()
+ENDIF()
