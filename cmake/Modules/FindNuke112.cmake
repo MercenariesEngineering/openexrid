@@ -1,5 +1,18 @@
 
 IF(WIN32)
+
+	find_library (DDIMAGE112_LIBRARY DDImage
+			${NUKE112_DIR}
+			"C:/Program\ Files/Nuke\ 11.2v1"
+			"C:/Program\ Files/Nuke\ 11.2v2"
+			"C:/Program\ Files/Nuke\ 11.2v3"
+			"C:/Program\ Files/Nuke\ 11.2v4"
+			"C:/Program\ Files/Nuke\ 11.2v5"
+			"C:/Program\ Files/Nuke\ 11.2v6"
+			"C:/Program\ Files/Nuke\ 11.2v7"
+			"C:/Program\ Files/Nuke\ 11.2v8"
+			)
+
 ELSEIF(UNIX)
 
 	find_library (DDIMAGE112_LIBRARY DDImage

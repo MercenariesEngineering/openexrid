@@ -1,6 +1,7 @@
 x64
 Debug
 debug
+relwithdebinfo
 *.filters
 *.sdf
 .vs

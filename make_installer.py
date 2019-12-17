@@ -39,10 +39,11 @@ try:
 	shutil.copy (cwd + "/LICENSE", "openexrid/")
 
 	for nuke in nuke_versions:
-		os.mkdir ("openexrid/"+nuke)
-		shutil.copy (cwd + "/build/release/lib/" + nuke + "/DeepOpenEXRId" + so_ext, "openexrid/"+nuke)
-		strip ("openexrid/"+nuke + "/DeepOpenEXRId" + so_ext)
-		shutil.copy (cwd + "/nuke/menu.py", "openexrid/"+nuke)
+		if os.path.exists(cwd + "/build/release/lib/" + nuke + "/DeepOpenEXRId" + so_ext):
+			os.mkdir ("openexrid/"+nuke)
+			shutil.copy (cwd + "/build/release/lib/" + nuke + "/DeepOpenEXRId" + so_ext, "openexrid/"+nuke)
+			strip ("openexrid/"+nuke + "/DeepOpenEXRId" + so_ext)
+			shutil.copy (cwd + "/nuke/menu.py", "openexrid/"+nuke)
 
 	shutil.make_archive (zip_filename, archive_type, ".", "openexrid")
 

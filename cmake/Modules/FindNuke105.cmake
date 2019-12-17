@@ -1,5 +1,18 @@
 
 IF(WIN32)
+
+	find_library (DDIMAGE105_LIBRARY DDImage
+			${NUKE105_DIR}
+			"C:/Program\ Files/Nuke\ 10.5v1"
+			"C:/Program\ Files/Nuke\ 10.5v2"
+			"C:/Program\ Files/Nuke\ 10.5v3"
+			"C:/Program\ Files/Nuke\ 10.5v4"
+			"C:/Program\ Files/Nuke\ 10.5v5"
+			"C:/Program\ Files/Nuke\ 10.5v6"
+			"C:/Program\ Files/Nuke\ 10.5v7"
+			"C:/Program\ Files/Nuke\ 10.5v8"
+			)
+
 ELSEIF(UNIX)
 
 	find_library (DDIMAGE105_LIBRARY DDImage
