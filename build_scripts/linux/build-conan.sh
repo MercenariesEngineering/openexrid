@@ -23,7 +23,7 @@ cmake -G "Unix Makefiles" -D USE_CONAN=1 -D CONAN_BUILD_INFO_DIR=Conan -D CMAKE_
 
 # And make
 echo "Make ..."
-make -j`nproc` VERBOSE=1
+make -j`nproc`
 
 # And build the install package
 cd ../..
