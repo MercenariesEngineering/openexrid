@@ -733,7 +733,7 @@ void DeepOpenEXRId::select (float x0, float y0, float x1, float y1, bool invert)
 		return;
 
 	DeepOp* in = input0();
-	if (in)
+	if (!in)
 		return;
 
 	DeepPlane inPlane;
