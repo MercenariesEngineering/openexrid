@@ -2,17 +2,17 @@
 IF(WIN32)
 ELSEIF(UNIX)
 
-  find_library (DDIMAGE105_LIBRARY DDImage
-      ${NUKE105_DIR}
-      "/usr/local/Nuke10.5v1"
-      "/usr/local/Nuke10.5v2"
-      "/usr/local/Nuke10.5v3"
-      "/usr/local/Nuke10.5v4"
-      "/usr/local/Nuke10.5v5"
-      "/usr/local/Nuke10.5v6"
-      "/usr/local/Nuke10.5v7"
-      "/usr/local/Nuke10.5v8"
-      )
+	find_library (DDIMAGE105_LIBRARY DDImage
+			${NUKE105_DIR}
+			"/usr/local/Nuke10.5v1"
+			"/usr/local/Nuke10.5v2"
+			"/usr/local/Nuke10.5v3"
+			"/usr/local/Nuke10.5v4"
+			"/usr/local/Nuke10.5v5"
+			"/usr/local/Nuke10.5v6"
+			"/usr/local/Nuke10.5v7"
+			"/usr/local/Nuke10.5v8"
+			)
 
 ENDIF()
 
@@ -21,5 +21,5 @@ find_path (NUKE105_INCLUDE_DIR DDImage/Op.h ${NUKE105_LIBRARY_DIR}/include)
 
 INCLUDE(FindPackageHandleStandardArgs)
 FIND_PACKAGE_HANDLE_STANDARD_ARGS(Nuke105 DEFAULT_MSG
-  DDIMAGE105_LIBRARY NUKE105_LIBRARY_DIR NUKE105_INCLUDE_DIR
+	DDIMAGE105_LIBRARY NUKE105_LIBRARY_DIR NUKE105_INCLUDE_DIR
 )
