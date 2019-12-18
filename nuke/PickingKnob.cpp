@@ -13,6 +13,15 @@
 
 */
 
+
+#if defined(_MSC_VER) && (_MSC_VER == 1600)
+#define FLT_RADIX 2
+#pragma warning(push, 0)
+#include <openimageio/missing_math.h>
+#pragma warning(pop)
+#undef hypotf
+#endif
+
 #include "PickingKnob.h"
 #include "DeepOpenEXRId.h"
 

@@ -16,18 +16,33 @@
 #pragma once
 
 #include <memory>
+
+#if defined(_MSC_VER) && (_MSC_VER > 1600)
 #include <mutex>
+typedef std::mutex OpenEXRIdMutex;
+typedef std::lock_guard<OpenEXRIdMutex> OpenEXRIdLockGuard;
+#else
+#include <boost/thread/lock_guard.hpp>
+#include <boost/thread/mutex.hpp>
+typedef boost::mutex OpenEXRIdMutex;
+typedef boost::lock_guard<OpenEXRIdMutex> OpenEXRIdLockGuard;
+#endif
 
 #include "DDImage/DeepFilterOp.h"
 #include "DDImage/Knobs.h"
 
-#include <OpenImageIO/ustring.h>
-
-#include <re2/set.h>
-
 #ifdef WIN32
 #pragma warning(push, 0)
 #endif
+
+#if defined(_MSC_VER) && (_MSC_VER <= 1600)
+#include <cmath>
+#undef rintf
+#undef expm1f
+#endif
+
+#include <OpenImageIO/ustring.h>
+#include <re2/set.h>
 #include <OSL/oslconfig.h>
 #include <OSL/optautomata.h>
 #include <OSL/lpeparse.h>
@@ -42,14 +57,14 @@
 template<typename H, typename T>
 struct HashCache
 {
-	std::mutex	Mutex;
+	OpenEXRIdMutex	Mutex;
 	H			Hash;
 	T			Value;
 
 	template<typename Builder>
 	T	get (const H &hash, Builder &&builder)
 	{
-		std::lock_guard<std::mutex>	guard (Mutex);
+		OpenEXRIdLockGuard guard (Mutex);
 		if (hash != Hash)
 		{
 			Value = builder ();

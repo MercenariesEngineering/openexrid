@@ -221,7 +221,7 @@ static std::string	hashCString (const char *p)
 {
 	md5_context	md5;
 	md5_starts (&md5);
-	md5_update (&md5, (const uint8_t*)p, strlen (p));
+	md5_update (&md5, (const uint8_t*)p, (uint32_t)strlen (p));
 	uint8_t	digest[16];
 	md5_finish (&md5, digest);
 	return MD5DigestToString (digest);
@@ -241,13 +241,13 @@ static std::string LightPathToString (const DeepOpenEXRId::LightPath &lp)
 			fulllpe += "'" + std::string (t.c_str ()) + "'";
 	};
 
-	for (auto &token : lp)
+	for (DeepOpenEXRId::LightPath::const_iterator token = lp.begin() ; token != lp.end() ; token++)
 	{
 		fulllpe += "<";
-		addToken (token.Type);
-		addToken (token.Scattering);
-		if (!token.Label.empty ())
-			addToken (token.Label);
+		addToken (token->Type);
+		addToken (token->Scattering);
+		if (!token->Label.empty ())
+			addToken (token->Label);
 		fulllpe += ">";
 	}
 
@@ -272,8 +272,8 @@ std::shared_ptr<DeepOpenEXRId::ExrIdData> DeepOpenEXRId::_getExrIdData ()
 		md5_context	md5;
 		md5_starts (&md5);
 		md5_update (&md5, (const uint8_t*)(&EXRIdVersion), sizeof (EXRIdVersion));
-		md5_update (&md5, (const uint8_t*)(namesPacked.c_str ()), namesPacked.size ());
-		md5_update (&md5, (const uint8_t*)(pathsPacked.c_str ()), pathsPacked.size ());
+		md5_update (&md5, (const uint8_t*)(namesPacked.c_str ()), (uint32_t)namesPacked.size ());
+		md5_update (&md5, (const uint8_t*)(pathsPacked.c_str ()), (uint32_t)pathsPacked.size ());
 
 		uint8_t	digest[16];
 		md5_finish (&md5, digest);
@@ -281,7 +281,7 @@ std::shared_ptr<DeepOpenEXRId::ExrIdData> DeepOpenEXRId::_getExrIdData ()
 		hash = MD5DigestToString (digest);
 	}
 
-	return ExrIdDataCache.get (hash, [&] ()
+	return ExrIdDataCache.get (hash, [&] () -> std::shared_ptr<DeepOpenEXRId::ExrIdData>
 	{
 		log ("Loading EXRId data ...");
 
@@ -333,8 +333,16 @@ std::shared_ptr<DeepOpenEXRId::ExrIdData> DeepOpenEXRId::_getExrIdData ()
 						label += *(buffer++);
 					if (*buffer == '\t')
 						++buffer;
-
+					
+#if defined(_MSC_VER) && (_MSC_VER <= 1600)
+					LPEEvent evt;
+					evt.Type = OIIO::ustring (type);
+					evt.Scattering = OIIO::ustring (scattering);
+					evt.Label = OIIO::ustring (label);
+					lp.emplace_back (evt);
+#else
 					lp.emplace_back (LPEEvent {OIIO::ustring (type),OIIO::ustring (scattering),OIIO::ustring (label)});
+#endif
 				}
 
 				data->LightPaths.emplace_back (lp);
@@ -359,7 +367,7 @@ DeepOpenEXRId::NameAutomatonPtr	DeepOpenEXRId::_getNamesAutomaton ()
 	// Note: we could keep a hash of _patterns and invalidate it with knob_changed
 	// but _patterns is not supposed to grow incontrollably, so there negigeable gain here
 	std::string	hash = hashCString (_patterns);
-	return NameAutomatonCache.get (hash, [&] ()
+	return NameAutomatonCache.get (hash, [&] () -> std::shared_ptr<NameAutomaton>
 	{
 		log ("Compiling name automaton ...");
 
@@ -372,20 +380,20 @@ DeepOpenEXRId::NameAutomatonPtr	DeepOpenEXRId::_getNamesAutomaton ()
 		if (set->Patterns.empty ())
 			NameAutomatonPtr ();
 
-		for (auto &pattern : set->Patterns)
+		for (std::vector<std::string>::const_iterator pattern = set->Patterns.begin() ; pattern != set->Patterns.end() ; pattern++)
 		{
 			std::string	err;
-			if (set->RegEx.Add (removeNeg (pattern), &err) < 0)
+			if (set->RegEx.Add (removeNeg (*pattern), &err) < 0)
 			{
-				error ("Bad regular expression '%s': %s", pattern.c_str (), err.c_str ());
-				return NameAutomatonPtr ();
+				((DeepOpenEXRId*)this)->error ("Bad regular expression '%s': %s", pattern->c_str (), err.c_str ());
+				return std::make_shared<NameAutomaton> ();
 			}
 		}
 
 		if (!set->RegEx.Compile ())
 		{
-			error ("Automaton compilation error");
-			return NameAutomatonPtr ();
+			((DeepOpenEXRId*)this)->error ("Automaton compilation error");
+			return std::make_shared<NameAutomaton> ();
 		}
 
 		log ("Compiled %d regexes", int (set->Patterns.size ()));
@@ -404,8 +412,8 @@ bool	DeepOpenEXRId::NameAutomaton::match (const std::string &name, std::vector<i
 		return false;
 
 	// Negative match?
-	for (auto patternid : tmp)
-		if (Patterns[patternid][0] == '-')
+	for (std::vector<int>::const_iterator patternid = tmp.begin() ; patternid != tmp.end() ; patternid++)
+		if (Patterns[*patternid][0] == '-')
 			return false;
 
 	return true;
@@ -416,7 +424,7 @@ DeepOpenEXRId::LPEAutomatonPtr	DeepOpenEXRId::_getLPEAutomaton ()
 	// Note: we could keep a hash of _LPEs and invalidate it with knob_changed
 	// but _LPEs is not supposed to grow incontrollably, so there negigeable gain here
 	std::string	hash = hashCString (_LPEs);
-	return LPEAutomatonCache.get (hash, [&] ()
+	return LPEAutomatonCache.get (hash, [&] () -> std::shared_ptr<LPEAutomaton>
 	{
 		log ("Compiling lpe automaton ...");
 
@@ -426,23 +434,25 @@ DeepOpenEXRId::LPEAutomatonPtr	DeepOpenEXRId::_getLPEAutomaton ()
 
 		splitPatterns (set->Patterns, _LPEs);
 		if (set->Patterns.empty ())
-			return LPEAutomatonPtr ();
+			return std::make_shared<LPEAutomaton> ();
 
 		OSL::NdfAutomata ndfautomata;
 		size_t	patternid = 0;
-		for (auto &pattern : set->Patterns)
+		for (std::vector<std::string>::const_iterator pattern = set->Patterns.begin() ; pattern != set->Patterns.end() ; pattern++)
 		{
-			const std::vector<OIIO::ustring> userEvents = {OIIO::ustring("I")};
+			std::vector<OIIO::ustring> userEvents;
+			userEvents.push_back(OIIO::ustring("I"));
+
 			OSL::Parser parser (&userEvents, NULL);
-			OSL::LPexp *e = parser.parse (removeNeg (pattern));
+			OSL::LPexp *e = parser.parse (removeNeg (*pattern));
 			if (parser.error ())
 			{
-				error ("Bad light path expression '%s': %s", pattern.c_str (), parser.getErrorMsg ());
-				return LPEAutomatonPtr ();
+				((DeepOpenEXRId*)this)->error ("Bad light path expression '%s': %s", pattern->c_str (), parser.getErrorMsg ());
+				return std::make_shared<LPEAutomaton> ();
 			}
 			else
 			{
-				auto exp = new OSL::lpexp::Rule (e, (void*)pattern.c_str ());
+				auto exp = new OSL::lpexp::Rule (e, (void*)pattern->c_str ());
 				exp->genAuto (ndfautomata);
 			}
 
@@ -451,7 +461,7 @@ DeepOpenEXRId::LPEAutomatonPtr	DeepOpenEXRId::_getLPEAutomaton ()
 		}
 
 		OSL::DfAutomata dfautomata;
-		ndfautoToDfauto (ndfautomata, dfautomata);
+		OSL::ndfautoToDfauto (ndfautomata, dfautomata);
 
 		set->LPEx.compileFrom (dfautomata);
 
@@ -467,10 +477,10 @@ bool	DeepOpenEXRId::LPEAutomaton::match (const LightPath &lightpath) const
 
 	// Move the automaton event by event
 	// Check that each transition doesn't move us outside the automaton
-	for (const auto &event : lightpath)
-		if ((state = LPEx.getTransition (state, event.Type)) < 0 ||
-			(state = LPEx.getTransition (state, event.Scattering)) < 0 ||
-			(state = LPEx.getTransition (state, event.Label)) < 0 ||
+	for (LightPath::const_iterator & evt = lightpath.begin() ; evt != lightpath.end() ; evt++)
+		if ((state = LPEx.getTransition (state, evt->Type)) < 0 ||
+			(state = LPEx.getTransition (state, evt->Scattering)) < 0 ||
+			(state = LPEx.getTransition (state, evt->Label)) < 0 ||
 			(state = LPEx.getTransition (state, OSL::Labels::STOP)) < 0)
 			return false;
 
@@ -498,18 +508,18 @@ DeepOpenEXRId::StatePtr	DeepOpenEXRId::_getState (
 	md5_context	md5;
 	md5_starts (&md5);
 	if (exrid != NULL)
-		md5_update (&md5, (const uint8_t*)(exrid->Hash.c_str ()), exrid->Hash.size ());
+		md5_update (&md5, (const uint8_t*)(exrid->Hash.c_str ()), (uint32_t)exrid->Hash.size ());
 	if (namesregex != NULL)
-		md5_update (&md5, (const uint8_t*)(namesregex->Hash.c_str ()), namesregex->Hash.size ());
+		md5_update (&md5, (const uint8_t*)(namesregex->Hash.c_str ()), (uint32_t)namesregex->Hash.size ());
 	if (lperegex != NULL)
-		md5_update (&md5, (const uint8_t*)(lperegex->Hash.c_str ()), lperegex->Hash.size ());
+		md5_update (&md5, (const uint8_t*)(lperegex->Hash.c_str ()), (uint32_t)lperegex->Hash.size ());
 
 	uint8_t	digest[16];
 	md5_finish (&md5, digest);
 
 	std::string	hash = MD5DigestToString (digest);
 
-	return StateCache.get (hash, [&] ()
+	return StateCache.get (hash, [&] () -> std::shared_ptr<State>
 	{
 		log ("Building exrid active state ...");
 
@@ -773,9 +783,9 @@ void DeepOpenEXRId::select (float x0, float y0, float x1, float y1, bool invert)
 
 	// Build a final string set
 	set<string> names;
-	for (auto id : ids)
-		if (id >= 0 && id < (int)exrid->Names.size())
-			names.insert (escapeRegExp (exrid->Names[id].c_str()));
+	for (set<int>::const_iterator id = ids.begin() ; id != ids.end() ; id++)
+		if (*id >= 0 && *id < (int)exrid->Names.size())
+			names.insert (escapeRegExp (exrid->Names[*id].c_str()));
 
 	set<string> oldNames = getOldName (_patterns);
 	set<string> result;
@@ -791,11 +801,11 @@ void DeepOpenEXRId::select (float x0, float y0, float x1, float y1, bool invert)
 
 	// Build a final string with the patterns
 	string patterns;
-	for (auto &pattern : result)
+	for (set<string>::const_iterator pattern = result.begin() ; pattern != result.end() ; pattern++)
 	{
 		if (!patterns.empty())
 			patterns += "\n";
-		patterns += pattern;
+		patterns += *pattern;
 	}
 	knob("patterns")->set_text (patterns.c_str());
 }

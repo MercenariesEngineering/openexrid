@@ -23,7 +23,10 @@ class OpenEXRIdConan(ConanFile):
         self.requires("OpenEXR/2.2.0@pierousseau/stable")
         self.requires("OpenFx/1.4@pierousseau/stable")
         self.requires("OpenImageIO/1.6.18@pierousseau/stable")
-        self.requires("re2/2019-06-01@pierousseau/stable")
+        if self.settings.compiler == "Visual Studio" and self.settings.compiler.version == 10:
+            self.requires("re2/2016-02-01@pierousseau/stable")
+        else:
+            self.requires("re2/2019-06-01@pierousseau/stable")
         self.requires("zlib/1.2.11@pierousseau/stable")
 
     def configure(self):
