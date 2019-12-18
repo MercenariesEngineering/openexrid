@@ -480,7 +480,7 @@ bool	DeepOpenEXRId::LPEAutomaton::match (const LightPath &lightpath) const
 
 	// Move the automaton event by event
 	// Check that each transition doesn't move us outside the automaton
-	for (LightPath::const_iterator & evt = lightpath.begin() ; evt != lightpath.end() ; evt++)
+	for (LightPath::const_iterator evt = lightpath.begin() ; evt != lightpath.end() ; evt++)
 		if ((state = LPEx.getTransition (state, evt->Type)) < 0 ||
 			(state = LPEx.getTransition (state, evt->Scattering)) < 0 ||
 			(state = LPEx.getTransition (state, evt->Label)) < 0 ||
