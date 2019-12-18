@@ -72,6 +72,11 @@ class DfOptimizedAutomata
             return &m_rules[m_states[state].begin_rules];
         }
 
+		bool empty() const
+		{
+			return (m_states.size() == 0) || (m_rules.size() == 0);
+		}
+
     protected:
         struct State
         {

@@ -473,6 +473,9 @@ DeepOpenEXRId::LPEAutomatonPtr	DeepOpenEXRId::_getLPEAutomaton ()
 
 bool	DeepOpenEXRId::LPEAutomaton::match (const LightPath &lightpath) const
 {
+	if (LPEx.empty())
+		return false;
+
 	int	state = 0;
 
 	// Move the automaton event by event
