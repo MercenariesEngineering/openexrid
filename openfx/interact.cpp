@@ -18,6 +18,7 @@
 #include <string.h>
 #include <math.h>
 #include <algorithm>
+#include <string>
 #include <set>
 #ifdef WIN32
 #include <Windows.h>

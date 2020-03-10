@@ -2,6 +2,7 @@ x64
 Debug
 debug
 relwithdebinfo
+Conan/*
 *.filters
 *.sdf
 .vs

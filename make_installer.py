@@ -27,8 +27,8 @@ for x in os.listdir("build/release/lib"):
 cwd = os.getcwd()
 tmpdir = tempfile.mkdtemp ()
 os.chdir (tmpdir)
-print ("Archiving in "+tmpdir)
 zip_filename = cwd + "/openexrid-" + version + "-" + zipfile_platform
+print ("Archiving in "+tmpdir+", output file is "+zip_filename)
 
 try:
 	os.mkdir ("openexrid")

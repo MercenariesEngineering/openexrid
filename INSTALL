@@ -46,6 +46,7 @@ Once you have a Docker ready, just run ./linux-docker-build.sh, which:
 
 While updating Conan dependencies, the whole .conan/data are stored in the conan_data folder. This to avoid
 polluting your own .conan/data with our stuff. Chances are, you probably won't use gcc-4.8 anytime soon :)
+You can however control this destination on the host by setting the envionment variable $CONAN_DATA (e.g. "export CONAN_DATA=~/.conan/data").
 
 Note that we've fixed the path to the NDK in the linux-docker-build.sh file. Feel free to suit your own installation.
 

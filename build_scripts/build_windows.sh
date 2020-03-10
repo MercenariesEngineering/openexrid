@@ -25,7 +25,7 @@ echo -e "\e[93m##                             ##\e[0m"
 echo -e "\e[93m## Usage: $0 [options] ##\e[0m"
 echo -e "\e[93m## Options :                   ##\e[0m"
 echo -e "\e[93m## --skip_conan                ##\e[0m"
-echo -e "\e[93m## --installer                 ##\e[0m"
+echo -e "\e[93m## --installer  (-> release)   ##\e[0m"
 echo -e "\e[93m## --release    (no debug/dev) ##\e[0m"
 echo -e "\e[93m## -h                          ##\e[0m"
 echo -e "\e[93m##                             ##\e[0m"
@@ -35,12 +35,15 @@ while [[ $# -gt 0 ]]
 do
 key="$1"
 case $key in
-    --skip_conan)
+    -s|--skip_conan)
 	update_conan_packages=""
     shift # past value
     ;;
-    --installer)
+    -i|--installer)
 	build_installer="y"
+	build_debug=""
+	build_releasedebug=""
+	build_release="y"
     shift # past value
     ;;
     -r|--release)
@@ -57,6 +60,10 @@ case $key in
     echo "  --release: only build release target, otherwise build release, relWithDebInfo, and debug"
     exit 0
     ;;
+    *)
+	# ignore unrecognized option
+	shift
+	;;
 esac
 done
 
@@ -90,8 +97,8 @@ function updateConan()
 	fi
 
 	if [ "$build_releasedebug" ]; then
-		cp ./build/release/conanbuildinfo_release.cmake ./build/relwithdebinfo/conanbuildinfo_relwithdebinfo.cmake
-		sed -i 's/_RELEASE/_RELWITHDEBINFO/g' ./build/relwithdebinfo/conanbuildinfo_relwithdebinfo.cmake
+		cp ./$1/release/conanbuildinfo_release.cmake ./$1/relwithdebinfo/conanbuildinfo_relwithdebinfo.cmake
+		sed -i 's/_RELEASE/_RELWITHDEBINFO/g' ./$1/relwithdebinfo/conanbuildinfo_relwithdebinfo.cmake
 	fi
 }
 
@@ -140,20 +147,19 @@ if [ "$update_conan_packages" ]; then
 fi
 
 echo -e "\e[93m#################################\e[0m"
-echo -e "\e[93m## Generating Makefiles        ##\e[0m"
+echo -e "\e[93m## Generating 2015 Makefiles   ##\e[0m"
 echo -e "\e[93m#################################\e[0m"
 
 cd $BUILD_FOLDER/release
-echo -e "\e[96mcmake -G \"$MSVC_VER\" -A $MSVC_ARCH ../../ -D USE_CONAN=1 -D BUILD_LIB=1 -D BUILD_PLUGINS=1 -D NUKE105_DIR=${NUKE105_DIR} -D NUKE112_DIR=${NUKE112_DIR} -D NUKE113_DIR=${NUKE113_DIR} -D NUKE120_DIR=${NUKE120_DIR} \e[0m"
-cmake -G "$MSVC_VER" -A $MSVC_ARCH ../../ -D USE_CONAN=1 -D BUILD_LIB=1 -D BUILD_PLUGINS=1 -D NUKE105_DIR=${NUKE105_DIR} -D NUKE112_DIR=${NUKE112_DIR} -D NUKE113_DIR=${NUKE113_DIR} -D NUKE120_DIR=${NUKE120_DIR}
+echo -e "\e[96mcmake -G \"$MSVC_VER\" -A $MSVC_ARCH ../../ -D USE_CONAN=1 -D BUILD_LIB=1 -D BUILD_PLUGINS=1 -D NUKE112_DIR=${NUKE112_DIR} -D NUKE113_DIR=${NUKE113_DIR} -D NUKE120_DIR=${NUKE120_DIR} \e[0m"
+cmake -G "$MSVC_VER" -A $MSVC_ARCH ../../ -D USE_CONAN=1 -D BUILD_LIB=1 -D BUILD_PLUGINS=1 -D NUKE112_DIR=${NUKE112_DIR} -D NUKE113_DIR=${NUKE113_DIR} -D NUKE120_DIR=${NUKE120_DIR}
 cd ../..
 
 echo -e "\e[93m#################################\e[0m"
-echo -e "\e[93m## Building                    ##\e[0m"
+echo -e "\e[93m## Building 2015               ##\e[0m"
 echo -e "\e[93m#################################\e[0m"
 
 cd $BUILD_FOLDER/release
-cmake --build . --target LibOpenEXRId --config Release
 cmake --build . --target OpenEXRIdOFX --config Release
 cmake --build . --target OpenEXRIdForNuke11.2 --config Release
 cmake --build . --target OpenEXRIdForNuke11.3 --config Release
@@ -174,16 +180,16 @@ if [ "$update_conan_packages" ]; then
 fi
 
 echo -e "\e[93m#################################\e[0m"
-echo -e "\e[93m## Generating Makefiles        ##\e[0m"
+echo -e "\e[93m## Generating 2010 Makefiles   ##\e[0m"
 echo -e "\e[93m#################################\e[0m"
 
 cd $BUILD_FOLDER/release
-echo -e "\e[96mcmake -G \"$MSVC_VER\" -A $MSVC_ARCH ../../ -D USE_CONAN=1 -D BUILD_LIB=1 -D BUILD_PLUGINS=1 -D NUKE105_DIR=${NUKE105_DIR} -D NUKE112_DIR=${NUKE112_DIR} -D NUKE113_DIR=${NUKE113_DIR} -D NUKE120_DIR=${NUKE120_DIR} \e[0m"
-cmake -G "$MSVC_VER" -A $MSVC_ARCH ../../ -D USE_CONAN=1 -D BUILD_LIB=1 -D BUILD_PLUGINS=1 -D NUKE105_DIR=${NUKE105_DIR} -D NUKE112_DIR=${NUKE112_DIR} -D NUKE113_DIR=${NUKE113_DIR} -D NUKE120_DIR=${NUKE120_DIR}
+echo -e "\e[96mcmake -G \"$MSVC_VER\" -A $MSVC_ARCH ../../ -D USE_CONAN=1 -D BUILD_LIB=1 -D BUILD_PLUGINS=1 -D NUKE105_DIR=${NUKE105_DIR}\e[0m"
+cmake -G "$MSVC_VER" -A $MSVC_ARCH ../../ -D USE_CONAN=1 -D BUILD_LIB=1 -D BUILD_PLUGINS=1 -D NUKE105_DIR=${NUKE105_DIR}
 cd ../..
 
 echo -e "\e[93m#################################\e[0m"
-echo -e "\e[93m## Building                    ##\e[0m"
+echo -e "\e[93m## Building 2010               ##\e[0m"
 echo -e "\e[93m#################################\e[0m"
 
 cd $BUILD_FOLDER/release
