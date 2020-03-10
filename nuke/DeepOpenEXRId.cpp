@@ -769,14 +769,25 @@ void DeepOpenEXRId::select (float x0, float y0, float x1, float y1, bool invert)
 	const bool click = box.w() == 1 && box.h() == 1;
 
 	set<int> ids;
-	for (DD::Image::Box::iterator it = box.begin(); it != box.end(); it++) {
-
+	for (DD::Image::Box::iterator it = box.begin(); it != box.end(); it++)
+	{
 		DeepPixel pixel = inPlane.getPixel(it);
-		for (int sample = (int)pixel.getSampleCount()-1; sample >= 0; --sample) {
-			const float _id = pixel.getOrderedSample(sample, idChannel);
-			ids.insert ((int)_id);
+		size_t sample_count = pixel.getSampleCount();
+		if (sample_count > 0)
+		{
 			if (click)
-				break;
+			{
+				const float _id = pixel.getOrderedSample(sample_count - 1, idChannel);
+				ids.insert((int)_id);
+			}
+			else
+			{
+				for (int sample = (int)sample_count - 1; sample >= 0; --sample)
+				{
+					const float _id = pixel.getUnorderedSample(sample, idChannel);
+					ids.insert((int)_id);
+				}
+			}
 		}
 	}
 
