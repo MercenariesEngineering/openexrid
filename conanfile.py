@@ -23,10 +23,12 @@ class OpenEXRIdConan(ConanFile):
         self.requires("OpenEXR/2.2.0@pierousseau/stable")
         self.requires("OpenFx/1.4@pierousseau/stable")
         self.requires("OpenImageIO/1.6.18@pierousseau/stable")
-        if self.settings.compiler == "Visual Studio" and self.settings.compiler.version == 10:
+        if (self.settings.compiler == "Visual Studio" and self.settings.compiler.version == 10) or (self.settings.compiler == "gcc" and self.settings.compiler.version == 4.1):
             self.requires("re2/2016-02-01@pierousseau/stable")
         else:
             self.requires("re2/2019-06-01@pierousseau/stable")
+
+        self.requires("libpng/1.6.37@pierousseau/stable")
         self.requires("zlib/1.2.11@pierousseau/stable")
 
     def configure(self):
@@ -39,6 +41,10 @@ class OpenEXRIdConan(ConanFile):
             self.options["OpenImageIO"].fPIC=True
             self.options["re2"].fPIC=True
             self.options["zlib"].fPIC=True
+
+        if self.settings.compiler == "gcc" and self.settings.compiler.version == 4.1:
+            self.options["libpng"].hardware_optimizations=False
+
 
     def source(self):
         self.run("git clone http://github.com/MercenariesEngineering/openexrid.git --branch %s" % self.version)

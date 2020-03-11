@@ -17,7 +17,7 @@ yum -y install vim centos-release-scl kernel-headers
 # install new glibc (this is the first release that works for every dependences)
 #rpm -Uvh $sources_dir/glibc-2.17-55.el6.x86_64.rpm $sources_dir/glibc-common-2.17-55.el6.x86_64.rpm $sources_dir/glibc-devel-2.17-55.el6.x86_64.rpm $sources_dir/glibc-headers-2.17-55.el6.x86_64.rpm &&
 # install any required tool from repositories
-yum -y install cmake3 bison flex tar bzip2 file wget patch
+yum -y install cmake3 bison flex tar bzip2 file wget patch nasm
 
 yum -y install gcc-c++.x86_64
 g++ --version

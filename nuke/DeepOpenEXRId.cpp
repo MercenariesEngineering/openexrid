@@ -227,33 +227,6 @@ static std::string	hashCString (const char *p)
 	return MD5DigestToString (digest);
 }
 
-static std::string LightPathToString (const DeepOpenEXRId::LightPath &lp)
-{
-	std::string	fulllpe;
-
-	auto	addToken = [&] (const OIIO::ustring &t)
-	{
-		if (t.empty ())
-			fulllpe += '.';
-		else if (t.size () == 1)
-			fulllpe += std::string (t.c_str ());
-		else
-			fulllpe += "'" + std::string (t.c_str ()) + "'";
-	};
-
-	for (DeepOpenEXRId::LightPath::const_iterator token = lp.begin() ; token != lp.end() ; token++)
-	{
-		fulllpe += "<";
-		addToken (token->Type);
-		addToken (token->Scattering);
-		if (!token->Label.empty ())
-			addToken (token->Label);
-		fulllpe += ">";
-	}
-
-	return fulllpe;
-}
-
 std::shared_ptr<DeepOpenEXRId::ExrIdData> DeepOpenEXRId::_getExrIdData ()
 {
 	const MetaData::Bundle &metadata = fetchMetaData (NULL);

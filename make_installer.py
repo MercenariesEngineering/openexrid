@@ -33,9 +33,20 @@ print ("Archiving in "+tmpdir+", output file is "+zip_filename)
 try:
 	os.mkdir ("openexrid")
 
-	os.makedirs ("openexrid/"+ofx_dst)
-	shutil.copy (cwd + "/build/release/lib/openexrid.ofx", "openexrid/"+ofx_dst)
-	strip ("openexrid/" + ofx_dst + "/openexrid.ofx")
+	if os.path.exists(cwd + "/build/release/lib/openexrid.ofx"):
+		os.makedirs ("openexrid/"+ofx_dst)
+		shutil.copy (cwd + "/build/release/lib/openexrid.ofx", "openexrid/"+ofx_dst)
+		strip ("openexrid/" + ofx_dst + "/openexrid.ofx")
+	else:
+		if os.path.exists(cwd + "/build/release/lib/OFX/openexrid.ofx"):
+			os.makedirs ("openexrid/OFX/"+ofx_dst)
+			shutil.copy (cwd + "/build/release/lib/OFX/openexrid.ofx", "openexrid/OFX/"+ofx_dst)
+			strip ("openexrid/OFX/" + ofx_dst + "/openexrid.ofx")
+		if os.path.exists(cwd + "/build/release/lib/OFX_nuke9/openexrid.ofx"):
+			os.makedirs ("openexrid/OFX_nuke9/"+ofx_dst)
+			shutil.copy (cwd + "/build/release/lib/OFX_nuke9/openexrid.ofx", "openexrid/OFX_nuke9/"+ofx_dst)
+			strip ("openexrid/OFX_nuke9/" + ofx_dst + "/openexrid.ofx")
+
 	shutil.copy (cwd + "/LICENSE", "openexrid/")
 
 	for nuke in nuke_versions:
