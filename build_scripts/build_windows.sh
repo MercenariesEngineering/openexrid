@@ -111,6 +111,9 @@ fi
 if [ ! "$NUKE105_DIR" ]; then
 	NUKE105_DIR="D:\\Nuke\\Nuke10.5v8"
 fi
+if [ ! "$NUKE111_DIR" ]; then
+	NUKE111_DIR="D:\\Nuke\\Nuke11.1v6"
+fi
 if [ ! "$NUKE112_DIR" ]; then
 	NUKE112_DIR="D:\\Nuke\\Nuke11.2v7"
 fi
@@ -119,6 +122,9 @@ if [ ! "$NUKE113_DIR" ]; then
 fi
 if [ ! "$NUKE120_DIR" ]; then
 	NUKE120_DIR="D:\\Nuke\\Nuke12.0v3"
+fi
+if [ ! "$NUKE121_DIR" ]; then
+	NUKE121_DIR="D:\\Nuke\\Nuke12.1v2"
 fi
 
 cd ..
@@ -154,8 +160,8 @@ echo -e "\e[93m## Generating 2015 Makefiles   ##\e[0m"
 echo -e "\e[93m#################################\e[0m"
 
 cd $BUILD_FOLDER/release
-echo -e "\e[96mcmake -G \"$MSVC_VER\" -A $MSVC_ARCH ../../ -D USE_CONAN=1 -D BUILD_LIB=1 -D BUILD_PLUGINS=1 -D NUKE112_DIR=${NUKE112_DIR} -D NUKE113_DIR=${NUKE113_DIR} -D NUKE120_DIR=${NUKE120_DIR} \e[0m"
-cmake -G "$MSVC_VER" -A $MSVC_ARCH ../../ -D USE_CONAN=1 -D BUILD_LIB=1 -D BUILD_PLUGINS=1 -D NUKE112_DIR=${NUKE112_DIR} -D NUKE113_DIR=${NUKE113_DIR} -D NUKE120_DIR=${NUKE120_DIR}
+echo -e "\e[96mcmake -G \"$MSVC_VER\" -A $MSVC_ARCH ../../ -D USE_CONAN=1 -D BUILD_LIB=1 -D BUILD_PLUGINS=1 -D NUKE111_DIR=${NUKE111_DIR} -D NUKE112_DIR=${NUKE112_DIR} -D NUKE113_DIR=${NUKE113_DIR} -D NUKE120_DIR=${NUKE120_DIR} -D NUKE121_DIR=${NUKE121_DIR} \e[0m"
+cmake -G "$MSVC_VER" -A $MSVC_ARCH ../../ -D USE_CONAN=1 -D BUILD_LIB=1 -D BUILD_PLUGINS=1 -D NUKE111_DIR=${NUKE111_DIR} -D NUKE112_DIR=${NUKE112_DIR} -D NUKE113_DIR=${NUKE113_DIR} -D NUKE120_DIR=${NUKE120_DIR} -D NUKE121_DIR=${NUKE121_DIR}
 cd ../..
 
 echo -e "\e[93m#################################\e[0m"
@@ -164,9 +170,11 @@ echo -e "\e[93m#################################\e[0m"
 
 cd $BUILD_FOLDER/release
 cmake --build . --target OpenEXRIdOFX --config Release
+cmake --build . --target OpenEXRIdForNuke11.1 --config Release
 cmake --build . --target OpenEXRIdForNuke11.2 --config Release
 cmake --build . --target OpenEXRIdForNuke11.3 --config Release
 cmake --build . --target OpenEXRIdForNuke12.0 --config Release
+cmake --build . --target OpenEXRIdForNuke12.1 --config Release
 cd ../..
 
 
