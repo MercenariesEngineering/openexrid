@@ -7,7 +7,7 @@ import os, shutil
 
 class OpenEXRIdConan(ConanFile):
     name = "OpenExrId"
-    version = "1.0-beta.20"
+    version = "1.0-beta.22"
     license = "MIT"
     url = "https://github.com/MercenariesEngineering/openexrid"
     description = "OpenEXR files able to isolate any object of a CG image with a perfect antialiazing "
@@ -17,19 +17,20 @@ class OpenEXRIdConan(ConanFile):
     generators = "cmake"
 
     def requirements(self):
-        self.requires("boost/1.64.0@conan/stable")
-        # From our recipes :
-        self.requires("IlmBase/2.2.0@pierousseau/stable")
-        self.requires("OpenEXR/2.2.0@pierousseau/stable")
+        self.requires("boost/1.70.0")
+        self.requires("zlib/1.2.11")
+        self.requires("libpng/1.6.37@pierousseau/stable")
         self.requires("OpenFx/1.4@pierousseau/stable")
-        self.requires("OpenImageIO/1.6.18@pierousseau/stable")
         if (self.settings.compiler == "Visual Studio" and self.settings.compiler.version == 10) or (self.settings.compiler == "gcc" and self.settings.compiler.version == 4.1):
+            self.requires("OpenImageIO/1.6.18@pierousseau/stable")
+            self.requires("IlmBase/2.2.0@pierousseau/stable")
+            self.requires("OpenEXR/2.2.0@pierousseau/stable")
             self.requires("re2/2016-02-01@pierousseau/stable")
         else:
+            self.requires("OpenImageIO/2.1.15.0@mercseng/stable")
+            self.requires("OpenEXR/2.4.0@mercseng/stable")
             self.requires("re2/2019-06-01@pierousseau/stable")
 
-        self.requires("libpng/1.6.37@pierousseau/stable")
-        self.requires("zlib/1.2.11@pierousseau/stable")
 
     def configure(self):
         if self.settings.os == "Linux":
