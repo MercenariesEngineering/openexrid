@@ -139,17 +139,20 @@ int clampFrame (int mode, int frame, int len, bool &black)
 std::string computeFinalName (OfxPropertySetHandle inArgs, Instance *instance, bool &black)
 {
 	black = false;
+	OfxTime time;
+	gPropHost->propGetDouble(inArgs, kOfxPropTime, 0, &time);
+
 	const char *_filename;
-	gParamHost->paramGetValue(instance->File, &_filename);
+	if (isHostNuke())
+		gParamHost->paramGetValueAtTime(instance->File, time, &_filename);
+	else
+		gParamHost->paramGetValue(instance->File, &_filename);
 	const std::string filename = _filename;
 
 	const size_t hashPos = filename.find ('#');
 	if (hashPos == filename.npos)
 		return filename;
-
-	double time;
-	gPropHost->propGetDouble(inArgs, kOfxPropTime, 0, &time);
-
+	
 	// Count the number of hash
 	int n = 1;
 	while (filename[hashPos+n] == '#') ++n;

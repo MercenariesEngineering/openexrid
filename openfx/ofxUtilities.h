@@ -288,6 +288,13 @@ inline OfxPropertySetHandle ofxuGetImage(OfxImageClipHandle &clip,
   return imageProps;
 }
 
+inline bool isHostNuke()
+{
+	char *returnedHostName;
+	gPropHost->propGetString(gHost->host, kOfxPropName, 0, &returnedHostName);
+	return strstr(returnedHostName, ".nuke") != 0;
+}
+
 /// exception thrown when images are missing
 class OfxuNoImageException{};                     
 

@@ -458,13 +458,6 @@ static OfxStatus render(OfxImageEffectHandle effect,
 	return status;
 }
 
-bool isHostNuke ()
-{
-	char *returnedHostName;
-	gPropHost->propGetString(gHost->host, kOfxPropName, 0, &returnedHostName);
-	return strstr (returnedHostName, ".nuke") != 0;
-}
-
 // Set our clip preferences 
 static OfxStatus getClipPreferences(OfxImageEffectHandle effect, OfxPropertySetHandle inArgs, OfxPropertySetHandle outArgs)
 {
