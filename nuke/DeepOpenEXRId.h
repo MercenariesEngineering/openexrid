@@ -18,14 +18,34 @@
 #include <memory>
 
 #if defined(_MSC_VER) && (_MSC_VER > 1600)
+#define USE_MODERN_APIS
+#endif
+
+#ifdef USE_MODERN_APIS
+
 #include <mutex>
-typedef std::mutex OpenEXRIdMutex;
-typedef std::lock_guard<OpenEXRIdMutex> OpenEXRIdLockGuard;
+namespace OpenEXRId
+{
+	using std::mutex;
+	using std::lock_guard;
+	using std::shared_ptr;
+	using std::make_shared;
+}
+
 #else
+
 #include <boost/thread/lock_guard.hpp>
 #include <boost/thread/mutex.hpp>
-typedef boost::mutex OpenEXRIdMutex;
-typedef boost::lock_guard<OpenEXRIdMutex> OpenEXRIdLockGuard;
+#include <boost/shared_ptr.hpp>
+#include <boost/make_shared.hpp>
+namespace OpenEXRId
+{
+	using boost::mutex;
+	using boost::lock_guard;
+	using boost::shared_ptr;
+	using boost::make_shared;
+}
+
 #endif
 
 #include "DDImage/DeepFilterOp.h"
@@ -52,27 +72,6 @@ typedef boost::lock_guard<OpenEXRIdMutex> OpenEXRIdLockGuard;
 #endif
 // Defined by oiio
 #undef copysign
-
-// A single entry hashed cache
-template<typename H, typename T>
-struct HashCache
-{
-	OpenEXRIdMutex	Mutex;
-	H			Hash;
-	T			Value;
-
-	template<typename Builder>
-	T	get (const H &hash, Builder &&builder)
-	{
-		OpenEXRIdLockGuard guard (Mutex);
-		if (hash != Hash)
-		{
-			Value = builder ();
-			Hash = hash;
-		}
-		return Value;
-	}
-};
 
 
 // The DeepOpenEXRId plugin
@@ -124,7 +123,31 @@ public:
 	void select (float x0, float y0, float x1, float y1, bool invert);
 
 	static const Description d;
+
+
 private:
+
+	// A single entry hashed cache
+	template<typename H, typename T>
+	struct HashCache
+	{
+		OpenEXRId::mutex	Mutex;
+		H					Hash;
+		T					Value;
+
+		T	get (const H &hash, const void * build_data)
+		{
+			OpenEXRId::lock_guard<OpenEXRId::mutex> guard (Mutex);
+			if (hash != Hash)
+			{
+				Value = build (hash, build_data);
+				Hash = hash;
+			}
+			return Value;
+		}
+
+		T	build(const H &hash, const void * build_data);
+	};
 
 	// This is the metadata we grabd from the input exrid
 	struct ExrIdData
@@ -134,8 +157,9 @@ private:
 		std::vector<LightPath>		LightPaths;
 	};
 
-	typedef std::shared_ptr<ExrIdData> ExrIdDataPtr;
-	HashCache<std::string,ExrIdDataPtr>	ExrIdDataCache;
+	typedef OpenEXRId::shared_ptr<ExrIdData>	ExrIdDataPtr;
+	typedef HashCache<std::string,ExrIdDataPtr>	ExrIdDataCacheType;
+	ExrIdDataCacheType	ExrIdDataCache;
 
 	// get the cached metadata (or build it if anything has changed)
 	ExrIdDataPtr				  	_getExrIdData ();
@@ -152,8 +176,9 @@ private:
 		bool	match (const std::string &name, std::vector<int> &tmp) const;
 	};
 
-	typedef std::shared_ptr<NameAutomaton> NameAutomatonPtr;
-	HashCache<std::string,NameAutomatonPtr>	NameAutomatonCache;
+	typedef OpenEXRId::shared_ptr<NameAutomaton>	NameAutomatonPtr;
+	typedef HashCache<std::string,NameAutomatonPtr>	NameAutomatonCacheType;
+	NameAutomatonCacheType	NameAutomatonCache;
 
 	// get the cached name matcing automaton
 	NameAutomatonPtr				_getNamesAutomaton ();
@@ -169,8 +194,9 @@ private:
 		bool	match (const LightPath &lightpath) const;
 	};
 
-	typedef std::shared_ptr<LPEAutomaton> LPEAutomatonPtr;
-	HashCache<std::string,LPEAutomatonPtr>	LPEAutomatonCache;
+	typedef OpenEXRId::shared_ptr<LPEAutomaton>		LPEAutomatonPtr;
+	typedef HashCache<std::string,LPEAutomatonPtr>	LPEAutomatonCacheType;
+	LPEAutomatonCacheType	LPEAutomatonCache;
 
 	// get the cached lpe matching automaton
 	LPEAutomatonPtr					_getLPEAutomaton ();
@@ -186,10 +212,18 @@ private:
 			{ return id < IdStates.size () && IdStates[id]; }
 		bool	lpeidSelected (size_t id) const
 			{ return id < LPEIdStates.size () && LPEIdStates[id]; }
+
+	struct BuildData
+	{
+		const DeepOpenEXRId::ExrIdDataPtr &exrid;
+		const DeepOpenEXRId::NameAutomatonPtr &namesregex;
+		const DeepOpenEXRId::LPEAutomatonPtr &lperegex;
+	};
 	};
 
-	typedef std::shared_ptr<State> StatePtr;
-	HashCache<std::string,StatePtr>	StateCache;
+	typedef OpenEXRId::shared_ptr<State> 	StatePtr;
+	typedef HashCache<std::string,StatePtr>	StateCacheType;
+	StateCacheType	StateCache;
 
 	// get the result activate names and light paths
 	StatePtr						_getState (

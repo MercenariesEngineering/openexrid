@@ -51,7 +51,7 @@ make -j`nproc` OpenEXRIdForNuke12.1
 # Build libraries relying on gcc-4.1
 prebuild ${BUILD_ROOT}/build_scripts/linux/docker/conan_profile_linux_gcc4.1
 make -j`nproc` OpenEXRIdOFX
-#make -j`nproc` OpenEXRIdForNuke9.0
+make -j`nproc` OpenEXRIdForNuke9.0
 
 echo -e "\e[93m#################################\e[0m"
 echo -e "\e[93m## Packaging                   ##\e[0m"
