@@ -1,0 +1,55 @@
+***************************
+* Compilation under linux *
+***************************
+
+Prerequisites:
+--------------
+
+- CMake 3.10. We provide a CMake solution to build the lib and plugins for Nuke and OFX. You can work your way out of CMake, though ...
+- gcc 4.8.2. Although you can use any c++11 capable compiler to build the OpenEXRId lib, compiling the Nuke plugins might not be pratical.
+- OpenEXR 2.5.1
+- re2 ; We use the 2019-06-01 release, but we may have success with earlier versions
+- OpenImageIO 2.1.15
+- zlib 1.2.11
+
+To build Nuke 9 plugins, an older toolchain is required :
+- gcc 4.1.2
+- OpenEXR and IlmBase 2.2.0
+- re2 2016-02-01
+- OpenImageIO 1.6.18
+- zlib 1.2.11
+
+We handle these dependencies automatically handled through Conan and Docker. 
+- install Conan and Docker
+- While updating Conan dependencies, the whole .conan/data are stored in the conan_data folder. This to avoid
+polluting your own .conan/data with our stuff. Chances are, you probably won't use gcc-4.8 anytime soon :)
+You can however control this destination on the host by setting the envionment variable $CONAN_DATA (e.g. "export CONAN_DATA=~/.conan/data").
+- install the nuke versions you wish to support. Note that we've fixed the path to the NDK in the linux-docker-build.sh file. Feel free to suit your own installation.
+- run ./linux-docker-build.sh (in build_scripts/linux folder), which:
+	* builds the docker image based on Centos6.6 (and also compiles gcc-4.8 and 4.1 and fetches all necessary dependencies)
+	* updates the dependencies using Conan
+	* and build all libs and plugins
+
+The resulting files are located in build/release.
+
+
+Alternatively, building with CMake:
+--------------------
+
+In this "manual" mode, it is up to you to use conan or manually set your dependencies. From the openexrid root:
+
+$ mkdir -p build/release
+$ cd build/release
+$ cmake -G "Unix Makefiles" -D CMAKE_BUILD_TYPE=Release -D CMAKE_C_COMPILER=gcc-4.8 -D CMAKE_CXX_COMPILER=g++-4.8 ../../
+$ make
+
+
+*****************************
+* Compilation under Windows *
+*****************************
+
+The build system is similar under windows. You need Visual Studio 2015 (and Visual Studio 2010 if you want to build Nuke plugins before Nuke 11).
+You need CMake 3.10, and Conan.
+For Nuke plugins building, Nuke installations should be accessible through environment variables 
+"$NUKE90_DIR", "$NUKE105_DIR", "$NUKE111_DIR", "$NUKE112_DIR", "$NUKE113_DIR", "$NUKE120_DIR", "$NUKE121_DIR".
+In a shell such as git bash, run the script "build_scripts/build_windows.sh", which will grab the dependencies through Conan, and build libs and plugins with the appropriate compiler.

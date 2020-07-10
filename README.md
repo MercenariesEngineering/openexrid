@@ -14,9 +14,13 @@ Sometime masks are missing, the shot goes back to the rendering departement.
 
 We think having a file format able to isolate any object may smooth this workflow.
 
-## Download
+## Installation
 
 Download the latest binary plug-ins from the [Release section](https://github.com/MercenariesEngineering/openexrid/releases)
+
+If you use one of the supported Nuke versions, simply extract that version's "DeepOpenEXRId.dll" or "DeepOpenEXRId.so" and the "menu.py" files to your [home_dir]/.nuke folder.
+
+If you use another software, or an unsupported version of Nuke, you can use the OpenFx plugin. Extract the "openexrid.ofx.bundle" folder to a directory of your choice and add an "OFX_PLUGIN_PATH" environment variable pointing to that directory.
 
 ## Video tutorials
 
@@ -36,7 +40,7 @@ The OpenFX plug-in isolates any object in your prefered compositing tool from an
 
 ## Compilation
 
-See the INSTALL file
+See the BUILDING file
 
 ## Tests
 
