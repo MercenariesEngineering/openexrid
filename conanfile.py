@@ -17,7 +17,6 @@ class OpenEXRIdConan(ConanFile):
     generators = "cmake"
 
     def requirements(self):
-        self.requires("boost/1.70.0")
         self.requires("zlib/1.2.11")
         self.requires("libpng/1.6.37@pierousseau/stable")
         self.requires("OpenFx/1.4@pierousseau/stable")
@@ -31,6 +30,10 @@ class OpenEXRIdConan(ConanFile):
             self.requires("OpenEXR/2.5.1@mercseng/stable")
             self.requires("re2/2019-06-01@pierousseau/stable")
 
+        if self.settings.os == "Linux":
+            self.requires("boost/1.67.0@conan/stable")
+        else:
+            self.requires("boost/1.70.0")
 
     def configure(self):
         if self.settings.os == "Linux":
