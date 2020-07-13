@@ -13,11 +13,17 @@ sed -i 's/mirrorlist=https/mirrorlist=http/' /etc/yum.repos.d/epel.repo
 # update trusted root certificates
 yum -y update ca-certificates --disablerepo=epel
 # install vim
-yum -y install vim centos-release-scl kernel-headers
+yum -y install vim
+# install SCL
+yum -y install centos-release-scl
+# install new linux headers 
+yum -y install kernel-headers
 # install new glibc (this is the first release that works for every dependences)
 #rpm -Uvh $sources_dir/glibc-2.17-55.el6.x86_64.rpm $sources_dir/glibc-common-2.17-55.el6.x86_64.rpm $sources_dir/glibc-devel-2.17-55.el6.x86_64.rpm $sources_dir/glibc-headers-2.17-55.el6.x86_64.rpm &&
 # install any required tool from repositories
 yum -y install cmake3 bison flex tar bzip2 file wget patch nasm
+# update SSL stuff
+yum update -y nss curl libcurl
 
 yum -y install gcc-c++.x86_64
 g++ --version

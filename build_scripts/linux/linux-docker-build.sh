@@ -22,4 +22,4 @@ docker run --rm -it \
 	-v "${this_directory}/../..:/openexrid" \
 	-v "$CONAN_DATA:/conan/.conan/data" \
 	$nukes \
-	"linux-openexrid-builder" ./build_scripts/linux/build-conan.sh
+	"linux-openexrid-builder" "scl enable sclo-git212 ./build_scripts/linux/build-conan.sh"
