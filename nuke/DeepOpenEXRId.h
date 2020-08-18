@@ -208,8 +208,8 @@ private:
 		std::vector<bool>			IdStates;
 		std::vector<bool>			LPEIdStates;
 
-		bool	idSelected (size_t id) const
-			{ return id < IdStates.size () && IdStates[id]; }
+		bool	idSelected (size_t id, bool invert) const
+			{ return id < IdStates.size () && IdStates[id] != invert; }
 		bool	lpeidSelected (size_t id) const
 			{ return id < LPEIdStates.size () && LPEIdStates[id]; }
 

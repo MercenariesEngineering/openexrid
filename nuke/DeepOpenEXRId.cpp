@@ -623,11 +623,11 @@ bool DeepOpenEXRId::doDeepEngine(DD::Image::Box box, const ChannelSet& channels,
 		{
 			const float	_id = pixel.getOrderedSample(sample, idChannel);
 			const int	id = (int)_id;
-			const bool	idselected = (st->idSelected (id) != _invert);
+			const bool	idselected = (st->idSelected (id, _invert));
 
+			bool		lpeidselected = true;
 			float		_lpeid = 0;
 			int			lpeid = 0;
-			bool		lpeidselected = true;
 			if (useLightPaths)
 			{
 				_lpeid = pixel.getOrderedSample (sample, lpeidChannel);
@@ -644,15 +644,25 @@ bool DeepOpenEXRId::doDeepEngine(DD::Image::Box box, const ChannelSet& channels,
 					foreach (channel, channels) 
 					{
 						if (channel == idChannel)
+						{
 							pels.push_back(_id);
+						}
 						else if (channel == lpeidChannel)
+						{
 							pels.push_back(_lpeid);
+						}
 						else if (channel == Chan_Alpha)
+						{
 							pels.push_back(alpha);
+						}
 						else if (channel == Chan_DeepFront || channel == Chan_DeepBack)
+						{
 							pels.push_back(pixel.getOrderedSample(sample, channel));
+						}
 						else
+						{
 							pels.push_back (alpha*halton (primes[channel%3], id));
+						}
 					}
 				}
 				else
@@ -666,11 +676,17 @@ bool DeepOpenEXRId::doDeepEngine(DD::Image::Box box, const ChannelSet& channels,
 				foreach (channel, channels) 
 				{
 					if (channel == idChannel)
+					{
 						pels.push_back(_id);
-					if (channel == lpeidChannel)
+					}
+					else if (channel == lpeidChannel)
+					{
 						pels.push_back(_lpeid);
+					}
 					else if (channel == Chan_DeepFront || channel == Chan_DeepBack)
+					{
 						pels.push_back(pixel.getOrderedSample(sample, channel));
+					}
 					else
 					{
 						const float v = pixel.getOrderedSample(sample, _alpha ? Chan_Alpha : channel);
