@@ -228,7 +228,7 @@ static std::string	hashCString (const char *p)
 }
 
 template<>
-DeepOpenEXRId::ExrIdDataPtr DeepOpenEXRId::ExrIdDataCacheType::build(const std::string &hash, const void * build_data)
+DeepOpenEXRId::ExrIdDataPtr DeepOpenEXRId::ExrIdDataCacheType::build(const std::string &hash, const void * build_data, DeepOpenEXRId * notifier)
 {
 	log ("Loading EXRId data ...");
 
@@ -332,14 +332,14 @@ OpenEXRId::shared_ptr<DeepOpenEXRId::ExrIdData> DeepOpenEXRId::_getExrIdData ()
 		hash = MD5DigestToString (digest);
 	}
 
-	return ExrIdDataCache.get (hash, static_cast<const void*>(&metadata));
+	return ExrIdDataCache.get (hash, static_cast<const void*>(&metadata), this);
 }
 
 
 
 
 template<>
-DeepOpenEXRId::NameAutomatonPtr DeepOpenEXRId::NameAutomatonCacheType::build(const std::string &hash, const void * build_data)
+DeepOpenEXRId::NameAutomatonPtr DeepOpenEXRId::NameAutomatonCacheType::build(const std::string &hash, const void * build_data, DeepOpenEXRId * notifier)
 {
 	log ("Compiling name automaton ...");
 
@@ -358,14 +358,14 @@ DeepOpenEXRId::NameAutomatonPtr DeepOpenEXRId::NameAutomatonCacheType::build(con
 		std::string	err;
 		if (set->RegEx.Add (removeNeg (*pattern), &err) < 0)
 		{
-			((DeepOpenEXRId*)this)->error ("Bad regular expression '%s': %s", pattern->c_str (), err.c_str ());
+			notifier->error ("Bad regular expression '%s': %s", pattern->c_str (), err.c_str ());
 			return OpenEXRId::make_shared<NameAutomaton> ();
 		}
 	}
 
 	if (!set->RegEx.Compile ())
 	{
-		((DeepOpenEXRId*)this)->error ("Automaton compilation error");
+		notifier->error ("Automaton compilation error");
 		return OpenEXRId::make_shared<NameAutomaton> ();
 	}
 
@@ -385,7 +385,7 @@ DeepOpenEXRId::NameAutomatonPtr	DeepOpenEXRId::_getNamesAutomaton ()
 	// Note: we could keep a hash of _patterns and invalidate it with knob_changed
 	// but _patterns is not supposed to grow incontrollably, so there negigeable gain here
 	std::string	hash = hashCString (_patterns);
-	return NameAutomatonCache.get (hash, static_cast<const void*>(_patterns));
+	return NameAutomatonCache.get (hash, static_cast<const void*>(_patterns), this);
 }
 
 bool	DeepOpenEXRId::NameAutomaton::match (const std::string &name, std::vector<int> &tmp) const
@@ -406,7 +406,7 @@ bool	DeepOpenEXRId::NameAutomaton::match (const std::string &name, std::vector<i
 }
 
 template<>
-DeepOpenEXRId::LPEAutomatonPtr DeepOpenEXRId::LPEAutomatonCacheType::build(const std::string &hash, const void * build_data)
+DeepOpenEXRId::LPEAutomatonPtr DeepOpenEXRId::LPEAutomatonCacheType::build(const std::string &hash, const void * build_data, DeepOpenEXRId * notifier)
 {
 	log ("Compiling lpe automaton ...");
 
@@ -430,7 +430,7 @@ DeepOpenEXRId::LPEAutomatonPtr DeepOpenEXRId::LPEAutomatonCacheType::build(const
 		OSL::LPexp *e = parser.parse (removeNeg (*pattern));
 		if (parser.error ())
 		{
-			((DeepOpenEXRId*)this)->error ("Bad light path expression '%s': %s", pattern->c_str (), parser.getErrorMsg ());
+			notifier->error ("Bad light path expression '%s': %s", pattern->c_str (), parser.getErrorMsg ());
 			return OpenEXRId::make_shared<LPEAutomaton> ();
 		}
 		else
@@ -458,7 +458,7 @@ DeepOpenEXRId::LPEAutomatonPtr	DeepOpenEXRId::_getLPEAutomaton ()
 	// Note: we could keep a hash of _LPEs and invalidate it with knob_changed
 	// but _LPEs is not supposed to grow incontrollably, so there negigeable gain here
 	std::string	hash = hashCString (_LPEs);
-	return LPEAutomatonCache.get (hash, static_cast<const void*>(_LPEs));
+	return LPEAutomatonCache.get (hash, static_cast<const void*>(_LPEs), this);
 }
 
 bool	DeepOpenEXRId::LPEAutomaton::match (const LightPath &lightpath) const
@@ -493,7 +493,7 @@ bool	DeepOpenEXRId::LPEAutomaton::match (const LightPath &lightpath) const
 }
 
 template<>
-DeepOpenEXRId::StatePtr DeepOpenEXRId::StateCacheType::build(const std::string &hash, const void * build_data)
+DeepOpenEXRId::StatePtr DeepOpenEXRId::StateCacheType::build(const std::string &hash, const void * build_data, DeepOpenEXRId * notifier)
 {
 	log ("Building exrid active state ...");
 
@@ -548,7 +548,7 @@ DeepOpenEXRId::StatePtr	DeepOpenEXRId::_getState (
 	std::string	hash = MD5DigestToString (digest);
 
 	State::BuildData state_data = {exrid, namesregex, lperegex};
-	return StateCache.get (hash, static_cast<const void*>(&state_data));
+	return StateCache.get (hash, static_cast<const void*>(&state_data), this);
 }
 
 bool DeepOpenEXRId::doDeepEngine(DD::Image::Box box, const ChannelSet& channels, DeepOutputPlane& plane)

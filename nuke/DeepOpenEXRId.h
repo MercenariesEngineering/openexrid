@@ -135,18 +135,18 @@ private:
 		H					Hash;
 		T					Value;
 
-		T	get (const H &hash, const void * build_data)
+		T	get (const H &hash, const void * build_data, DeepOpenEXRId * notifier)
 		{
 			OpenEXRId::lock_guard<OpenEXRId::mutex> guard (Mutex);
 			if (hash != Hash)
 			{
-				Value = build (hash, build_data);
+				Value = build (hash, build_data, notifier);
 				Hash = hash;
 			}
 			return Value;
 		}
 
-		T	build(const H &hash, const void * build_data);
+		T	build(const H &hash, const void * build_data, DeepOpenEXRId * notifier);
 	};
 
 	// This is the metadata we grabd from the input exrid
