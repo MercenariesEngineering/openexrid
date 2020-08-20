@@ -41,6 +41,7 @@ function prebuild()
 # Build libraries relying on gcc-4.8
 prebuild ${BUILD_ROOT}/build_scripts/linux/docker/conan_profile_linux
 make -j`nproc` OpenEXRIdOFX
+make -j`nproc` OpenEXRIdForNuke10.0
 make -j`nproc` OpenEXRIdForNuke10.5
 make -j`nproc` OpenEXRIdForNuke11.1
 make -j`nproc` OpenEXRIdForNuke11.2
