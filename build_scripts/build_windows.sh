@@ -108,6 +108,9 @@ function updateConan()
 if [ ! "$NUKE90_DIR" ]; then
 	NUKE90_DIR="D:\\Nuke\\Nuke9.0v9"
 fi
+if [ ! "$NUKE100_DIR" ]; then
+	NUKE105_DIR="D:\\Nuke\\Nuke10.0v6"
+fi
 if [ ! "$NUKE105_DIR" ]; then
 	NUKE105_DIR="D:\\Nuke\\Nuke10.5v8"
 fi
@@ -195,8 +198,8 @@ echo -e "\e[93m## Generating 2010 Makefiles   ##\e[0m"
 echo -e "\e[93m#################################\e[0m"
 
 cd $BUILD_FOLDER/release
-echo -e "\e[96mcmake -G \"$MSVC_VER\" -A $MSVC_ARCH ../../ -D USE_CONAN=1 -D BUILD_LIB=1 -D BUILD_PLUGINS=1 -D NUKE90_DIR=${NUKE90_DIR} -D NUKE105_DIR=${NUKE105_DIR}\e[0m"
-cmake -G "$MSVC_VER" -A $MSVC_ARCH ../../ -D USE_CONAN=1 -D BUILD_LIB=1 -D BUILD_PLUGINS=1 -D NUKE90_DIR=${NUKE90_DIR} -D NUKE105_DIR=${NUKE105_DIR}
+echo -e "\e[96mcmake -G \"$MSVC_VER\" -A $MSVC_ARCH ../../ -D USE_CONAN=1 -D BUILD_LIB=1 -D BUILD_PLUGINS=1 -D NUKE90_DIR=${NUKE90_DIR} -D NUKE100_DIR=${NUKE100_DIR} -D NUKE105_DIR=${NUKE105_DIR}\e[0m"
+cmake -G "$MSVC_VER" -A $MSVC_ARCH ../../ -D USE_CONAN=1 -D BUILD_LIB=1 -D BUILD_PLUGINS=1 -D NUKE90_DIR=${NUKE90_DIR} -D NUKE100_DIR=${NUKE100_DIR} -D NUKE105_DIR=${NUKE105_DIR}
 cd ../..
 
 echo -e "\e[93m#################################\e[0m"
@@ -205,6 +208,7 @@ echo -e "\e[93m#################################\e[0m"
 
 cd $BUILD_FOLDER/release
 cmake --build . --target OpenEXRIdForNuke9.0 --config Release
+cmake --build . --target OpenEXRIdForNuke10.0 --config Release
 cmake --build . --target OpenEXRIdForNuke10.5 --config Release
 cd ../..
 
