@@ -129,6 +129,9 @@ fi
 if [ ! "$NUKE121_DIR" ]; then
 	NUKE121_DIR="D:\\Nuke\\Nuke12.1v2"
 fi
+if [ ! "$NUKE122_DIR" ]; then
+	NUKE122_DIR="D:\\Nuke\\Nuke12.2v4"
+fi
 
 cd ..
 mkdir -p build2010
@@ -163,8 +166,8 @@ echo -e "\e[93m## Generating 2015 Makefiles   ##\e[0m"
 echo -e "\e[93m#################################\e[0m"
 
 cd $BUILD_FOLDER/release
-echo -e "\e[96mcmake -G \"$MSVC_VER\" -A $MSVC_ARCH ../../ -D USE_CONAN=1 -D BUILD_LIB=1 -D BUILD_PLUGINS=1 -D NUKE111_DIR=${NUKE111_DIR} -D NUKE112_DIR=${NUKE112_DIR} -D NUKE113_DIR=${NUKE113_DIR} -D NUKE120_DIR=${NUKE120_DIR} -D NUKE121_DIR=${NUKE121_DIR} \e[0m"
-cmake -G "$MSVC_VER" -A $MSVC_ARCH ../../ -D USE_CONAN=1 -D BUILD_LIB=1 -D BUILD_PLUGINS=1 -D NUKE111_DIR=${NUKE111_DIR} -D NUKE112_DIR=${NUKE112_DIR} -D NUKE113_DIR=${NUKE113_DIR} -D NUKE120_DIR=${NUKE120_DIR} -D NUKE121_DIR=${NUKE121_DIR}
+echo -e "\e[96mcmake -G \"$MSVC_VER\" -A $MSVC_ARCH ../../ -D USE_CONAN=1 -D BUILD_LIB=1 -D BUILD_PLUGINS=1 -D NUKE111_DIR=${NUKE111_DIR} -D NUKE112_DIR=${NUKE112_DIR} -D NUKE113_DIR=${NUKE113_DIR} -D NUKE120_DIR=${NUKE120_DIR} -D NUKE121_DIR=${NUKE121_DIR} -D NUKE122_DIR=${NUKE122_DIR} \e[0m"
+cmake -G "$MSVC_VER" -A $MSVC_ARCH ../../ -D USE_CONAN=1 -D BUILD_LIB=1 -D BUILD_PLUGINS=1 -D NUKE111_DIR=${NUKE111_DIR} -D NUKE112_DIR=${NUKE112_DIR} -D NUKE113_DIR=${NUKE113_DIR} -D NUKE120_DIR=${NUKE120_DIR} -D NUKE121_DIR=${NUKE121_DIR} -D NUKE122_DIR=${NUKE122_DIR}
 cd ../..
 
 echo -e "\e[93m#################################\e[0m"
@@ -178,6 +181,7 @@ cmake --build . --target OpenEXRIdForNuke11.2 --config Release
 cmake --build . --target OpenEXRIdForNuke11.3 --config Release
 cmake --build . --target OpenEXRIdForNuke12.0 --config Release
 cmake --build . --target OpenEXRIdForNuke12.1 --config Release
+cmake --build . --target OpenEXRIdForNuke12.2 --config Release
 cd ../..
 
 

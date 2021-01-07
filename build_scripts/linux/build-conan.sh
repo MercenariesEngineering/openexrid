@@ -48,6 +48,7 @@ make -j`nproc` OpenEXRIdForNuke11.2
 make -j`nproc` OpenEXRIdForNuke11.3
 make -j`nproc` OpenEXRIdForNuke12.0
 make -j`nproc` OpenEXRIdForNuke12.1
+make -j`nproc` OpenEXRIdForNuke12.2
 
 # Build libraries relying on gcc-4.1
 prebuild ${BUILD_ROOT}/build_scripts/linux/docker/conan_profile_linux_gcc4.1
