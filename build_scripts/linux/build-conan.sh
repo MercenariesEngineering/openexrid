@@ -7,6 +7,7 @@ BUILD_ROOT=${THIS_DIRECTORY}/../..
 cd ${BUILD_ROOT}
 
 conan remote add pierousseau https://api.bintray.com/conan/pierousseau/libs
+conan remote add mercseng https://api.bintray.com/conan/mercenariesengineering/conan_packages
 
 function prebuild()
 {
