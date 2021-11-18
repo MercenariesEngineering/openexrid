@@ -7,7 +7,7 @@ import os, shutil
 
 class OpenEXRIdConan(ConanFile):
     name = "OpenExrId"
-    version = "1.0-beta.22"
+    version = "1.0-beta.27"
     license = "MIT"
     url = "https://github.com/MercenariesEngineering/openexrid"
     description = "OpenEXR files able to isolate any object of a CG image with a perfect antialiazing "
