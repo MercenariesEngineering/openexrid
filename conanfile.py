@@ -18,6 +18,7 @@ class OpenEXRIdConan(ConanFile):
 
     def requirements(self):
         self.requires("zlib/1.2.11@mercseng/v0")
+        self.requires("bzip2/1.0.8@mercseng/v0")
         self.requires("OpenFx/1.4@pierousseau/stable")
         if (self.settings.compiler == "Visual Studio" and self.settings.compiler.version == 10) or (self.settings.compiler == "gcc" and self.settings.compiler.version == 4.1):
             # Building for old Nukes
@@ -26,14 +27,14 @@ class OpenEXRIdConan(ConanFile):
             self.requires("OpenEXR/2.2.0@pierousseau/stable")
             self.requires("re2/2016-02-01@pierousseau/stable")
             self.requires("libpng/1.6.37@pierousseau/stable")
-            self.requires("boost/1.67.0@conan/stable")
+            self.requires("boost/1.64.0@guerilla_legacy/v0")
         elif self.settings.os == "Linux":
             # Newer Nukes, Linux
             self.requires("OpenImageIO/2.1.15.0@mercseng/stable")
             self.requires("OpenEXR/2.5.1@mercseng/stable")
             self.requires("re2/2019-06-01@pierousseau/stable")
             self.requires("libpng/1.6.37@mercseng/v0")
-            self.requires("boost/1.67.0@conan/stable")
+            self.requires("boost/1.64.0@guerilla_legacy/v0")
         else:
             # Newer Nukes, Windows
             self.requires("OpenImageIO/2.1.15.0@mercseng/v2")
