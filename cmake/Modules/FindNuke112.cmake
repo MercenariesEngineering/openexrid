@@ -3,6 +3,7 @@ IF(WIN32)
 
 	find_library (DDIMAGE112_LIBRARY DDImage
 			${NUKE112_DIR}
+			$ENV{NUKE112_DIR}
 			"C:/Program\ Files/Nuke\ 11.2v1"
 			"C:/Program\ Files/Nuke\ 11.2v2"
 			"C:/Program\ Files/Nuke\ 11.2v3"
@@ -17,6 +18,7 @@ ELSEIF(UNIX)
 
 	find_library (DDIMAGE112_LIBRARY DDImage
 			${NUKE112_DIR}
+			$ENV{NUKE112_DIR}
 			"/usr/local/Nuke11.2v1"
 			"/usr/local/Nuke11.2v2"
 			"/usr/local/Nuke11.2v3"

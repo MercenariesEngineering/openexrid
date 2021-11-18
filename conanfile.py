@@ -12,8 +12,8 @@ class OpenEXRIdConan(ConanFile):
     url = "https://github.com/MercenariesEngineering/openexrid"
     description = "OpenEXR files able to isolate any object of a CG image with a perfect antialiazing "
     settings = "os", "compiler", "build_type", "arch"
-    options = {"shared": [True, False], "fPIC": [True, False] }
-    default_options = "shared=False","*:shared=False","fPIC=True"
+    options = {"shared": [True, False], "fPIC": [True, False], "build_lib": [True, False], "build_plugins": [True, False] }
+    default_options = "shared=False","*:shared=False","fPIC=True","build_lib=True","build_plugins=False"
     generators = "cmake"
 
     def requirements(self):
@@ -73,10 +73,41 @@ class OpenEXRIdConan(ConanFile):
         cmake = CMake(self)
         #cmake.verbose = True
         cmake.definitions["USE_CONAN"] = True
-        cmake.definitions["BUILD_LIB"] = True
-        cmake.definitions["BUILD_PLUGINS"] = False
-        cmake.configure(source_dir="%s/openexrid" % self.source_folder)
-        cmake.build()
+        cmake.definitions["BUILD_LIB"] = self.options.build_lib
+        cmake.definitions["BUILD_PLUGINS"] = self.options.build_plugins
+        cmake.definitions["CONAN_BUILD_INFO_DIR"] = os.path.join(self.build_folder, "..", "Conan")
+        source_dir="%s/openexrid" % self.source_folder
+        if os.path.isdir(source_dir+"/openexrid"):
+            cmake.configure(source_dir=source_dir)
+        else:
+            cmake.configure()
+
+        targets = []
+        if self.settings.compiler == "Visual Studio":
+            if self.settings.compiler.version == 10:
+                # Visual 2010
+                if self.options.build_plugins:
+                    targets.extend(["OpenEXRIdForNuke9.0", "OpenEXRIdForNuke10.0", "OpenEXRIdForNuke10.5"])
+            elif self.settings.compiler.version == 14:
+                # Visual 2015
+                if self.options.build_lib:
+                    targets.extend(["LibOpenEXRId"])
+                if self.options.build_plugins:
+                    targets.extend(["OpenEXRIdOFX", "OpenEXRIdForNuke11.1", "OpenEXRIdForNuke11.2", "OpenEXRIdForNuke11.3", "OpenEXRIdForNuke12.0", "OpenEXRIdForNuke12.1", "OpenEXRIdForNuke12.2"])
+        elif self.settings.compiler == "gcc":
+            if self.settings.compiler.version == 4.1:
+                # gcc 4.1
+                if self.options.build_plugins:
+                    targets.extend(["OpenEXRIdOFX", "OpenEXRIdForNuke9.0"])
+            else:
+                # gcc 7+
+                if self.options.build_lib:
+                    targets.extend(["LibOpenEXRId"])
+                if self.options.build_plugins:
+                    targets.extend(["OpenEXRIdOFX", "OpenEXRIdForNuke10.0", "OpenEXRIdForNuke10.5", "OpenEXRIdForNuke11.1", "OpenEXRIdForNuke11.2", "OpenEXRIdForNuke11.3", "OpenEXRIdForNuke12.0", "OpenEXRIdForNuke12.1", "OpenEXRIdForNuke12.2"])
+        
+        for t in targets:
+            cmake.build(target=t)
         
     def package(self):
         self.copy("*.h", dst="include/openexrid", src="openexrid/openexrid")

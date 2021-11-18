@@ -3,6 +3,7 @@ IF(WIN32)
 
 	find_library (DDIMAGE90_LIBRARY DDImage
 			${NUKE90_DIR}
+			$ENV{NUKE90_DIR}
 			"C:/Program\ Files/Nuke\ 9.0v1"
 			"C:/Program\ Files/Nuke\ 9.0v2"
 			"C:/Program\ Files/Nuke\ 9.0v3"
@@ -19,6 +20,7 @@ ELSEIF(UNIX)
 
 	find_library (DDIMAGE90_LIBRARY DDImage
 			${NUKE90_DIR}
+			$ENV{NUKE90_DIR}
 			"/usr/local/Nuke9.0v1"
 			"/usr/local/Nuke9.0v2"
 			"/usr/local/Nuke9.0v3"

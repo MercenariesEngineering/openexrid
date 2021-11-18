@@ -1,0 +1,41 @@
+################################
+### Python environment
+################################
+
+#export PYTHON_38=/x/Tools/Python38
+#export PYTHONHOME=$PYTHON_38
+#export PYTHONPATH=$PYTHON_38
+#export PATH=$PYTHON_38:$PYTHON_38/Scripts:$PATH
+
+################################
+### Conan environment
+################################
+
+#alias conan="/x/Tools/Python38/Scripts/conan.exe"
+ 
+# Where to store out conan packages ?
+#export CONAN_USER_HOME="C:/.conan"
+
+# Use a different conan folder when building from docker ? 
+#export CONAN_DOCKER_HOME="C:/.conan_docker"
+
+# Required conan repository
+#conan remote add mercenaries http://c3dcoodq1.mercs-eng.com:8081/artifactory/api/conan/conan_packages --insert 0 --force
+#conan remote add guerilla_legacy http://c3dcoodq1.mercs-eng.com:8081/artifactory/api/conan/guerilla_legacy --insert 1 --force
+ 
+# Would you like to update conan everytime you run .build.sh ? ("full"/"fast"/"skip")
+#export conan_update="full"
+
+################################
+### Nuke Environment
+################################
+
+#export NUKE90_DIR="D:\\Nuke\\Nuke9.0v9"
+#export NUKE105_DIR="D:\\Nuke\\Nuke10.0v6"
+#export NUKE105_DIR="D:\\Nuke\\Nuke10.5v8"
+#export NUKE111_DIR="D:\\Nuke\\Nuke11.1v6"
+#export NUKE112_DIR="D:\\Nuke\\Nuke11.2v7"
+#export NUKE113_DIR="D:\\Nuke\\Nuke11.3v6"
+#export NUKE120_DIR="D:\\Nuke\\Nuke12.0v3"
+#export NUKE121_DIR="D:\\Nuke\\Nuke12.1v2"
+#export NUKE122_DIR="D:\\Nuke\\Nuke12.2v4"

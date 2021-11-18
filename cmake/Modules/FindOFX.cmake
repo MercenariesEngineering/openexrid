@@ -3,6 +3,7 @@ find_path (OFX_ROOT_DIR
 	include/ofxCore.h
 	PATHS
 		${OFX_DIR}
+		$ENV{OFX_DIR}
 		"/usr/local/openfx"
 	)
 

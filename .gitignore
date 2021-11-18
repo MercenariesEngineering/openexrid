@@ -3,6 +3,7 @@ Debug
 debug
 relwithdebinfo
 Conan/*
+build/
 *.filters
 *.sdf
 .vs
@@ -13,3 +14,4 @@ release
 *.tar.gz
 build4.1/
 build4.8/
+.build_env
