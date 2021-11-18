@@ -140,6 +140,22 @@ mkdir -p "${build_directory}"
 ##############################################################################
 
 if [ "$build_installer" ]; then
+	if [ "$machine" == "Linux" ] && [ ! -f /.dockerenv ] ; then
+		# Relaunch in docker !
+		echo -e "\e[96mRelaunching builder in docker\n\e[0m"
+		if [ -d "$CONAN_DOCKER_HOME" ] ; then
+			echo -e "\e[96mLocal conan folder: $CONAN_DOCKER_HOME\n\e[0m"
+			CONAN_USER_HOME=$(realpath $CONAN_DOCKER_HOME) ./build_tools/linux/linux-docker-build.sh
+		elif [ -d "$CONAN_USER_HOME" ] ; then
+			echo -e "\e[96mLocal conan folder: $CONAN_USER_HOME\n\e[0m"
+			CONAN_USER_HOME=$(realpath $CONAN_USER_HOME) ./build_tools/linux/linux-docker-build.sh
+		else
+			echo -e "\e[96mLocal conan folder: ~/.conan\n\e[0m"
+			CONAN_USER_HOME=$(realpath ~) ./build_tools/linux/linux-docker-build.sh
+		fi
+		exit 0
+	fi
+
 	build="y"
 	build_type="Release"
 fi
