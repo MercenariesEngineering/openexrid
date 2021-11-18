@@ -94,7 +94,7 @@ class OpenEXRIdConan(ConanFile):
                 if self.options.build_lib:
                     targets.extend(["LibOpenEXRId"])
                 if self.options.build_plugins:
-                    targets.extend(["OpenEXRIdOFX", "OpenEXRIdForNuke11.1", "OpenEXRIdForNuke11.2", "OpenEXRIdForNuke11.3", "OpenEXRIdForNuke12.0", "OpenEXRIdForNuke12.1", "OpenEXRIdForNuke12.2"])
+                    targets.extend(["OpenEXRIdOFX", "OpenEXRIdForNuke11.1", "OpenEXRIdForNuke11.2", "OpenEXRIdForNuke11.3", "OpenEXRIdForNuke12.0", "OpenEXRIdForNuke12.1", "OpenEXRIdForNuke12.2", "OpenEXRIdForNuke13.0"])
         elif self.settings.compiler == "gcc":
             if self.settings.compiler.version == 4.1:
                 # gcc 4.1
@@ -105,7 +105,7 @@ class OpenEXRIdConan(ConanFile):
                 if self.options.build_lib:
                     targets.extend(["LibOpenEXRId"])
                 if self.options.build_plugins:
-                    targets.extend(["OpenEXRIdOFX", "OpenEXRIdForNuke10.0", "OpenEXRIdForNuke10.5", "OpenEXRIdForNuke11.1", "OpenEXRIdForNuke11.2", "OpenEXRIdForNuke11.3", "OpenEXRIdForNuke12.0", "OpenEXRIdForNuke12.1", "OpenEXRIdForNuke12.2"])
+                    targets.extend(["OpenEXRIdOFX", "OpenEXRIdForNuke10.0", "OpenEXRIdForNuke10.5", "OpenEXRIdForNuke11.1", "OpenEXRIdForNuke11.2", "OpenEXRIdForNuke11.3", "OpenEXRIdForNuke12.0", "OpenEXRIdForNuke12.1", "OpenEXRIdForNuke12.2", "OpenEXRIdForNuke13.0"])
         
         for t in targets:
             cmake.build(target=t)
