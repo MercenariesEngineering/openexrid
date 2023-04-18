@@ -16,10 +16,11 @@
 #pragma once
 
 #include <map>
+#include <string>
 
 namespace openexrid
 {
 
-std::string Version = "1.0-beta.27";
+std::string Version = "1.0-beta.28";
 
 }

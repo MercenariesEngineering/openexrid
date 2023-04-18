@@ -7,7 +7,7 @@ import os, shutil
 
 class OpenEXRIdConan(ConanFile):
     name = "OpenExrId"
-    version = "1.0-beta.27"
+    version = "1.0-beta.28"
     license = "MIT"
     url = "https://github.com/MercenariesEngineering/openexrid"
     description = "OpenEXR files able to isolate any object of a CG image with a perfect antialiazing "
@@ -20,28 +20,46 @@ class OpenEXRIdConan(ConanFile):
         self.requires("zlib/1.2.11@mercseng/v0")
         self.requires("bzip2/1.0.8@mercseng/v0")
         self.requires("OpenFx/1.4@pierousseau/stable")
-        if (self.settings.compiler == "Visual Studio" and self.settings.compiler.version == 10) or (self.settings.compiler == "gcc" and self.settings.compiler.version == 4.1):
-            # Building for old Nukes
-            self.requires("OpenImageIO/1.6.18@pierousseau/stable")
-            self.requires("IlmBase/2.2.0@pierousseau/stable")
-            self.requires("OpenEXR/2.2.0@pierousseau/stable")
-            self.requires("re2/2016-02-01@pierousseau/stable")
-            self.requires("libpng/1.6.37@pierousseau/stable")
-            self.requires("boost/1.64.0@guerilla_legacy/v0")
-        elif self.settings.os == "Linux":
-            # Newer Nukes, Linux
-            self.requires("OpenImageIO/2.1.15.0@mercseng/stable")
-            self.requires("OpenEXR/2.5.1@mercseng/stable")
-            self.requires("re2/2019-06-01@pierousseau/stable")
-            self.requires("libpng/1.6.37@mercseng/v0")
-            self.requires("boost/1.64.0@guerilla_legacy/v0")
-        else:
-            # Newer Nukes, Windows
-            self.requires("OpenImageIO/2.1.15.0@mercseng/v2")
-            self.requires("OpenEXR/2.5.1@mercseng/v0")
-            self.requires("re2/2019-06-01@mercseng/v0")
-            self.requires("libpng/1.6.37@mercseng/v0")
-            self.requires("boost/1.73.0@mercseng/v2")
+
+        if self.settings.os == "Linux":
+            if self.settings.compiler == "gcc" and self.settings.compiler.version == 4.1:
+                # Nuke 9
+                self.requires("OpenImageIO/1.6.18@pierousseau/stable")
+                self.requires("IlmBase/2.2.0@pierousseau/stable")
+                self.requires("OpenEXR/2.2.0@pierousseau/stable")
+                self.requires("re2/2016-02-01@pierousseau/stable")
+                self.requires("libpng/1.6.37@pierousseau/stable")
+                self.requires("boost/1.64.0@guerilla_legacy/v0")
+            else:
+                # Nukes 10+
+                self.requires("OpenImageIO/2.1.15.0@mercseng/stable")
+                self.requires("OpenEXR/2.5.1@mercseng/stable")
+                self.requires("re2/2019-06-01@pierousseau/stable")
+                self.requires("libpng/1.6.37@mercseng/v0")
+                self.requires("boost/1.64.0@guerilla_legacy/v0")
+        elif self.settings.compiler == "Visual Studio":
+            if self.settings.compiler.version == 10:
+                # Nuke 9, 10
+                self.requires("OpenImageIO/1.6.18@pierousseau/stable")
+                self.requires("IlmBase/2.2.0@pierousseau/stable")
+                self.requires("OpenEXR/2.2.0@pierousseau/stable")
+                self.requires("re2/2016-02-01@pierousseau/stable")
+                self.requires("libpng/1.6.37@pierousseau/stable")
+                self.requires("boost/1.64.0@guerilla_legacy/v0")
+            elif self.settings.compiler.version == 14:
+                # Nukes 11-13
+                self.requires("OpenImageIO/2.1.15.0@mercseng/v2")
+                self.requires("OpenEXR/2.5.1@mercseng/v0")
+                self.requires("re2/2019-06-01@mercseng/v0")
+                self.requires("libpng/1.6.37@mercseng/v0")
+                self.requires("boost/1.73.0@mercseng/v2")
+            elif self.settings.compiler.version == 16:
+                # Nuke 14+
+                self.requires("OpenImageIO/2.1.15.0@mercseng/v2")
+                self.requires("OpenEXR/2.5.1@mercseng/v0")
+                self.requires("re2/2019-06-01@mercseng/v1")
+                self.requires("libpng/1.6.37@mercseng/v0")
+                self.requires("boost/1.73.0@mercseng/v6")
 
     def configure(self):
         if self.settings.os == "Linux":
@@ -91,10 +109,14 @@ class OpenEXRIdConan(ConanFile):
                     targets.extend(["OpenEXRIdForNuke9.0", "OpenEXRIdForNuke10.0", "OpenEXRIdForNuke10.5"])
             elif self.settings.compiler.version == 14:
                 # Visual 2015
+                if self.options.build_plugins:
+                    targets.extend(["OpenEXRIdOFX", "OpenEXRIdForNuke11.1", "OpenEXRIdForNuke11.2", "OpenEXRIdForNuke11.3", "OpenEXRIdForNuke12.0", "OpenEXRIdForNuke12.1", "OpenEXRIdForNuke12.2", "OpenEXRIdForNuke13.0"])
+            elif self.settings.compiler.version == 16:
+                # Visual 2019
                 if self.options.build_lib:
                     targets.extend(["LibOpenEXRId"])
                 if self.options.build_plugins:
-                    targets.extend(["OpenEXRIdOFX", "OpenEXRIdForNuke11.1", "OpenEXRIdForNuke11.2", "OpenEXRIdForNuke11.3", "OpenEXRIdForNuke12.0", "OpenEXRIdForNuke12.1", "OpenEXRIdForNuke12.2", "OpenEXRIdForNuke13.0"])
+                    targets.extend(["OpenEXRIdForNuke14.0"])
         elif self.settings.compiler == "gcc":
             if self.settings.compiler.version == 4.1:
                 # gcc 4.1
@@ -105,7 +127,7 @@ class OpenEXRIdConan(ConanFile):
                 if self.options.build_lib:
                     targets.extend(["LibOpenEXRId"])
                 if self.options.build_plugins:
-                    targets.extend(["OpenEXRIdOFX", "OpenEXRIdForNuke10.0", "OpenEXRIdForNuke10.5", "OpenEXRIdForNuke11.1", "OpenEXRIdForNuke11.2", "OpenEXRIdForNuke11.3", "OpenEXRIdForNuke12.0", "OpenEXRIdForNuke12.1", "OpenEXRIdForNuke12.2", "OpenEXRIdForNuke13.0"])
+                    targets.extend(["OpenEXRIdOFX", "OpenEXRIdForNuke10.0", "OpenEXRIdForNuke10.5", "OpenEXRIdForNuke11.1", "OpenEXRIdForNuke11.2", "OpenEXRIdForNuke11.3", "OpenEXRIdForNuke12.0", "OpenEXRIdForNuke12.1", "OpenEXRIdForNuke12.2", "OpenEXRIdForNuke13.0", "OpenEXRIdForNuke14.0"])
         
         for t in targets:
             cmake.build(target=t)
