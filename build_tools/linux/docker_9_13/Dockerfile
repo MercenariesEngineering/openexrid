@@ -17,7 +17,7 @@ ENV CMAKE_MODULE_PATH=${CMAKE_ROOT}/share/cmake-3.16/Modules
 ENV PATH=${CMAKE_ROOT}/bin:${PATH}
 
 ENV CONAN_USER_HOME=/conan
-COPY conan_profile_linux ${CONAN_USER_HOME}/.conan/profiles/default
+COPY conan_profile_linux_gcc_4.8 ${CONAN_USER_HOME}/.conan/profiles/default
 COPY conan-bootstrap.sh /build/
 RUN /build/conan-bootstrap.sh
 

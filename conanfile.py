@@ -21,8 +21,8 @@ class OpenEXRIdConan(ConanFile):
         self.requires("bzip2/1.0.8@mercseng/v0")
         self.requires("OpenFx/1.4@pierousseau/stable")
 
-        if self.settings.os == "Linux":
-            if self.settings.compiler == "gcc" and self.settings.compiler.version == 4.1:
+        if self.settings.os == "Linux" and self.settings.compiler == "gcc":
+            if self.settings.compiler.version == 4.1:
                 # Nuke 9
                 self.requires("OpenImageIO/1.6.18@pierousseau/stable")
                 self.requires("IlmBase/2.2.0@pierousseau/stable")
@@ -30,13 +30,21 @@ class OpenEXRIdConan(ConanFile):
                 self.requires("re2/2016-02-01@pierousseau/stable")
                 self.requires("libpng/1.6.37@pierousseau/stable")
                 self.requires("boost/1.64.0@guerilla_legacy/v0")
-            else:
-                # Nukes 10+
+            elif self.settings.compiler.version == 4.8:
+                # Nukes 10-13
                 self.requires("OpenImageIO/2.1.15.0@mercseng/stable")
                 self.requires("OpenEXR/2.5.1@mercseng/stable")
                 self.requires("re2/2019-06-01@pierousseau/stable")
                 self.requires("libpng/1.6.37@mercseng/v0")
                 self.requires("boost/1.64.0@guerilla_legacy/v0")
+            elif self.settings.compiler.version == 9:
+                # Nuke 14+
+                self.requires("OpenImageIO/2.1.15.0@mercseng/v2")
+                self.requires("OpenEXR/2.5.1@mercseng/v0")
+                self.requires("re2/2019-06-01@mercseng/v1")
+                self.requires("libpng/1.6.37@mercseng/v0")
+                self.requires("boost/1.73.0@mercseng/v6")
+                self.requires("tbb/2020.02@mercseng/v3")
         elif self.settings.compiler == "Visual Studio":
             if self.settings.compiler.version == 10:
                 # Nuke 9, 10
@@ -72,6 +80,8 @@ class OpenEXRIdConan(ConanFile):
             self.options["OpenImageIO"].fPIC=True
             self.options["re2"].fPIC=True
             self.options["zlib"].fPIC=True
+            if self.settings.compiler == "gcc" and self.settings.compiler.version == 9:
+                self.options["tbb"].shared=True
 
         if self.settings.compiler == "gcc" and self.settings.compiler.version == 4.1:
             self.options["libpng"].hardware_optimizations=False
@@ -104,30 +114,34 @@ class OpenEXRIdConan(ConanFile):
         targets = []
         if self.settings.compiler == "Visual Studio":
             if self.settings.compiler.version == 10:
-                # Visual 2010
+                # Visual 2010, Nukes 9-10
                 if self.options.build_plugins:
                     targets.extend(["OpenEXRIdForNuke9.0", "OpenEXRIdForNuke10.0", "OpenEXRIdForNuke10.5"])
             elif self.settings.compiler.version == 14:
-                # Visual 2015
+                # Visual 2015, Nukes 11-13
                 if self.options.build_plugins:
                     targets.extend(["OpenEXRIdOFX", "OpenEXRIdForNuke11.1", "OpenEXRIdForNuke11.2", "OpenEXRIdForNuke11.3", "OpenEXRIdForNuke12.0", "OpenEXRIdForNuke12.1", "OpenEXRIdForNuke12.2", "OpenEXRIdForNuke13.0"])
             elif self.settings.compiler.version == 16:
-                # Visual 2019
+                # Visual 2019, Nuke 14+
                 if self.options.build_lib:
                     targets.extend(["LibOpenEXRId"])
                 if self.options.build_plugins:
                     targets.extend(["OpenEXRIdForNuke14.0"])
         elif self.settings.compiler == "gcc":
             if self.settings.compiler.version == 4.1:
-                # gcc 4.1
+                # gcc 4.1, Nuke 9
                 if self.options.build_plugins:
                     targets.extend(["OpenEXRIdOFX", "OpenEXRIdForNuke9.0"])
-            else:
-                # gcc 7+
+            elif self.settings.compiler.version == 4.8:
+                # gcc 4.8, Nuke 10-13
+                if self.options.build_plugins:
+                    targets.extend(["OpenEXRIdOFX", "OpenEXRIdForNuke10.0", "OpenEXRIdForNuke10.5", "OpenEXRIdForNuke11.1", "OpenEXRIdForNuke11.2", "OpenEXRIdForNuke11.3", "OpenEXRIdForNuke12.0", "OpenEXRIdForNuke12.1", "OpenEXRIdForNuke12.2", "OpenEXRIdForNuke13.0"])
+            elif self.settings.compiler.version == 9:
+                # gcc 9, Nuke 14+
                 if self.options.build_lib:
                     targets.extend(["LibOpenEXRId"])
                 if self.options.build_plugins:
-                    targets.extend(["OpenEXRIdOFX", "OpenEXRIdForNuke10.0", "OpenEXRIdForNuke10.5", "OpenEXRIdForNuke11.1", "OpenEXRIdForNuke11.2", "OpenEXRIdForNuke11.3", "OpenEXRIdForNuke12.0", "OpenEXRIdForNuke12.1", "OpenEXRIdForNuke12.2", "OpenEXRIdForNuke13.0", "OpenEXRIdForNuke14.0"])
+                    targets.extend(["OpenEXRIdOFX", "OpenEXRIdForNuke14.0"])
         
         for t in targets:
             cmake.build(target=t)

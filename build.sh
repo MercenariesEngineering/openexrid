@@ -313,13 +313,23 @@ if [ "$machine" == "Windows" ]; then
 	CMAKE_BUILD_TYPE=$config conan build --install-folder ${build_directory}/Conan/ --source-folder ${root_directory} --build-folder ${build_directory}/build2010 --package-folder ${build_root_directory}/bin ${conan_actions} ${root_directory}/conanfile.py
 else
 	mkdir -p ${build_directory}/buildgcc41
-	mkdir -p ${build_directory}/buildgcc
+	mkdir -p ${build_directory}/buildgcc48
+	mkdir -p ${build_directory}/buildgcc93
 
-	ConanUpdate ${root_directory}/build_tools/conan_profile_linux
-	CMAKE_BUILD_TYPE=$config conan build --install-folder ${build_directory}/Conan/ --source-folder ${root_directory} --build-folder ${build_directory}/buildgcc --package-folder ${build_root_directory}/bin ${conan_actions} ${root_directory}/conanfile.py
+	if [ "$build41" ]; then
+		ConanUpdate ${root_directory}/build_tools/conan_profile_linux_gcc4.1
+		CMAKE_BUILD_TYPE=$config conan build --install-folder ${build_directory}/Conan/ --source-folder ${root_directory} --build-folder ${build_directory}/buildgcc41 --package-folder ${build_root_directory}/bin ${conan_actions} ${root_directory}/conanfile.py
+	fi
 
-	ConanUpdate ${root_directory}/build_tools/conan_profile_linux_gcc4.1
-	CMAKE_BUILD_TYPE=$config conan build --install-folder ${build_directory}/Conan/ --source-folder ${root_directory} --build-folder ${build_directory}/buildgcc41 --package-folder ${build_root_directory}/bin ${conan_actions} ${root_directory}/conanfile.py
+	if [ "$build48" ]; then
+		ConanUpdate ${root_directory}/build_tools/conan_profile_linux_gcc4.8
+		CMAKE_BUILD_TYPE=$config conan build --install-folder ${build_directory}/Conan/ --source-folder ${root_directory} --build-folder ${build_directory}/buildgcc48 --package-folder ${build_root_directory}/bin ${conan_actions} ${root_directory}/conanfile.py
+	fi
+
+	if [ "$build93" ]; then
+		ConanUpdate ${root_directory}/build_tools/conan_profile_linux_gcc9.3
+		CMAKE_BUILD_TYPE=$config conan build --install-folder ${build_directory}/Conan/ --source-folder ${root_directory} --build-folder ${build_directory}/buildgcc93 --package-folder ${build_root_directory}/bin ${conan_actions} ${root_directory}/conanfile.py
+	fi
 fi
 
 

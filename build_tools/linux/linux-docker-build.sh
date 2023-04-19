@@ -9,8 +9,10 @@ set -e
 
 this_directory="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
-# Build the docker image
-docker build -t "linux-openexrid-builder" "${this_directory}/docker" --rm
+# Build the docker images
+docker build -t "openexrid-9-13-builder" "${this_directory}/docker_9_13" --rm
+
+docker build -t "openexrid-14plus-builder" "${this_directory}/docker_14plus" --rm
 
 nukes=""
 for nuke in `ls -d /usr/local/Nuke*` ; do
@@ -21,5 +23,15 @@ docker run --rm -it \
 	-u $(id -u):$(id -g) \
 	-v "${this_directory}/../..:/openexrid" \
 	-v "$CONAN_USER_HOME/.conan/data:/conan/.conan/data" \
+	-e build41=1 \
+	-e build48=1 \
 	$nukes \
-	"linux-openexrid-builder" "scl enable sclo-git212 ./build_tools/linux/build-conan.sh"
+	"openexrid-9-13-builder" "scl enable sclo-git212 /openexrid/build_tools/linux/build-conan.sh"
+
+docker run --rm -it \
+	-u $(id -u):$(id -g) \
+	-v "${this_directory}/../..:/openexrid" \
+	-v "$CONAN_USER_HOME/.conan/data:/builder/.conan/data" \
+	-e build93=1 \
+	$nukes \
+	"openexrid-14plus-builder" "/openexrid/build_tools/linux/build-conan.sh"
