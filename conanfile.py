@@ -120,7 +120,7 @@ class OpenEXRIdConan(ConanFile):
             elif self.settings.compiler.version == 14:
                 # Visual 2015, Nukes 11-13
                 if self.options.build_plugins:
-                    targets.extend(["OpenEXRIdOFX", "OpenEXRIdForNuke11.1", "OpenEXRIdForNuke11.2", "OpenEXRIdForNuke11.3", "OpenEXRIdForNuke12.0", "OpenEXRIdForNuke12.1", "OpenEXRIdForNuke12.2", "OpenEXRIdForNuke13.0"])
+                    targets.extend(["OpenEXRIdOFX", "OpenEXRIdForNuke11.1", "OpenEXRIdForNuke11.2", "OpenEXRIdForNuke11.3", "OpenEXRIdForNuke12.0", "OpenEXRIdForNuke12.1", "OpenEXRIdForNuke12.2", "OpenEXRIdForNuke13.0", "OpenEXRIdForNuke13.2"])
             elif self.settings.compiler.version == 16:
                 # Visual 2019, Nuke 14+
                 if self.options.build_lib:
@@ -135,7 +135,7 @@ class OpenEXRIdConan(ConanFile):
             elif self.settings.compiler.version == 4.8:
                 # gcc 4.8, Nuke 10-13
                 if self.options.build_plugins:
-                    targets.extend(["OpenEXRIdOFX", "OpenEXRIdForNuke10.0", "OpenEXRIdForNuke10.5", "OpenEXRIdForNuke11.1", "OpenEXRIdForNuke11.2", "OpenEXRIdForNuke11.3", "OpenEXRIdForNuke12.0", "OpenEXRIdForNuke12.1", "OpenEXRIdForNuke12.2", "OpenEXRIdForNuke13.0"])
+                    targets.extend(["OpenEXRIdOFX", "OpenEXRIdForNuke10.0", "OpenEXRIdForNuke10.5", "OpenEXRIdForNuke11.1", "OpenEXRIdForNuke11.2", "OpenEXRIdForNuke11.3", "OpenEXRIdForNuke12.0", "OpenEXRIdForNuke12.1", "OpenEXRIdForNuke12.2", "OpenEXRIdForNuke13.0", "OpenEXRIdForNuke13.2"])
             elif self.settings.compiler.version == 9:
                 # gcc 9, Nuke 14+
                 if self.options.build_lib:
