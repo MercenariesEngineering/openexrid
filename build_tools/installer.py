@@ -42,10 +42,6 @@ try:
 			os.makedirs ("openexrid/OFX/"+ofx_dst)
 			shutil.copy (cwd + "/build/release/lib/OFX/openexrid.ofx", "openexrid/OFX/"+ofx_dst)
 			strip ("openexrid/OFX/" + ofx_dst + "/openexrid.ofx")
-		if os.path.exists(cwd + "/build/release/lib/OFX_nuke9/openexrid.ofx"):
-			os.makedirs ("openexrid/OFX_nuke9/"+ofx_dst)
-			shutil.copy (cwd + "/build/release/lib/OFX_nuke9/openexrid.ofx", "openexrid/OFX_nuke9/"+ofx_dst)
-			strip ("openexrid/OFX_nuke9/" + ofx_dst + "/openexrid.ofx")
 
 	shutil.copy (cwd + "/LICENSE", "openexrid/")
 

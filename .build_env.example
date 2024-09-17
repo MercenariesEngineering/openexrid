@@ -30,9 +30,6 @@
 ### Nuke Environment
 ################################
 
-#export NUKE90_DIR="D:\\Nuke\\Nuke9.0v9"
-#export NUKE105_DIR="D:\\Nuke\\Nuke10.0v6"
-#export NUKE105_DIR="D:\\Nuke\\Nuke10.5v8"
 #export NUKE111_DIR="D:\\Nuke\\Nuke11.1v6"
 #export NUKE112_DIR="D:\\Nuke\\Nuke11.2v7"
 #export NUKE113_DIR="D:\\Nuke\\Nuke11.3v6"

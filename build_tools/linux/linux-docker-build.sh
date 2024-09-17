@@ -23,7 +23,6 @@ docker run --rm -it \
 	-u $(id -u):$(id -g) \
 	-v "${this_directory}/../..:/openexrid" \
 	-v "$CONAN_USER_HOME/.conan/data:/conan/.conan/data" \
-	-e build41=1 \
 	-e build48=1 \
 	$nukes \
 	"openexrid-9-13-builder" "scl enable sclo-git212 /openexrid/build_tools/linux/build-conan.sh"

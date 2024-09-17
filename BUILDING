@@ -51,5 +51,5 @@ $ make
 The build system is similar under windows. You need Visual Studio 2015 (and Visual Studio 2010 if you want to build Nuke plugins before Nuke 11).
 You need CMake 3.10, and Conan.
 For Nuke plugins building, Nuke installations should be accessible through environment variables 
-"$NUKE90_DIR", "$NUKE105_DIR", "$NUKE111_DIR", "$NUKE112_DIR", "$NUKE113_DIR", "$NUKE120_DIR", "$NUKE121_DIR".
+"$NUKE111_DIR", "$NUKE112_DIR", "$NUKE113_DIR", "$NUKE120_DIR", "$NUKE121_DIR".
 In a shell such as git bash, run the script "build_scripts/build_windows.sh", which will grab the dependencies through Conan, and build libs and plugins with the appropriate compiler.

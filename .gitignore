@@ -12,6 +12,5 @@ build/
 release
 *.zip
 *.tar.gz
-build4.1/
 build4.8/
 .build_env
