@@ -7,7 +7,7 @@ import os, shutil
 
 class OpenEXRIdConan(ConanFile):
     name = "OpenExrId"
-    version = "1.0-beta.28"
+    version = "1.0-beta.29"
     license = "MIT"
     url = "https://github.com/MercenariesEngineering/openexrid"
     description = "OpenEXR files able to isolate any object of a CG image with a perfect antialiazing "
@@ -105,6 +105,26 @@ class OpenEXRIdConan(ConanFile):
         cmake.definitions["BUILD_LIB"] = self.options.build_lib
         cmake.definitions["BUILD_PLUGINS"] = self.options.build_plugins
         cmake.definitions["CONAN_BUILD_INFO_DIR"] = os.path.join(self.build_folder, "..", "Conan")
+
+        if self.settings.compiler == "Visual Studio":
+            if self.settings.compiler.version == 10 or self.settings.compiler.version == 14:
+                # Visual 2010/2015, Nukes 9-13
+                cmake.definitions["CMAKE_CXX_STANDARD"] = 11
+                cmake.definitions["CMAKE_CXX_STANDARD_REQUIRED"] = True
+            elif self.settings.compiler.version == 16:
+                # Visual 2019, Nuke 14+
+                cmake.definitions["CMAKE_CXX_STANDARD"] = 17
+                cmake.definitions["CMAKE_CXX_STANDARD_REQUIRED"] = True
+        elif self.settings.compiler == "gcc":
+            if self.settings.compiler.version == 4.8:
+                # gcc 4.8, Nuke 10-13
+                cmake.definitions["CMAKE_CXX_STANDARD"] = 11
+                cmake.definitions["CMAKE_CXX_STANDARD_REQUIRED"] = True
+            elif self.settings.compiler.version == 9:
+                # gcc 9, Nuke 14+
+                cmake.definitions["CMAKE_CXX_STANDARD"] = 17
+                cmake.definitions["CMAKE_CXX_STANDARD_REQUIRED"] = True
+
         source_dir="%s/openexrid" % self.source_folder
         if os.path.isdir(source_dir+"/openexrid"):
             cmake.configure(source_dir=source_dir)
@@ -126,7 +146,7 @@ class OpenEXRIdConan(ConanFile):
                 if self.options.build_lib:
                     targets.extend(["LibOpenEXRId"])
                 if self.options.build_plugins:
-                    targets.extend(["OpenEXRIdForNuke14.0"])
+                    targets.extend(["OpenEXRIdForNuke14.0", "OpenEXRIdForNuke15.1"])
         elif self.settings.compiler == "gcc":
             if self.settings.compiler.version == 4.1:
                 # gcc 4.1, Nuke 9
@@ -141,7 +161,7 @@ class OpenEXRIdConan(ConanFile):
                 if self.options.build_lib:
                     targets.extend(["LibOpenEXRId"])
                 if self.options.build_plugins:
-                    targets.extend(["OpenEXRIdOFX", "OpenEXRIdForNuke14.0"])
+                    targets.extend(["OpenEXRIdOFX", "OpenEXRIdForNuke14.0", "OpenEXRIdForNuke15.1"])
         
         for t in targets:
             cmake.build(target=t)
