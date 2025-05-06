@@ -305,8 +305,8 @@ if [ "$machine" == "Windows" ]; then
 	ConanUpdate ${root_directory}/build_tools/conan_profile_windows_vs2019
 	CMAKE_BUILD_TYPE=$config conan build --install-folder ${build_directory}/Conan/ --source-folder ${root_directory} --build-folder ${build_directory}/build2019 --package-folder ${build_root_directory}/bin ${conan_actions} ${root_directory}/conanfile.py
 
-	ConanUpdate ${root_directory}/build_tools/conan_profile_windows_vs2015
-	CMAKE_BUILD_TYPE=$config conan build --install-folder ${build_directory}/Conan/ --source-folder ${root_directory} --build-folder ${build_directory}/build2015 --package-folder ${build_root_directory}/bin ${conan_actions} ${root_directory}/conanfile.py
+	#ConanUpdate ${root_directory}/build_tools/conan_profile_windows_vs2015
+	#CMAKE_BUILD_TYPE=$config conan build --install-folder ${build_directory}/Conan/ --source-folder ${root_directory} --build-folder ${build_directory}/build2015 --package-folder ${build_root_directory}/bin ${conan_actions} ${root_directory}/conanfile.py
 else
 	mkdir -p ${build_directory}/buildgcc48
 	mkdir -p ${build_directory}/buildgcc93

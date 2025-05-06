@@ -7,7 +7,7 @@ import os, shutil
 
 class OpenEXRIdConan(ConanFile):
     name = "OpenExrId"
-    version = "1.0-beta.29"
+    version = "1.0-beta.30"
     license = "MIT"
     url = "https://github.com/MercenariesEngineering/openexrid"
     description = "OpenEXR files able to isolate any object of a CG image with a perfect antialiazing "
@@ -45,13 +45,15 @@ class OpenEXRIdConan(ConanFile):
                 self.requires("re2/2019-06-01@mercseng/v0")
                 self.requires("libpng/1.6.37@mercseng/v0")
                 self.requires("boost/1.73.0@mercseng/v2")
+                self.requires("tbb/2020.02@mercseng/v3")
             elif self.settings.compiler.version == 16:
                 # Nuke 14+
-                self.requires("OpenImageIO/2.1.15.0@mercseng/v2")
+                self.requires("OpenImageIO/2.1.15.0@mercseng/v4")
                 self.requires("OpenEXR/2.5.1@mercseng/v0")
                 self.requires("re2/2019-06-01@mercseng/v1")
                 self.requires("libpng/1.6.37@mercseng/v0")
                 self.requires("boost/1.73.0@mercseng/v6")
+                self.requires("tbb/2020.02@mercseng/v3")
 
     def configure(self):
         if self.settings.os == "Linux":
@@ -110,7 +112,7 @@ class OpenEXRIdConan(ConanFile):
                 if self.options.build_lib:
                     targets.extend(["LibOpenEXRId"])
                 if self.options.build_plugins:
-                    targets.extend(["OpenEXRIdForNuke14.0", "OpenEXRIdForNuke15.1"])
+                    targets.extend(["OpenEXRIdForNuke14.0", "OpenEXRIdForNuke15.1", "OpenEXRIdForNuke16.0"])
         elif self.settings.compiler == "gcc":
             if self.settings.compiler.version == 4.8:
                 # gcc 4.8, Nuke 11-13
@@ -121,7 +123,7 @@ class OpenEXRIdConan(ConanFile):
                 if self.options.build_lib:
                     targets.extend(["LibOpenEXRId"])
                 if self.options.build_plugins:
-                    targets.extend(["OpenEXRIdOFX", "OpenEXRIdForNuke14.0", "OpenEXRIdForNuke15.1"])
+                    targets.extend(["OpenEXRIdOFX", "OpenEXRIdForNuke14.0", "OpenEXRIdForNuke15.1", "OpenEXRIdForNuke16.0"])
         
         for t in targets:
             cmake.build(target=t)
