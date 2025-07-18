@@ -15,7 +15,14 @@ INCLUDE(cmake/compile_definitions.cmake)
 INCLUDE(cmake/output_folders.cmake)
 
 IF(USE_CONAN)
-	INCLUDE(${CMAKE_CURRENT_LIST_DIR}/../build/generators/conan_toolchain.cmake)
+	if (WIN32)
+		INCLUDE(${CMAKE_CURRENT_LIST_DIR}/../build/generators/conan_toolchain.cmake)
+	endif (WIN32)
+	if (UNIX)
+		# Oddly enough, generators have a directory per config on Linux, but just for this package?!
+		# We would expect the conan_toolchain.cmake file to be passed directly in the arguments
+		INCLUDE(${CMAKE_CURRENT_LIST_DIR}/../build/Release/generators/conan_toolchain.cmake)
+	endif (UNIX)
 ENDIF()
 
 SET(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_SOURCE_DIR}/cmake/Modules)
