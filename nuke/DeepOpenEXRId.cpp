@@ -283,12 +283,12 @@ DeepOpenEXRId::ExrIdDataPtr DeepOpenEXRId::ExrIdDataCacheType::build(const std::
 					++buffer;
 				
 #ifdef USE_MODERN_APIS
-				lp.emplace_back (LPEEvent {OIIO::ustring (type),OIIO::ustring (scattering),OIIO::ustring (label)});
+				lp.emplace_back (LPEEvent {lpe::ustr (type),lpe::ustr (scattering),lpe::ustr (label)});
 #else
 				LPEEvent evt;
-				evt.Type = OIIO::ustring (type);
-				evt.Scattering = OIIO::ustring (scattering);
-				evt.Label = OIIO::ustring (label);
+				evt.Type = lpe::ustr (type);
+				evt.Scattering = lpe::ustr (scattering);
+				evt.Label = lpe::ustr (label);
 				lp.push_back (evt);
 #endif
 			}
@@ -419,15 +419,15 @@ DeepOpenEXRId::LPEAutomatonPtr DeepOpenEXRId::LPEAutomatonCacheType::build(const
 	if (set->Patterns.empty ())
 		return OpenEXRId::make_shared<LPEAutomaton> ();
 
-	OSL::NdfAutomata ndfautomata;
+	lpe::NdfAutomata ndfautomata;
 	size_t	patternid = 0;
 	for (std::vector<std::string>::const_iterator pattern = set->Patterns.begin() ; pattern != set->Patterns.end() ; pattern++)
 	{
-		std::vector<OIIO::ustring> userEvents;
-		userEvents.push_back(OIIO::ustring("I"));
+		std::vector<lpe::ustr> userEvents;
+		userEvents.push_back(lpe::ustr("I"));
 
-		OSL::Parser parser (&userEvents, NULL);
-		OSL::LPexp *e = parser.parse (removeNeg (*pattern));
+		lpe::Parser parser (&userEvents, NULL);
+		lpe::LPexpPtr e = parser.parse (removeNeg (*pattern));
 		if (parser.error ())
 		{
 			notifier->error ("Bad light path expression '%s': %s", pattern->c_str (), parser.getErrorMsg ());
@@ -435,16 +435,14 @@ DeepOpenEXRId::LPEAutomatonPtr DeepOpenEXRId::LPEAutomatonCacheType::build(const
 		}
 		else
 		{
-			OSL::lpexp::Rule * exp = new OSL::lpexp::Rule (e, (void*)pattern->c_str ());
+			lpe::lpexp::Rule * exp = new lpe::lpexp::Rule (e, (void*)pattern->c_str ());
 			exp->genAuto (ndfautomata);
 		}
-
-		delete e;
 		++patternid;
 	}
 
-	OSL::DfAutomata dfautomata;
-	OSL::ndfautoToDfauto (ndfautomata, dfautomata);
+	lpe::DfAutomata dfautomata;
+	lpe::ndfautoToDfauto (ndfautomata, dfautomata);
 
 	set->LPEx.compileFrom (dfautomata);
 
@@ -463,7 +461,7 @@ DeepOpenEXRId::LPEAutomatonPtr	DeepOpenEXRId::_getLPEAutomaton ()
 
 bool	DeepOpenEXRId::LPEAutomaton::match (const LightPath &lightpath) const
 {
-	if (LPEx.empty())
+	if (LPEx.m_states.empty())
 		return false;
 
 	int	state = 0;
@@ -474,7 +472,7 @@ bool	DeepOpenEXRId::LPEAutomaton::match (const LightPath &lightpath) const
 		if ((state = LPEx.getTransition (state, evt->Type)) < 0 ||
 			(state = LPEx.getTransition (state, evt->Scattering)) < 0 ||
 			(state = LPEx.getTransition (state, evt->Label)) < 0 ||
-			(state = LPEx.getTransition (state, OSL::Labels::STOP)) < 0)
+			(state = LPEx.getTransition (state, lpe::Labels::__STOP__)) < 0)
 			return false;
 
 	int nMatchExp = 0;
@@ -837,4 +835,4 @@ void DeepOpenEXRId::select (float x0, float y0, float x1, float y1, bool invert)
 }
 
 static Op* build(Node* node) { return new DeepOpenEXRId(node); }
-const Op::Description DeepOpenEXRId::d(::CLASS, "Deep/DeepOpenEXRId", build);
+const Op::Description DeepOpenEXRId::d(::CLASS, build);

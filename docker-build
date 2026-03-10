@@ -1,0 +1,29 @@
+#!/usr/bin/env bash
+
+set -e
+
+this_dir="$(readlink -f ".")"
+
+dockerimage="mercenaries/openexrid_builder_nk15:1.0"
+builderhost=builder:62.210.206.55
+
+function rundocker
+{
+	docker run -it --rm \
+		--add-host $builderhost \
+		--env USER=$USER \
+		-u $(id -u):$(id -g) \
+		-v /etc/passwd:/etc/passwd \
+		-v $HOME:$HOME \
+        -v /mnt/work:/mnt/work \
+        -v $this_dir:$this_dir \
+        -v /mnt/c:/mnt/c \
+        -w $this_dir \
+		"$dockerimage" $@
+}
+
+if [ "$#" == "0" ]; then
+    rundocker bash
+else
+    rundocker ./build.py $@
+fi

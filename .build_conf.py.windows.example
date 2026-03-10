@@ -1,0 +1,17 @@
+
+conf_file = {
+    "project": "OpenEXRId",
+    "conan_home": "/home/ben/.conan2",
+    "build_dir": "build",
+    "bin_dir": "bin",
+    "installer_dir": "build/installer",
+    "conan_install_dir": "conan",
+    "build_config": "Release",
+    "conan_install_config": "single",
+    "nuke150": "/mnt/work/code/3rdparty/NDK/Nuke15.0v8",
+    "nuke151": "/mnt/work/code/3rdparty/NDK/Nuke15.1v10",
+    "nuke152": "/mnt/work/code/3rdparty/NDK/Nuke15.2v7",
+    "nuke160": "/mnt/work/code/3rdparty/NDK/Nuke16.0v7",
+    "nuke161": "/mnt/work/code/3rdparty/NDK/Nuke16.1v1",
+    "nuke170": "/mnt/work/code/3rdparty/NDK/Nuke17.0v1"
+}

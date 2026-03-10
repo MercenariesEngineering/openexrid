@@ -17,7 +17,7 @@
 
 #include <memory>
 
-#if defined(_MSC_VER) && (_MSC_VER > 1600)
+#if (defined(_MSC_VER) && (_MSC_VER > 1600)) || (defined(__GNUG__))
 #define USE_MODERN_APIS
 #endif
 
@@ -61,12 +61,9 @@ namespace OpenEXRId
 #undef expm1f
 #endif
 
-#include <OpenImageIO/ustring.h>
 #include <re2/set.h>
-#include <OSL/oslconfig.h>
-#include <OSL/optautomata.h>
-#include <OSL/lpeparse.h>
-#include <OSL/oslclosure.h>
+#include "OSL/optautomata.h"
+#include "OSL/lpeparse.h"
 #ifdef WIN32
 #pragma warning(pop)
 #endif
@@ -87,9 +84,9 @@ public:
 
 	struct LPEEvent
 	{
-		OIIO::ustring Type;
-		OIIO::ustring Scattering;
-		OIIO::ustring Label;
+		lpe::ustr Type;
+		lpe::ustr Scattering;
+		lpe::ustr Label;
 	};
 
 	typedef std::vector<LPEEvent> LightPath;
@@ -189,7 +186,7 @@ private:
 	public:
 		std::string					Hash;
 		std::vector<std::string> 	Patterns;
-		OSL::DfOptimizedAutomata	LPEx;
+		lpe::DfOptimizedAutomata	LPEx;
 
 		bool	match (const LightPath &lightpath) const;
 	};

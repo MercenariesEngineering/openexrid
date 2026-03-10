@@ -26,24 +26,23 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include "OSL/automata.h"
-#include "OSL/optautomata.h"
+#include "automata.h"
+#include "optautomata.h"
 #include <algorithm>
 #include <cstdio>
+#include <iostream>
 
 
-OSL_NAMESPACE_ENTER
-
-namespace Strutil = OIIO::Strutil;
+namespace lpe {
 
 #ifdef _MSC_VER
 #define snprintf sprintf_s
 #endif
 
-ustring lambda("__lambda__");
+lpe::ustr lambda("__lambda__");
 
 void
-NdfAutomata::State::getTransitions(ustring symbol, IntSet &out_states)const
+NdfAutomata::State::getTransitions(lpe::ustr symbol, IntSet &out_states)const
 {
     SymbolToIntList::const_iterator s = m_symbol_trans.find(symbol);
     if (s != m_symbol_trans.end())
@@ -74,7 +73,7 @@ NdfAutomata::State::getLambdaTransitions ()const
 
 
 void
-NdfAutomata::State::addTransition(ustring symbol, NdfAutomata::State *state)
+NdfAutomata::State::addTransition(lpe::ustr symbol, NdfAutomata::State *state)
 {
     m_symbol_trans[symbol].insert(state->m_id);
 }
@@ -90,57 +89,6 @@ NdfAutomata::State::addWildcardTransition(Wildcard *wildcard, NdfAutomata::State
     m_wildcard_trans = state->m_id;
 }
 
-
-
-std::string
-NdfAutomata::State::tostr()const
-{
-    std::string s = "";
-    // output the transitions
-    for (SymbolToIntList::const_iterator i = m_symbol_trans.begin(); i != m_symbol_trans.end(); ++i) {
-        ustring sym = i->first;
-        const IntSet &dest = i->second;
-        if (s.size())
-            s += " ";
-        if (sym == lambda)
-            s += "@";
-        else
-            s += sym.c_str();
-        s += ":{";
-        for (IntSet::const_iterator j = dest.begin(); j != dest.end(); ++j) {
-            if (s[s.size()-1] != '{')
-                s += ", ";
-            s += Strutil::format("%d", *j);
-        }
-        s += "}";
-    }
-    // In case there is a wildcard transition ...
-    if (m_wildcard) {
-        if (s.size())
-            s += " ";
-        // No symbols in the black list, print just .
-        if (m_wildcard->m_minus.empty())
-            s += ".:";
-        else {
-            // Standard regexp notation [^abcd]
-            s += "[^";
-            for (SymbolSet::const_iterator i = m_wildcard->m_minus.begin(); i != m_wildcard->m_minus.end(); ++i) {
-                if (!i->c_str())
-                    s += "_";
-                else
-                    s += i->c_str();
-            }
-            s += "]:";
-        }
-        s += Strutil::format("%d", m_wildcard_trans);
-    }
-    // and finally the rule if we have it
-    if (m_rule) {
-        s += " | ";
-        s += Strutil::format("%lx", (long unsigned int)m_rule);
-    }
-    return s;
-}
 
 
 
@@ -190,7 +138,7 @@ NdfAutomata::symbolsFrom(const IntSet &states, SymbolSet &out_symbols, Wildcard 
 
 
 void
-NdfAutomata::transitionsFrom(const IntSet &states, ustring symbol, IntSet &out_states)const
+NdfAutomata::transitionsFrom(const IntSet &states, lpe::ustr symbol, IntSet &out_states)const
 {
     for (IntSet::const_iterator i = states.begin(); i != states.end(); ++i)
         // remember getTransitions is not destructive with out_states, it just adds stuff
@@ -257,20 +205,6 @@ NdfAutomata::lambdaClosure(IntSet &states)const
 
 
 
-std::string
-NdfAutomata::tostr()const
-{
-    std::string s;
-    for (size_t i = 0; i < m_states.size(); ++i) {
-        char temp[32];
-        snprintf(temp, 32, "%d : ", (int)i);
-        s += temp + m_states[i]->tostr() + "\n";
-    }
-    return s;
-}
-
-
-
 NdfAutomata::~NdfAutomata()
 {
     for (std::vector<State *>::iterator i = m_states.begin(); i != m_states.end(); ++i)
@@ -291,7 +225,7 @@ void keyFromStateSet(const IntSet &states, StateSetKey &out_key)
 
 
 int
-DfAutomata::State::getTransition(ustring symbol)const
+DfAutomata::State::getTransition(lpe::ustr symbol)const
 {
     SymbolToInt::const_iterator i = m_symbol_trans.find(symbol);
     if (i == m_symbol_trans.end())
@@ -306,7 +240,7 @@ DfAutomata::State::getTransition(ustring symbol)const
 
 
 void
-DfAutomata::State::addTransition(ustring symbol, DfAutomata::State *state)
+DfAutomata::State::addTransition(lpe::ustr symbol, DfAutomata::State *state)
 {
     SymbolToInt::value_type value(symbol, state->m_id);
     std::pair<SymbolToInt::iterator, bool> place = m_symbol_trans.insert(value);
@@ -346,75 +280,11 @@ DfAutomata::State::removeUselessTransitions()
 
 
 
-std::string
-DfAutomata::State::tostr()const
-{
-    std::string s = "";
-    // normal transitions
-    for (SymbolToInt::const_iterator i = m_symbol_trans.begin(); i != m_symbol_trans.end(); ++i) {
-        ustring sym = i->first;
-        int dest = i->second;
-        if (s.size())
-            s += " ";
-        if (sym == lambda)
-            s += "@";
-        else
-            s += sym.c_str();
-        s += ":";
-        s += Strutil::format("%d", dest);
-    }
-    // wildcard
-    if (m_wildcard_trans >= 0) {
-        if (s.size())
-            s += " ";
-        if (m_symbol_trans.empty())
-            s += ".:";
-        else {
-            s += "[^";
-            for (SymbolToInt::const_iterator i = m_symbol_trans.begin(); i != m_symbol_trans.end(); ++i) {
-                if (!i->first.c_str())
-                    s += "_";
-                else
-                    s += i->first.c_str();
-            }
-            s += "}:";
-        }
-        s += Strutil::format("%d", m_wildcard_trans);
-    }
-    // and the rules
-    if (m_rules.size()) {
-        s += " | [";
-        for (RuleSet::const_iterator i = m_rules.begin(); i != m_rules.end(); ++i) {
-            if (s[s.size()-1] != '[')
-                s += ", ";
-            s += Strutil::format("%lx", (long unsigned int)*i);
-        }
-        s += "]";
-    }
-    return s;
-}
-
-
-
 DfAutomata::State *
 DfAutomata::newState()
 {
     m_states.push_back(new State(m_states.size()));
     return m_states.back();
-}
-
-
-
-std::string
-DfAutomata::tostr()const
-{
-    std::string s;
-    for (size_t i = 0; i < m_states.size(); ++i) {
-        char temp[32];
-        snprintf(temp, 32, "%d : ", (int)i);
-        s += temp + m_states[i]->tostr() + "\n";
-    }
-    return s;
 }
 
 
@@ -438,10 +308,10 @@ DfAutomata::equivalent(const State *dfstateA, const State *dfstateB)
         if (other == dfstateB->m_symbol_trans.end())
             return false;
         // The pointed state by both transitions have to be the same or any of dfstateA and dfstateB
-        int destA = (i->second == dfstateA->getId() || i->second == dfstateB->getId()) ? -2 : i->second;
-        int destB = (other->second == dfstateA->getId() || other->second == dfstateB->getId()) ? -2 : other->second;
+        int dA = (i->second == dfstateA->getId() || i->second == dfstateB->getId()) ? -2 : i->second;
+        int dB = (other->second == dfstateA->getId() || other->second == dfstateB->getId()) ? -2 : other->second;
         // when they are -1 is because they are in the wildcard black list, anyway they have to match so ...
-        if (destA != destB)
+        if (dA != dB)
             return false;
     }
     // if everything passed, they are equivalent, congratulations.
@@ -620,7 +490,7 @@ ndfautoToDfauto(const NdfAutomata &ndfautomata, DfAutomata &dfautomata)
 bool
 DfOptimizedAutomata::Transition::trans_comp (const DfOptimizedAutomata::Transition &a, const DfOptimizedAutomata::Transition &b)
 {
-    return a.symbol.data() < b.symbol.data();
+    return a.symbol < b.symbol;
 }
 
 
@@ -659,4 +529,4 @@ DfOptimizedAutomata::compileFrom(const DfAutomata &dfautomata)
 }
 
 
-OSL_NAMESPACE_EXIT
+}

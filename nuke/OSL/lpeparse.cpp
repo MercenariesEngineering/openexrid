@@ -26,19 +26,19 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include "OSL/lpeparse.h"
-#include "OSL/oslclosure.h"
-#include <OpenImageIO/dassert.h>
+#include "lpeparse.h"
+
+#include <iostream>
+#include <cassert>
+
+namespace lpe {
 
 
-OSL_NAMESPACE_ENTER
 
+static lpe::ustr udot(".");
 
-
-static ustring udot(".");
-
-Parser::Parser(const std::vector<ustring> *user_events,
-               const std::vector<ustring> *user_scatterings)
+Parser::Parser(const std::vector<lpe::ustr> *user_events,
+               const std::vector<lpe::ustr> *user_scatterings)
 {
     m_ingroup = false;
     m_error = "";
@@ -67,9 +67,9 @@ Parser::Parser(const std::vector<ustring> *user_events,
     m_basic_labels.insert(Labels::SINGULAR);
     m_basic_labels.insert(Labels::STRAIGHT);
     m_basic_labels.insert(Labels::NONE);
-    m_basic_labels.insert(Labels::STOP);
+    m_basic_labels.insert(Labels::__STOP__);
 
-    m_minus_stop.insert(Labels::STOP);
+    m_minus_stop.insert(Labels::__STOP__);
 
     if (user_events)
       for (size_t i = 0; i < user_events->size(); ++i)
@@ -86,54 +86,53 @@ Parser::Parser(const std::vector<ustring> *user_events,
 }
 
 
-LPexp *
-Parser::buildStop(LPexp *etype, LPexp *scatter, const std::list<LPexp*> &custom)
+LPexpPtr
+Parser::buildStop(LPexpPtr etype, LPexpPtr scatter, const std::list<LPexpPtr> &custom)
 {
-    lpexp::Cat *cat = new lpexp::Cat();
+    auto cat = std::make_shared<lpexp::Cat>();
     cat->append(etype);
     cat->append(scatter);
-    for (std::list<LPexp*>::const_iterator i = custom.begin(); i != custom.end(); ++i)
+    for (std::list<LPexpPtr>::const_iterator i = custom.begin(); i != custom.end(); ++i)
         cat->append(*i);
 
     if (custom.size() < 5)
-        cat->append (new lpexp::Repeat (new lpexp::Wildexp (m_basic_labels)));
-    cat->append(new lpexp::Symbol(Labels::STOP));
+        cat->append (std::make_shared<lpexp::Repeat> (std::make_shared<lpexp::Wildexp> (m_basic_labels)));
+    cat->append(std::make_shared<lpexp::Symbol> (Labels::__STOP__));
     return cat;
 }
 
 
 
-LPexp *
+LPexpPtr
 Parser::parseSymbol()
 {
     bool iscustom;
-    ustring sym = parseRawSymbol(iscustom);
+    lpe::ustr sym = parseRawSymbol(iscustom);
     if (m_ingroup) {
         if (sym == udot)
-            return new lpexp::Wildexp(m_minus_stop);
+            return std::make_shared<lpexp::Wildexp> (m_minus_stop);
         else
-            return new lpexp::Symbol(sym);
+            return std::make_shared<lpexp::Symbol>(sym);
     } else {
         if (iscustom) {
-            std::list<LPexp *> custom;
-            custom.push_back(new lpexp::Symbol(sym));
-            return buildStop(new lpexp::Wildexp(m_minus_stop), new lpexp::Wildexp(m_minus_stop), custom);
+            std::list<LPexpPtr> custom;
+            custom.push_back(std::make_shared<lpexp::Symbol>(sym));
+            return buildStop(std::make_shared<lpexp::Wildexp>(m_minus_stop), std::make_shared<lpexp::Wildexp>(m_minus_stop), custom);
         } else {
-            LPexp *basics[2] = {NULL, NULL};
+            LPexpPtr    basics[2];
             if (sym != ".") {
                 SymbolToInt::const_iterator i = m_label_position.find(sym);
                 if (i == m_label_position.end()) {
-                    m_error = std::string("Unrecognized basic label: ") +
-                        (sym.c_str() ? sym.c_str() : "<nullptr>");
+                    m_error = std::string("Unrecognized basic label: ") + sym.c_str();
                     return NULL;
                 }
                 int pos = i->second;
-                basics[pos] = new lpexp::Symbol(sym);
+                basics[pos] = std::make_shared<lpexp::Symbol>(sym);
             }
             for (int k = 0; k < 2; ++k)
                 if (!basics[k])
-                    basics[k] = new lpexp::Wildexp(m_minus_stop);
-            std::list<LPexp *> empty;
+                    basics[k] = std::make_shared<lpexp::Wildexp>(m_minus_stop);
+            std::list<LPexpPtr> empty;
             return buildStop (basics[0], basics[1], empty);
         }
     }
@@ -141,7 +140,7 @@ Parser::parseSymbol()
 
 
 
-ustring
+lpe::ustr
 Parser::parseRawSymbol(bool &iscustom)
 {
     std::string sym;
@@ -165,16 +164,16 @@ Parser::parseRawSymbol(bool &iscustom)
     // hacky alias for NONE label
     if (!iscustom && sym == "x")
         return Labels::NONE;
-    return ustring(sym);
+    return lpe::ustr(sym);
 }
 
 
 
-LPexp *
+LPexpPtr
 Parser::parseCat()
 {
     //lpexp::Cat *cat = new lpexp::Cat();
-    std::vector<LPexp *> explist;
+    std::vector<LPexpPtr> explist;
     char endchar;
     if (head() == '(') {
         next();
@@ -186,30 +185,25 @@ Parser::parseCat()
         if (head() == '|') {
             if (!explist.size()) {
                 m_error = "No left expression to or with |";
-                for (size_t i=0; i < explist.size(); ++i)
-                    delete explist[i];
                 return NULL;
             }
             next();
-            LPexp *e = _parse();
+            LPexpPtr e = _parse();
             if (error()) {
-                for (size_t i=0; i < explist.size(); ++i)
-                    delete explist[i];
                 return NULL;
             }
-            if (explist.back()->getType() == lpexp::OR)
-                ((lpexp::Orlist*)explist.back())->append(e);
-            else {
-                lpexp::Orlist *orexp = new lpexp::Orlist();
+            if (explist.back()->getType() == lpexp::OR) {
+                lpexp::Orlist   *_or = static_cast<lpexp::Orlist*> (explist.back().get ());
+                _or->append(e);
+            } else {
+                auto orexp = std::make_shared<lpexp::Orlist>();
                 orexp->append(explist.back());
                 orexp->append(e);
                 explist[explist.size() - 1] = orexp;
             }
         } else {
-            LPexp *e = _parse();
+            LPexpPtr e = _parse();
             if (error()) {
-                for (size_t i=0; i < explist.size(); ++i)
-                    delete explist[i];
                 return NULL;
             }
             explist.push_back(e);
@@ -219,11 +213,9 @@ Parser::parseCat()
         next();
     else if (endchar != 0) {
         m_error = "Reached end of line looking for )";
-        for (size_t i=0; i < explist.size(); ++i)
-            delete explist[i];
         return NULL;
     }
-    lpexp::Cat *cat = new lpexp::Cat();
+    auto cat = std::make_shared<lpexp::Cat>();
     for (size_t i=0; i < explist.size(); ++i)
         cat->append(explist[i]);
     return cat;
@@ -231,20 +223,18 @@ Parser::parseCat()
 
 
 
-LPexp *
+LPexpPtr
 Parser::parseGroup()
 {
-    ASSERT(head() == '<');
+    assert(head() == '<');
     if (m_ingroup) {
         m_error = "No groups allowed inside of groups";
         return NULL;
     }
     int basicpos = 0;
-    LPexp *basics[2] = {NULL, NULL};
-    std::list<LPexp *> custom;
+    LPexpPtr basics[2];
+    std::list<LPexpPtr> custom;
 #define THROWAWAY() do{\
-    for (int i=0;i<2;++i) if(basics[i]) delete basics[i];\
-    for (std::list<LPexp *>::iterator i = custom.begin();i!=custom.end();++i) delete *i;\
     m_ingroup = false;\
     return NULL;\
     }while(0)
@@ -252,7 +242,7 @@ Parser::parseGroup()
     m_ingroup = true;
     next();
     while (hasInput() && head() != '>') {
-        LPexp *e = _parse();
+        LPexpPtr e = _parse();
         if (error()) THROWAWAY();
         if (basicpos < 2)
             basics[basicpos++] = e;
@@ -267,23 +257,23 @@ Parser::parseGroup()
     next();
     m_ingroup = false;
     for (; basicpos < 2; ++basicpos)
-        basics[basicpos] = new lpexp::Wildexp(m_minus_stop);
+        basics[basicpos] = std::make_shared<lpexp::Wildexp>(m_minus_stop);
     return buildStop(basics[0], basics[1], custom);
 }
 
 
 
-LPexp *
+LPexpPtr
 Parser::parseNegor()
 {
-    ASSERT (head() == '^');
+    assert (head() == '^');
     SymbolSet symlist;
-    symlist.insert(Labels::STOP); // never allowed
+    symlist.insert(Labels::__STOP__); // never allowed
     int pos = -1;
     next();
     while (hasInput() && head() != ']') {
         bool iscustom;
-        ustring sym = parseRawSymbol(iscustom);
+        lpe::ustr sym = parseRawSymbol(iscustom);
         if (error()) return NULL;
         symlist.insert(sym);
         if (iscustom) {
@@ -310,20 +300,20 @@ Parser::parseNegor()
         return NULL;
     }
     next();
-    lpexp::Wildexp *wildcard = new lpexp::Wildexp(symlist);
+    auto wildcard = std::make_shared<lpexp::Wildexp>(symlist);
     if (m_ingroup)
         return wildcard;
     else {
-        std::list<LPexp *> custom;
+        std::list<LPexpPtr> custom;
         if (pos < 0) { // is a custom label
             custom.push_back(wildcard);
-            return buildStop(new lpexp::Wildexp(m_minus_stop), new lpexp::Wildexp(m_minus_stop), custom);
+            return buildStop(std::make_shared<lpexp::Wildexp>(m_minus_stop), std::make_shared<lpexp::Wildexp>(m_minus_stop), custom);
         } else {
-            LPexp *basics[2] = {NULL, NULL};
+            LPexpPtr basics[2];
             basics[pos] = wildcard;
             for (int i = 0; i < 2; ++i)
                 if (!basics[i])
-                    basics[i] = new lpexp::Wildexp(m_minus_stop);
+                    basics[i] = std::make_shared<lpexp::Wildexp>(m_minus_stop);
             return buildStop(basics[0], basics[1], custom);
         }
     }
@@ -331,26 +321,24 @@ Parser::parseNegor()
 
 
 
-LPexp *
+LPexpPtr
 Parser::parseOrlist()
 {
-    ASSERT(head() == '[');
+    assert(head() == '[');
     next();
     if (hasInput() && head() == '^')
         return parseNegor();
     else {
-        lpexp::Orlist *orlist = new lpexp::Orlist();
+        auto orlist = std::make_shared<lpexp::Orlist>();
         while (hasInput() && head() != ']') {
-            LPexp *e = _parse();
+            LPexpPtr e = _parse();
             if (error()) {
-                delete orlist;
                 return NULL;
             }
             orlist->append(e);
         }
         if (!hasInput()) {
             m_error = "Reached end of line looking for ] to end an or list";
-            delete orlist;
             return NULL;
         }
         next();
@@ -363,7 +351,7 @@ Parser::parseOrlist()
 std::pair<int, int>
 Parser::parseRange()
 {
-    ASSERT(head() == '{');
+    assert(head() == '{');
     next();
     std::string firstnum = "";
     while (hasInput() && '0' <= head() && head() <= '9') {
@@ -393,28 +381,28 @@ Parser::parseRange()
 
 
 
-LPexp *
-Parser::parseModifier(LPexp *e)
+LPexpPtr
+Parser::parseModifier(LPexpPtr e)
 {
     if (hasInput()) {
         if (head() == '*') {
             next();
-            return new lpexp::Repeat(e);
+            return std::make_shared<lpexp::Repeat>(e);
         } else if (head() == '{') {
             std::pair<int, int> range = parseRange();
             if (error()) return NULL;
             if (range.second < 0) {
-                lpexp::Cat *cat = new lpexp::Cat();
-                cat->append(new lpexp::NRepeat(e, range.first, range.first));
-                cat->append(new lpexp::Repeat(e->clone()));
+                auto cat = std::make_shared<lpexp::Cat>();
+                cat->append(std::make_shared<lpexp::NRepeat>(e, range.first, range.first));
+                cat->append(std::make_shared<lpexp::Repeat>(e->clone()));
                 return cat;
             } else
-                return new lpexp::NRepeat(e, range.first, range.second);
+                return std::make_shared<lpexp::NRepeat>(e, range.first, range.second);
         } else if (head() == '+') {
             next();
-            lpexp::Cat *cat = new lpexp::Cat();
+            auto cat = std::make_shared<lpexp::Cat>();
             cat->append(e);
-            cat->append(new lpexp::Repeat(e->clone()));
+            cat->append(std::make_shared<lpexp::Repeat>(e->clone()));
             return cat;
         } else
             return e;
@@ -425,10 +413,10 @@ Parser::parseModifier(LPexp *e)
 
 
 
-LPexp *
+LPexpPtr
 Parser::_parse()
 {
-    LPexp *e;
+    LPexpPtr e;
     if (head() == '(')
         e = parseCat();
     else if (head() == '[')
@@ -444,7 +432,7 @@ Parser::_parse()
 
 
 
-LPexp *
+LPexpPtr
 Parser::parse(const char *text)
 {
     m_error = "";
@@ -458,4 +446,4 @@ Parser::parse(const char *text)
 }
 
 
-OSL_NAMESPACE_EXIT
+}

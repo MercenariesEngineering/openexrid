@@ -26,12 +26,24 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include "OSL/lpexp.h"
+#include "lpexp.h"
 
 
-OSL_NAMESPACE_ENTER
+namespace lpe {
 
-
+lpe::ustr Labels::NONE = lpe::ustr("__none__");;
+lpe::ustr Labels::CAMERA = lpe::ustr("C");;
+lpe::ustr Labels::LIGHT = lpe::ustr("L");;
+lpe::ustr Labels::BACKGROUND = lpe::ustr("B");;
+lpe::ustr Labels::VOLUME = lpe::ustr("V");;
+lpe::ustr Labels::OBJECT = lpe::ustr("O");;
+lpe::ustr Labels::TRANSMIT = lpe::ustr("T");;
+lpe::ustr Labels::REFLECT = lpe::ustr("R");;
+lpe::ustr Labels::DIFFUSE = lpe::ustr("D");;
+lpe::ustr Labels::GLOSSY = lpe::ustr("G");;
+lpe::ustr Labels::SINGULAR = lpe::ustr("S");;
+lpe::ustr Labels::STRAIGHT = lpe::ustr("s");;
+lpe::ustr Labels::__STOP__ = lpe::ustr("__stop__");;
 
 
 lpexp::FirstLast
@@ -42,7 +54,7 @@ lpexp::Cat::genAuto(NdfAutomata &automata)const
     // Sequentially create the states for the expressions and link them all by
     // lambda transitions. Making the begin state of the first one our begin, and the
     // end state of the last one our end
-    for (std::list<LPexp *>::const_iterator i = m_children.begin(); i != m_children.end(); ++i) {
+    for (std::list<LPexpPtr>::const_iterator i = m_children.begin(); i != m_children.end(); ++i) {
         FirstLast fl = (*i)->genAuto(automata);
         if (!first)
             first = fl.first;
@@ -58,7 +70,7 @@ lpexp::Cat::genAuto(NdfAutomata &automata)const
 
 
 void
-lpexp::Cat::append(LPexp *lpexp)
+lpexp::Cat::append(LPexpPtr lpexp)
 {
     m_children.push_back(lpexp);
 }
@@ -66,18 +78,15 @@ lpexp::Cat::append(LPexp *lpexp)
 
 
 lpexp::Cat::~Cat()
-{
-    for (std::list<LPexp *>::iterator i = m_children.begin(); i != m_children.end(); ++i)
-        delete *i;
-}
+{}
 
 
 
-lpexp::LPexp *
+lpexp::LPexpPtr
 lpexp::Cat::clone()const
 {
-    Cat *newcat = new Cat();
-    for (std::list<LPexp *>::const_iterator i = m_children.begin(); i != m_children.end(); ++i)
+    auto    newcat = std::make_shared<Cat> ();
+    for (std::list<LPexpPtr>::const_iterator i = m_children.begin(); i != m_children.end(); ++i)
         newcat->append((*i)->clone());
     return newcat;
 }
@@ -116,7 +125,7 @@ lpexp::Orlist::genAuto(NdfAutomata &automata)const
     // two new states begin and end
     NdfAutomata::State *begin = automata.newState();
     NdfAutomata::State *end = automata.newState();
-    for (std::list<LPexp *>::const_iterator i = m_children.begin(); i != m_children.end(); ++i) {
+    for (std::list<LPexpPtr>::const_iterator i = m_children.begin(); i != m_children.end(); ++i) {
         // And then for every child we create its part of automata and link our begin to its
         // begin and its end to our end with lambda transitions
         FirstLast fl = (*i)->genAuto(automata);
@@ -129,7 +138,7 @@ lpexp::Orlist::genAuto(NdfAutomata &automata)const
 
 
 void
-lpexp::Orlist::append(LPexp *lpexp)
+lpexp::Orlist::append(LPexpPtr lpexp)
 {
     m_children.push_back(lpexp);
 }
@@ -137,18 +146,15 @@ lpexp::Orlist::append(LPexp *lpexp)
 
 
 lpexp::Orlist::~Orlist()
-{
-    for (std::list<LPexp *>::iterator i = m_children.begin(); i != m_children.end(); ++i)
-        delete *i;
-}
+{}
 
 
 
-lpexp::LPexp *
+lpexp::LPexpPtr
 lpexp::Orlist::clone()const
 {
-    Orlist *newor = new Orlist();
-    for (std::list<LPexp *>::const_iterator i = m_children.begin(); i != m_children.end(); ++i)
+    auto newor = std::make_shared<Orlist> ();
+    for (std::list<LPexpPtr>::const_iterator i = m_children.begin(); i != m_children.end(); ++i)
         newor->append((*i)->clone());
     return newor;
 }
@@ -217,4 +223,4 @@ lpexp::Rule::genAuto(NdfAutomata &automata)const
 }
 
 
-OSL_NAMESPACE_EXIT
+}
