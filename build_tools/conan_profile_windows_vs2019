@@ -1,13 +1,12 @@
 [settings]
 os=Windows
-os_build=Windows
 arch=x86_64
-arch_build=x86_64
-compiler=Visual Studio
-compiler.version=16
 build_type=Release
-[options]
-[build_requires]
-[env]
+compiler=msvc
+compiler.cppstd=17
+compiler.runtime=dynamic
+compiler.runtime_type=Release
+compiler.version=192
+[buildenv]
 MSVC_VER="Visual Studio 16 2019"
 MSVC_ARCH="x64"
