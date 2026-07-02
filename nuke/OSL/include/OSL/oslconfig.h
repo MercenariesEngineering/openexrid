@@ -55,10 +55,16 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // Symbol export defines
 #include "export.h"
 
-// All the things we need from Imath
+// All the things we need from Imath. OpenEXR 3 split Imath into its own include path.
+#ifdef OPENEXRID_USE_IMATH3
+#include <Imath/ImathVec.h>
+#include <Imath/ImathColor.h>
+#include <Imath/ImathMatrix.h>
+#else
 #include <OpenEXR/ImathVec.h>
 #include <OpenEXR/ImathColor.h>
 #include <OpenEXR/ImathMatrix.h>
+#endif
 
 // All the things we need from OpenImageIO
 #include <OpenImageIO/version.h>

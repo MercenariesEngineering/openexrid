@@ -40,7 +40,14 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #pragma once
 
 
+#ifdef OPENEXRID_USE_IMATH3
+#include <Imath/ImathMatrix.h>
+#else
 #include <OpenEXR/ImathMatrix.h>
+#endif
+
+#include <limits>
+#include <stdexcept>
 
 namespace Imathx {   // "extended" Imath
 
@@ -225,7 +232,7 @@ template <class T> class Matrix22
     //------------------------------------------------------------
     // Inverse matrix: If singExc is false, inverting a singular
     // matrix produces an identity matrix.  If singExc is true,
-    // inverting a singular matrix throws a SingMatrixExc.
+    // inverting a singular matrix throws an exception.
     //
     // inverse() and invert() invert matrices using determinants.
     // 
@@ -279,10 +286,10 @@ template <class T> class Matrix22
     // Limitations of type T (see also class limits<T>)
     //-------------------------------------------------
 
-    static T            baseTypeMin()           {return Imath::limits<T>::min();}
-    static T            baseTypeMax()           {return Imath::limits<T>::max();}
-    static T            baseTypeSmallest()      {return Imath::limits<T>::smallest();}
-    static T            baseTypeEpsilon()       {return Imath::limits<T>::epsilon();}
+    static T            baseTypeMin()           {return std::numeric_limits<T>::min();}
+    static T            baseTypeMax()           {return std::numeric_limits<T>::max();}
+    static T            baseTypeSmallest()      {return std::numeric_limits<T>::min();}
+    static T            baseTypeEpsilon()       {return std::numeric_limits<T>::epsilon();}
 
   private:
 
@@ -778,7 +785,7 @@ Matrix22<T>::inverse (bool singExc) const
     }
     else
     {
-        T mr = Imath::abs (r) / Imath::limits<T>::smallest();
+        T mr = Imath::abs (r) / std::numeric_limits<T>::min();
 
         for (int i = 0; i < 2; ++i)
         {
@@ -791,7 +798,7 @@ Matrix22<T>::inverse (bool singExc) const
                 else
                 {
                     if (singExc)
-                        throw Imath::SingMatrixExc ("Cannot invert "
+                        throw std::invalid_argument ("Cannot invert "
                                              "singular matrix.");
                     return Matrix22();
                 }
