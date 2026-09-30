@@ -617,8 +617,9 @@ bool DeepOpenEXRId::doDeepEngine(DD::Image::Box box, const ChannelSet& channels,
 
 		DeepOutPixel pels;
 
-		// Alpha of the previous samples
-		float prevVis = 0.f;
+		// Transmittance of the input and retained samples.
+		double inputVisibility = 1.0;
+		double retainedVisibility = 1.0;
 		for (int sample = (int)pixel.getSampleCount()-1; sample >= 0; --sample)
 		{
 			const float	_id = pixel.getOrderedSample(sample, idChannel);
@@ -635,9 +636,13 @@ bool DeepOpenEXRId::doDeepEngine(DD::Image::Box box, const ChannelSet& channels,
 				lpeidselected = st->lpeidSelected (lpeid);
 			}
 
+			const float inputAlpha = pixel.getOrderedSample(sample, Chan_Alpha);
+			const double scale = _keepVis && !_colors
+				? (retainedVisibility > 0.0 ? inputVisibility / retainedVisibility : 1.0)
+				: 1.0;
 			if (!idselected || !lpeidselected)
 			{
-				const float alpha = pixel.getOrderedSample(sample, Chan_Alpha);
+				const float alpha = inputAlpha;
 				if (_colors)
 				{
 					// Display unselected samples with false colors
@@ -665,11 +670,6 @@ bool DeepOpenEXRId::doDeepEngine(DD::Image::Box box, const ChannelSet& channels,
 						}
 					}
 				}
-				else
-				{
-					// Not selected, keep the previous visibility
-					prevVis += (1.f-prevVis)*alpha;
-				}
 			}
 			else
 			{
@@ -690,9 +690,16 @@ bool DeepOpenEXRId::doDeepEngine(DD::Image::Box box, const ChannelSet& channels,
 					else
 					{
 						const float v = pixel.getOrderedSample(sample, _alpha ? Chan_Alpha : channel);
-						pels.push_back(v*(_keepVis ? (1.f-prevVis) : 1.f));
+						pels.push_back(v*scale);
 					}
 				}
+			}
+			if (_keepVis && !_colors)
+			{
+				// Track the rounded alpha stored in the output plane.
+				if (idselected && lpeidselected)
+					retainedVisibility *= 1.0 - float(inputAlpha*scale);
+				inputVisibility *= 1.0 - inputAlpha;
 			}
 		}
 
