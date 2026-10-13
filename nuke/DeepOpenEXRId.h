@@ -16,6 +16,7 @@
 #pragma once
 
 #include <memory>
+#include <unordered_set>
 
 #if defined(_MSC_VER) && (_MSC_VER > 1600)
 #define USE_MODERN_APIS
@@ -104,6 +105,7 @@ public:
 		_keepVis = true;
 		_version = NULL;
 		_mode = 0;
+		_useLightPaths = false;
 	}
 
 	const char* node_help() const;
@@ -170,8 +172,10 @@ private:
 	public:
 		NameAutomaton ();
 		std::string					Hash;
-		std::vector<std::string>	Patterns;
+		std::vector<std::string>	Patterns;	// the patterns in RegEx, with their - sign
 		re2::RE2::Set				RegEx;
+		// "^name$" patterns (as a viewer pick writes them) select one name each: a hash set, not the RE2 set
+		std::unordered_set<std::string>	Names, ExcludedNames;
 
 		bool	match (const std::string &name, std::vector<int> &tmp) const;
 	};
@@ -230,4 +234,9 @@ private:
 		const ExrIdDataPtr &data,
 		const NameAutomatonPtr &names,
 		const LPEAutomatonPtr &lpes);
+
+	// The selection for the engine, built in _validate (the engine runs once per row or tile, on several threads)
+	ExrIdDataPtr	_exrid;
+	StatePtr		_state;
+	bool			_useLightPaths;
 };

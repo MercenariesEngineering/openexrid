@@ -13,6 +13,8 @@
 
 */
 
+#include <cctype>
+#include <cstring>
 #include <iterator>
 
 #include "../openexrid/Version.h"
@@ -188,6 +190,18 @@ int DeepOpenEXRId::knob_changed(DD::Image::Knob* k)
 void DeepOpenEXRId::_validate(bool for_real)
 {
 	DeepFilterOp::_validate(for_real);
+
+	// The selection depends only on the knobs and the input's metadata: build it once here, not in each engine call.
+	_exrid = ExrIdDataPtr ();
+	_state = StatePtr ();
+	_useLightPaths = false;
+	if (!input0 () || _patterns == NULL)
+		return;
+	_exrid = _getExrIdData ();
+	const NameAutomatonPtr namesregex = _getNamesAutomaton ();
+	const LPEAutomatonPtr lperegex = _getLPEAutomaton ();
+	_state = _getState (_exrid, namesregex, lperegex);
+	_useLightPaths = lperegex != NULL && !_exrid->LightPaths.empty ();
 }
 
 static void	unpackStringToArray (const std::string &s, std::vector<std::string> &array, char separator)
@@ -338,6 +352,33 @@ OpenEXRId::shared_ptr<DeepOpenEXRId::ExrIdData> DeepOpenEXRId::_getExrIdData ()
 
 
 
+// A pattern "^text$" whose text has no regular expression operator, or only escaped ones (as a viewer pick writes it),
+// matches exactly one name: the text without its escapes. Thousands of picked names make an RE2 set slow to build, or
+// larger than its memory budget (the selection then fails).
+static bool anchoredLiteral (const std::string &pattern, std::string &literal)
+{
+	const size_t end = pattern.size () - 1;
+	if (pattern.size () < 2 || pattern[0] != '^' || pattern[end] != '$')
+		return false;
+	literal.clear ();
+	for (size_t i = 1; i < end; ++i)
+	{
+		const char c = pattern[i];
+		if (c == '\\')
+		{
+			// An escaped letter or digit is a class or an assertion (\d, \b); an escape before the final $ makes it literal.
+			if (i+1 >= end || isalnum ((unsigned char)pattern[i+1]))
+				return false;
+			literal += pattern[++i];
+		}
+		else if (strchr (".^$*+?()[{|", c) != NULL)
+			return false;
+		else
+			literal += c;
+	}
+	return true;
+}
+
 template<>
 DeepOpenEXRId::NameAutomatonPtr DeepOpenEXRId::NameAutomatonCacheType::build(const std::string &hash, const void * build_data, DeepOpenEXRId * notifier)
 {
@@ -349,27 +390,34 @@ DeepOpenEXRId::NameAutomatonPtr DeepOpenEXRId::NameAutomatonCacheType::build(con
 	const char * _patterns = static_cast<const char *>(build_data);
 
 	// Split the pattern text entry in patterns
-	splitPatterns (set->Patterns, _patterns);
-	if (set->Patterns.empty ())
-		NameAutomatonPtr ();
+	std::vector<std::string> patterns;
+	splitPatterns (patterns, _patterns);
 
-	for (std::vector<std::string>::const_iterator pattern = set->Patterns.begin() ; pattern != set->Patterns.end() ; pattern++)
+	std::string literal;
+	for (const std::string &pattern : patterns)
 	{
-		std::string	err;
-		if (set->RegEx.Add (removeNeg (*pattern), &err) < 0)
+		if (anchoredLiteral (removeNeg (pattern), literal))
 		{
-			notifier->error ("Bad regular expression '%s': %s", pattern->c_str (), err.c_str ());
+			(pattern[0] == '-' ? set->ExcludedNames : set->Names).insert (literal);
+			continue;
+		}
+		std::string	err;
+		if (set->RegEx.Add (removeNeg (pattern), &err) < 0)
+		{
+			notifier->error ("Bad regular expression '%s': %s", pattern.c_str (), err.c_str ());
 			return OpenEXRId::make_shared<NameAutomaton> ();
 		}
+		set->Patterns.push_back (pattern);
 	}
 
-	if (!set->RegEx.Compile ())
+	// re2 does not compile an empty set (only "^name$" patterns): match() then skips it.
+	if (!set->Patterns.empty () && !set->RegEx.Compile ())
 	{
 		notifier->error ("Automaton compilation error");
 		return OpenEXRId::make_shared<NameAutomaton> ();
 	}
 
-	log ("Compiled %d regexes", int (set->Patterns.size ()));
+	log ("Compiled %d regexes and %d names", int (set->Patterns.size ()), int (set->Names.size () + set->ExcludedNames.size ()));
 
 	return set;
 }
@@ -390,19 +438,22 @@ DeepOpenEXRId::NameAutomatonPtr	DeepOpenEXRId::_getNamesAutomaton ()
 
 bool	DeepOpenEXRId::NameAutomaton::match (const std::string &name, std::vector<int> &tmp) const
 {
-	tmp.clear ();
-	RegEx.Match (name, &tmp);
-
-	// No match?
-	if (tmp.empty ())
+	// Selected: a pattern matches, and no negative pattern does.
+	if (ExcludedNames.count (name) != 0)
 		return false;
-
-	// Negative match?
-	for (std::vector<int>::const_iterator patternid = tmp.begin() ; patternid != tmp.end() ; patternid++)
-		if (Patterns[*patternid][0] == '-')
-			return false;
-
-	return true;
+	bool matched = Names.count (name) != 0;
+	if (!Patterns.empty ())
+	{
+		tmp.clear ();
+		RegEx.Match (name, &tmp);
+		for (std::vector<int>::const_iterator patternid = tmp.begin() ; patternid != tmp.end() ; patternid++)
+		{
+			if (Patterns[*patternid][0] == '-')
+				return false;
+			matched = true;
+		}
+	}
+	return matched;
 }
 
 template<>
@@ -556,34 +607,17 @@ bool DeepOpenEXRId::doDeepEngine(DD::Image::Box box, const ChannelSet& channels,
 	if (!input0 () || _patterns == NULL)
 		return true;
 
-#ifdef TIMING_LOG
-	std::chrono::time_point<std::chrono::system_clock> _start = std::chrono::system_clock::now ();
-#endif
-
-	// Load the EXRId metadata
-	ExrIdDataPtr		exrid = _getExrIdData ();
-	if (exrid->Names.empty ())
+	// The selection _validate built (copies: the engine runs on several threads)
+	const ExrIdDataPtr	exrid = _exrid;
+	const StatePtr		st = _state;
+	if (exrid == NULL || exrid->Names.empty () || st == NULL)
 		return false;
 
-	// Load the pattern regex and lpe automata
-	NameAutomatonPtr	namesregex = _getNamesAutomaton ();
-	LPEAutomatonPtr		lperegex = _getLPEAutomaton ();
-
-	// Load the active names and light paths ids
-	StatePtr			st = _getState (exrid, namesregex, lperegex);
-
-#ifdef TIMING_LOG
-	std::chrono::time_point<std::chrono::system_clock> _end = std::chrono::system_clock::now ();
-	auto microseconds = std::chrono::duration_cast<std::chrono::microseconds>(_end - _start);
-	log ("metadata loaded in %dus", int (microseconds.count ()));
-#endif
-
-	bool	useLightPaths = lperegex != NULL && !exrid->LightPaths.empty ();
+	bool	useLightPaths = _useLightPaths;
 
 	DeepOp* in = input0();
 
 	// Get the Id channel
-	DD::Image::ChannelSet requiredChannels = DD::Image::Mask_Alpha;
 	Channel idChannel = DD::Image::getChannel ("other.Id");
 
 	// Get the LPEId channel
@@ -611,18 +645,53 @@ bool DeepOpenEXRId::doDeepEngine(DD::Image::Box box, const ChannelSet& channels,
 	// For the halton colors
 	const float primes[3] = {2,3,5};
 
+	// Where each output value comes from, once for the box: the sample loop then reads the floats of each sample directly.
+	enum Kind { KindId, KindLPEId, KindDepth, KindAlpha, KindColor };
+	struct Output
+	{
+		Channel	channel;
+		Kind	kind;
+		int		source;	// the channel's index in an input sample, -1 when the input does not have it (0)
+	};
+	const ChannelMap &inChannels = inPlane.channels ();
+	const auto index = [&](Channel channel) { return inChannels.contains (channel) && channel != Chan_Black ? (int)inChannels.chanNo (channel) : -1; };
+	std::vector<Output> outputs;
+	foreach (channel, channels)
+	{
+		const Kind kind = channel == idChannel ? KindId : channel == lpeidChannel ? KindLPEId
+			: channel == Chan_DeepFront || channel == Chan_DeepBack ? KindDepth : channel == Chan_Alpha ? KindAlpha : KindColor;
+		outputs.push_back (Output {channel, kind, index (channel)});
+	}
+	const int idIndex = index (idChannel);
+	const int lpeidIndex = useLightPaths ? index (lpeidChannel) : -1;
+	const int alphaIndex = index (Chan_Alpha);
+	const int frontIndex = index (Chan_DeepFront);
+	if (frontIndex < 0)
+		return false;
+	const auto value = [](const float *sample, int source) { return source >= 0 ? sample[source] : 0.0f; };
+
+	DeepOutPixel pels;
 	for (DD::Image::Box::iterator it = box.begin(); it != box.end(); it++) {
 
 		DeepPixel pixel = inPlane.getPixel(it);
+		const size_t count = pixel.getSampleCount ();
+		const float *begin = pixel.data ();
+		const float *end = begin + pixel.getDataCount ();
 
-		DeepOutPixel pels;
+		pels.clear ();
+		pels.reserve (count * outputs.size ());
 
 		// Transmittance of the input and retained samples.
 		double inputVisibility = 1.0;
 		double retainedVisibility = 1.0;
-		for (int sample = (int)pixel.getSampleCount()-1; sample >= 0; --sample)
+		for (int sample = (int)count-1; sample >= 0; --sample)
 		{
-			const float	_id = pixel.getOrderedSample(sample, idChannel);
+			// The sample in depth order: getOrderedSample gives a reference into the pixel's data.
+			const float *s = &pixel.getOrderedSample(sample, Chan_DeepFront) - frontIndex;
+			if (s < begin || s >= end)
+				return false;
+
+			const float	_id = value (s, idIndex);
 			const int	id = (int)_id;
 			const bool	idselected = (st->idSelected (id, _invert));
 
@@ -631,12 +700,12 @@ bool DeepOpenEXRId::doDeepEngine(DD::Image::Box box, const ChannelSet& channels,
 			int			lpeid = 0;
 			if (useLightPaths)
 			{
-				_lpeid = pixel.getOrderedSample (sample, lpeidChannel);
+				_lpeid = value (s, lpeidIndex);
 				lpeid = (int)_lpeid;
 				lpeidselected = st->lpeidSelected (lpeid);
 			}
 
-			const float inputAlpha = pixel.getOrderedSample(sample, Chan_Alpha);
+			const float inputAlpha = value (s, alphaIndex);
 			const double scale = _keepVis && !_colors
 				? (retainedVisibility > 0.0 ? inputVisibility / retainedVisibility : 1.0)
 				: 1.0;
@@ -646,51 +715,33 @@ bool DeepOpenEXRId::doDeepEngine(DD::Image::Box box, const ChannelSet& channels,
 				if (_colors)
 				{
 					// Display unselected samples with false colors
-					foreach (channel, channels) 
+					for (const Output &output : outputs)
 					{
-						if (channel == idChannel)
+						switch (output.kind)
 						{
-							pels.push_back(_id);
-						}
-						else if (channel == lpeidChannel)
-						{
-							pels.push_back(_lpeid);
-						}
-						else if (channel == Chan_Alpha)
-						{
-							pels.push_back(alpha);
-						}
-						else if (channel == Chan_DeepFront || channel == Chan_DeepBack)
-						{
-							pels.push_back(pixel.getOrderedSample(sample, channel));
-						}
-						else
-						{
-							pels.push_back (alpha*halton (primes[channel%3], id));
+						case KindId: pels.push_back(_id); break;
+						case KindLPEId: pels.push_back(_lpeid); break;
+						case KindAlpha: pels.push_back(alpha); break;
+						case KindDepth: pels.push_back(value (s, output.source)); break;
+						default: pels.push_back (alpha*halton (primes[output.channel%3], id)); break;
 						}
 					}
 				}
 			}
 			else
 			{
-				foreach (channel, channels) 
+				for (const Output &output : outputs)
 				{
-					if (channel == idChannel)
+					switch (output.kind)
 					{
-						pels.push_back(_id);
-					}
-					else if (channel == lpeidChannel)
-					{
-						pels.push_back(_lpeid);
-					}
-					else if (channel == Chan_DeepFront || channel == Chan_DeepBack)
-					{
-						pels.push_back(pixel.getOrderedSample(sample, channel));
-					}
-					else
-					{
-						const float v = pixel.getOrderedSample(sample, _alpha ? Chan_Alpha : channel);
-						pels.push_back(v*scale);
+					case KindId: pels.push_back(_id); break;
+					case KindLPEId: pels.push_back(_lpeid); break;
+					case KindDepth: pels.push_back(value (s, output.source)); break;
+					default:
+						{
+							const float v = _alpha ? inputAlpha : value (s, output.source);
+							pels.push_back(v*scale);
+						}
 					}
 				}
 			}
