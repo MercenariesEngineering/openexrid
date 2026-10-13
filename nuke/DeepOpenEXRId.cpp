@@ -717,7 +717,7 @@ static std::string escapeRegExp (const char *s)
 	while (*s)
 	{
 		if (find (sc, sc+12, *s) != sc+12)
-			result += "\\\\";
+			result += '\\';
 		result += *s;
 		++s;
 	}
@@ -725,14 +725,16 @@ static std::string escapeRegExp (const char *s)
 	return result;
 }
 
-static std::string escapeBackslash (const std::string &str)
+// The patterns knob substitutes Tcl in its text ("[...]" runs a command, "$x" reads a variable, "\" escapes): escape
+// those characters, so that the knob's value (the op's patterns) is the given text. Before, a picked name with "[" gave
+// "Syntax error" as the patterns.
+static std::string toKnobText (const std::string &str)
 {
 	string result;
-	for (size_t i = 0; i < str.size(); ++i)
+	for (const char c : str)
 	{
-		const char c = str[i];
-		if (c == '\\')
-			result += c;
+		if (c == '\\' || c == '[' || c == ']' || c == '$')
+			result += '\\';
 		result += c;
 	}
 	return result;
@@ -749,7 +751,7 @@ static std::set<std::string> getOldName (const char *str)
 		if (*str == '\0' || delim.find (*str) != delim.npos)
 		{
 			if (start < str)
-				result.insert (escapeBackslash (string (start, str)));
+				result.insert (string (start, str));
 			start = str+1;
 		}
 		if (*str == '\0')
@@ -840,7 +842,7 @@ void DeepOpenEXRId::select (float x0, float y0, float x1, float y1, bool invert)
 			patterns += "\n";
 		patterns += *pattern;
 	}
-	knob("patterns")->set_text (patterns.c_str());
+	knob("patterns")->set_text (toKnobText (patterns).c_str());
 }
 
 static Op* build(Node* node) { return new DeepOpenEXRId(node); }
